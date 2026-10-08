@@ -180,20 +180,15 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
   return (
     <div className={`grid gap-6 ${compact ? "" : "lg:grid-cols-[24rem_1fr]"}`}>
       <div className="space-y-5 order-2 lg:order-1">
-        <form
-          role="search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void runSearch(query);
-          }}
-        >
+        {/* A div, not a form: the picker is embedded in the checkout form and forms cannot nest. */}
+        <div role="search">
           <label htmlFor="addr" className="label">Delivery address or area</label>
           <div className="flex gap-2">
-            <input id="addr" className="field" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. Ikeja, Lekki Phase 1, Ikorodu" autoComplete="street-address" />
-            <button className="btn btn-ink" disabled={searching || query.trim().length < 2}>{searching ? "Searching" : "Search"}</button>
+            <input id="addr" className="field" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void runSearch(query); } }} placeholder="e.g. Ikeja, Lekki Phase 1, Ikorodu" autoComplete="off" />
+            <button type="button" className="btn btn-ink" onClick={() => void runSearch(query)} disabled={searching || query.trim().length < 2}>{searching ? "Searching" : "Search"}</button>
           </div>
           <p className="hint mt-1.5">Or click the map to drop a pin, then drag it to adjust.</p>
-        </form>
+        </div>
 
         {results && (
           <div aria-live="polite">

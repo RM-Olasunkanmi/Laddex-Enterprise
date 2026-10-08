@@ -21,7 +21,7 @@
     "reinstall": "rm -rf tsconfig.tsbuildinfo .next node_modules  pnpm-lock.yaml && pnpm install",
     "reinstall:full": "rm -rf pnpm-lock.yaml .next .turbo node_modules && pnpm store prune && pnpm install",
     "test": "vitest run",
-    "test:e2e": "tsx scripts/qa/e2e.ts",
+    "test:e2e": "node scripts/qa/e2e.mjs",
     "geo:build": "tsx scripts/geo/build-boundaries.ts"
   },
   "dependencies": {

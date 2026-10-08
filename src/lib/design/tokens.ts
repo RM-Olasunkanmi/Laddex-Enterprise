@@ -22,9 +22,9 @@ export const color = {
   emberTint: "#F3DCCB",
   onEmber: "#FFF8F0",
 
-  slate: "#2F5D6B",
-  slateDeep: "#1F4350",
-  slateTint: "#D6E4E8",
+  slate: "#3F6FB5",
+  slateDeep: "#244A82",
+  slateTint: "#DCE6F4",
 
   ochre: "#E3B04B",
   ochreDeep: "#7A5200",
@@ -46,15 +46,15 @@ export const color = {
 export const chart = {
   palmOil: color.ember,
   tapioca: color.slate,
-  retail: "#3F3A33",
-  wholesale: "#C58F14",
+  retail: "#2F8F6B",
+  wholesale: "#B07F10",
   neutral: "#8C8374",
   prior: "#8C8374",
   grid: "#E4DDCE",
   /** Single-hue sequential ramp for normalised choropleths (low to high). */
   sequential: ["#FBEFE6", "#F0C9AB", "#DE8F5C", "#C25A22", "#8A2A06"],
   /** Categorical set for delivery zones. Always paired with a text label in the legend. */
-  zones: ["#2F5D6B", "#B23A0E", "#B07F10", "#5E6B2F", "#6B3F5E"],
+  zones: ["#3F6FB5", "#B23A0E", "#B07F10", "#2F8F6B"],
 } as const;
 
 export const map = {
@@ -64,7 +64,7 @@ export const map = {
   selectLine: "#1E1B17",
   hoverFill: "#F6E6BF",
   outsideFill: "#ECE6DA",
-  sampleCoverageLine: "#2F5D6B",
+  sampleCoverageLine: "#3F6FB5",
   orderPoint: "#B23A0E",
   pickup: "#1E1B17",
   background: "#EDE8DE",
