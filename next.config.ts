@@ -38,6 +38,7 @@ const remotePatternsFromConfig = (): RemotePattern[] => {
 };
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,

@@ -15,6 +15,9 @@ import { generateMetadataLayout } from "@/lib/seo/metadata";
 
 import "@/lib/styles/globals.css";
 
+// The legacy Payload storefront reads the CMS on every request, so it needs no database at build time.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   return generateMetadataLayout();
 }
