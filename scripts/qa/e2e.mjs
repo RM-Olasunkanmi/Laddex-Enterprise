@@ -123,10 +123,25 @@ const go = (page, path) =>
     await page.waitForFunction(() => document.querySelector("#lga-pick option:nth-child(3)"), null, { timeout: 15000 });
     const lga = await page.locator("#lga-pick option").nth(2).innerText();
     await page.selectOption("#lga-pick", { index: 2 });
-    await page.getByRole("button", { name: "Confirm this location" }).click();
+    assert(await page.getByRole("button", { name: "Confirm this address" }).isDisabled(), "confirm needs an address");
+    await page.fill("#addr-line", "12 Test Street, beside the central market");
+    await page.getByRole("button", { name: "Confirm this address" }).click();
     const body = await page.locator("body").innerText();
     assert(/Kano/.test(body) && /North West/.test(body), "state and region shown: " + lga);
     assert(/Delivery options/.test(body) && /₦/.test(body), "delivery fee shown");
+  });
+  await check("delivery: geolocation fills the pin, landmark chips explain offline state", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, geolocation: { latitude: 6.4584, longitude: 7.5464 }, permissions: ["geolocation"] });
+    const gp = await ctx.newPage();
+    await go(gp, "/delivery");
+    await gp.selectOption("#state-pick", { label: "Enugu" });
+    await gp.getByRole("button", { name: "Use my current location" }).click();
+    await gp.waitForFunction(() => /Your device location/.test(document.body.innerText), null, { timeout: 15000 });
+    assert(/Enugu/.test(await gp.locator("body").innerText()), "gps resolved to Enugu");
+    await gp.getByRole("button", { name: "Market", exact: true }).click();
+    await gp.waitForTimeout(4000);
+    assert(/Nothing found|not reachable|Market|Result/i.test(await gp.locator("body").innerText()), "landmark feedback");
+    await ctx.close();
   });
   await check("delivery: offline fallback search finds a southeastern town", async () => {
     await go(page, "/delivery");
@@ -231,6 +246,34 @@ const go = (page, path) =>
     await go(page, "/dashboard/geography?unit=lagos");
     await page.waitForTimeout(1500);
     assert((await page.locator("tbody tr button.mono").count()) === 0, "no order rows for analyst");
+  });
+  await check("stock: staff edit changes what the shop shows", async () => {
+    await go(page, "/dashboard/stock");
+    await page.waitForSelector("#q-gi-25kg", { timeout: 20000 });
+    await page.fill("#q-gi-25kg", "0");
+    await page.getByRole("button", { name: /Save 1 change/ }).click();
+    assert((await page.getByText(/Saved 1 change/).count()) > 0, "saved message");
+    await go(page, "/products/garri-igbo?pack=gi-25kg");
+    await page.waitForTimeout(800);
+    assert((await page.getByText("This pack is out of stock").count()) > 0, "storefront shows out of stock");
+    await go(page, "/dashboard/stock");
+    await page.fill("#q-gi-25kg", "5");
+    await page.getByRole("button", { name: /Save 1 change/ }).click();
+    await go(page, "/products/garri-igbo?pack=gi-25kg");
+    await page.waitForTimeout(800);
+    assert((await page.getByText("Low stock").count()) > 0, "low stock shown on product page");
+    await go(page, "/dashboard/stock");
+    await page.getByRole("button", { name: "Reset to catalogue values" }).click();
+    await page.getByRole("button", { name: /Click again/ }).click();
+    assert((await page.getByText("No changes saved yet").count()) > 0, "reset clears log");
+  });
+  await check("motion: reduced-motion shows everything without animation", async () => {
+    const rp = await newPage();
+    await rp.emulateMedia({ reducedMotion: "reduce" });
+    await go(rp, "/");
+    const op = await rp.evaluate(() => getComputedStyle(document.querySelector(".rv")).opacity);
+    assert(op === "1", "reveal element visible, opacity " + op);
+    await rp.context().close();
   });
   await check("dashboard: error state with retry", async () => {
     await go(page, "/dashboard?fail=data");

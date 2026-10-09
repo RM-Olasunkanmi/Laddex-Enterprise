@@ -11,6 +11,7 @@ import type {
 import {
   addBoundaryLayers,
   bindHover,
+  pulseSelection,
   setFeatureStates,
 } from "@/components/maps/layers";
 import { flyTo, useMapLibre } from "@/components/maps/use-maplibre";
@@ -188,6 +189,12 @@ export function DashboardMap() {
     polyKey,
   ]);
 
+  // The selected outline breathes so the eye finds it.
+  useEffect(() => {
+    if (!map || !map.getSource(POLY_SOURCE)) return;
+    return pulseSelection(map, POLY_SOURCE, !!selection.unitId);
+  }, [map, selection.unitId, polyKey]);
+
   // Proportional symbols for sales volume at unit centroids.
   useEffect(() => {
     if (!map || !derived) return;
@@ -231,6 +238,11 @@ export function DashboardMap() {
           "circle-stroke-width": 1.5,
         },
       });
+      requestAnimationFrame(
+        () =>
+          map.getLayer(SYMBOLS) &&
+          map.setPaintProperty(SYMBOLS, "circle-radius", radius),
+      );
       map.on("click", SYMBOLS, (e) => {
         const id = e.features?.[0]?.properties?.id;
         if (id) dispatch({ type: "selectUnit", unitId: String(id) });
@@ -379,7 +391,20 @@ export function DashboardMap() {
     }
     target ??= extentFor();
     if (first) {
+      // Opening move: start pulled back and settle onto the country.
+      const still = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
       map.fitBounds(target, { padding: 24, duration: 0, maxZoom: 11 });
+      if (!still) {
+        const z = map.getZoom();
+        map.jumpTo({ zoom: z - 1.4 });
+        map.easeTo({
+          zoom: z,
+          duration: 1600,
+          easing: (t) => 1 - (1 - t) ** 3,
+        });
+      }
       return;
     }
     flyTo(map, {

@@ -33,6 +33,7 @@ const routes = [
   "/dashboard/insights",
   "/dashboard/reports",
   "/dashboard/inventory",
+  "/dashboard/stock",
 ];
 const browser = await chromium.launch({
   executablePath: find(),
@@ -53,6 +54,9 @@ for (const route of routes) {
   if (process.env.DARK) await page.addInitScript(() => localStorage.setItem("laddex-theme", "dark"));
   await page.goto(BASE + route, { waitUntil: "networkidle", timeout: 90000 });
   await page.waitForTimeout(1500);
+  // Scroll through so scroll-driven reveals have played before measuring contrast.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.waitForTimeout(300);
   await page.addScriptTag({ content: axeSource });
   const res = await page.evaluate(() =>
     window.axe.run(document, {

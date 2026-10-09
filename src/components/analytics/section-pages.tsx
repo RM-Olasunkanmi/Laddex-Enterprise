@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { OrderTable } from "./order-table";
@@ -9,6 +10,7 @@ import { HBarChart } from "@/components/charts/hbar-chart";
 import { Notice, Tag } from "@/components/lx/primitives";
 import { activeTier } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
+import { stockStore, withStock } from "@/features/catalogue/stock";
 import {
   METRICS,
   SYNTHETIC_NOTICE,
@@ -209,12 +211,16 @@ export function CustomersPage() {
 
 export function InventoryPage() {
   const { derived, state } = useDashboard();
+  const stockState = stockStore.use();
   const days = daysBetween(state.filters.from, state.filters.to);
   const rows = useMemo(
     () =>
       derived
         ? variantStats(derived.inSelection, days).map((v) => {
-            const variant = ALL_VARIANTS.find((x) => x.id === v.variantId)!;
+            const variant = withStock(
+              ALL_VARIANTS.find((x) => x.id === v.variantId)!,
+              stockState,
+            );
             const cover =
               v.velocity && v.velocity > 0
                 ? variant.stock.qtyAvailable / v.velocity
@@ -222,7 +228,7 @@ export function InventoryPage() {
             return { v, variant, cover };
           })
         : [],
-    [derived, days],
+    [derived, days, stockState],
   );
   if (!derived) return <Loading />;
   return (
@@ -319,6 +325,16 @@ export function InventoryPage() {
           </tbody>
         </table>
       </div>
+      <p className="text-sm">
+        Need to change what is on hand?{" "}
+        <Link
+          href="/dashboard/stock"
+          className="underline underline-offset-4 font-medium"
+        >
+          Update stock
+        </Link>
+        . Saved levels feed the days-of-cover table above.
+      </p>
       <Notice tone="sample">
         Stock quantities are catalogue fixtures. Production reads live stock per
         distribution point from the inventory system.

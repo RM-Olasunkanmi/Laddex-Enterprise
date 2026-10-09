@@ -11,13 +11,14 @@ import { StockTag } from "@/components/lx/primitives";
 import { ProductPhoto } from "@/components/product/product-photo";
 import { pricePerBaseUnit } from "@/features/catalogue/pricing";
 import { packLabel, sortedVariants } from "@/features/catalogue/selectors";
+import { useStockedProduct } from "@/features/catalogue/stock";
 
 /**
  * One product, with its sizes as selectable chips. The price, unit price, stock and add-to-cart
  * button follow the chosen size, so buying a different size never needs a different page.
  */
 export function ProductCard({
-  product,
+  product: baseProduct,
   initialVariantId,
   priority = false,
 }: {
@@ -25,6 +26,7 @@ export function ProductCard({
   initialVariantId?: string;
   priority?: boolean;
 }) {
+  const product = useStockedProduct(baseProduct);
   const variants = sortedVariants(product);
   const firstInStock =
     variants.find((v) => v.stock.status !== "out-of-stock") ?? variants[0];
@@ -36,7 +38,7 @@ export function ProductCard({
   const out = variant.stock.status === "out-of-stock";
 
   return (
-    <article className="group flex flex-col bg-card border border-line rounded-md overflow-hidden transition-shadow duration-[var(--d-base)] hover:shadow-raised">
+    <article className="group lift flex flex-col bg-card border border-line rounded-[1.5rem] overflow-hidden">
       <Link
         href={href}
         className="relative block"
@@ -77,7 +79,7 @@ export function ProductCard({
                 role="radio"
                 aria-checked={sel}
                 onClick={() => setId(v.id)}
-                className={`min-h-9 min-w-11 px-2.5 rounded-sm border text-sm mono ${sel ? "border-ember bg-ember-tint text-ink" : "border-line-strong bg-card hover:border-ink"} ${sold && !sel ? "border-dashed text-ink-3" : ""}`}
+                className={`min-h-9 min-w-11 px-2.5 rounded-full border text-sm mono transition-transform duration-200 active:scale-95 ${sel ? "border-ember bg-ember-tint text-ink" : "border-line-strong bg-card hover:border-ink"} ${sold && !sel ? "border-dashed text-ink-3" : ""}`}
               >
                 {packLabel(v)}
               </button>

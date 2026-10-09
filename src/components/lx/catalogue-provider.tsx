@@ -4,6 +4,8 @@ import { createContext, useContext, type ReactNode } from "react";
 
 import type { CategoryInfo, Product } from "@/features/catalogue/types";
 
+import { useStocked } from "@/features/catalogue/stock";
+
 interface CatalogueContextValue {
   products: Product[];
   categories: CategoryInfo[];
@@ -20,8 +22,11 @@ export function CatalogueProvider({
   categories,
   children,
 }: CatalogueContextValue & { children: ReactNode }) {
+  const stocked = useStocked(products);
   return (
-    <Ctx.Provider value={{ products, categories }}>{children}</Ctx.Provider>
+    <Ctx.Provider value={{ products: stocked, categories }}>
+      {children}
+    </Ctx.Provider>
   );
 }
 

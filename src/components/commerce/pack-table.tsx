@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import type { Product } from "@/features/catalogue/types";
@@ -6,10 +8,12 @@ import { PACKAGING_LABEL } from "@/components/lx/labels";
 import { StockTag, Tag } from "@/components/lx/primitives";
 import { pricePerBaseUnit } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
+import { useStockedProduct } from "@/features/catalogue/stock";
 import { formatNaira } from "@/lib/formatters";
 
 /** Every pack of one product in a scannable ledger. Becomes stacked rows on small screens. */
-export function PackTable({ product }: { product: Product }) {
+export function PackTable({ product: baseProduct }: { product: Product }) {
+  const product = useStockedProduct(baseProduct);
   const rows = [...product.variants].sort(
     (a, b) => a.contentBase - b.contentBase,
   );

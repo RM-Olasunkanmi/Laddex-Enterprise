@@ -265,15 +265,13 @@ export function OverviewPage() {
               >
                 <HBarChart
                   ariaLabel="Gross sales by state"
-                  data={data.stats
-                    .slice(0, 10)
-                    .map((s) => ({
-                      id: s.id,
-                      label: nameOf(s.id),
-                      value: s.grossKobo,
-                      display: formatNairaCompact(s.grossKobo),
-                      fill: s.id === UNASSIGNED ? chart.neutral : chart.palm,
-                    }))}
+                  data={data.stats.slice(0, 10).map((s) => ({
+                    id: s.id,
+                    label: nameOf(s.id),
+                    value: s.grossKobo,
+                    display: formatNairaCompact(s.grossKobo),
+                    fill: s.id === UNASSIGNED ? chart.neutral : chart.palm,
+                  }))}
                 />
               </ChartFrame>
             </div>

@@ -46,7 +46,9 @@ export function DeliveryCheck({
         <div className="mt-2 space-y-3">
           <p className="text-sm">
             <span className="text-ink-3">To </span>
-            <strong>{location.label}</strong>
+            <strong>
+              {location.addressLine ? location.addressLine : location.label}
+            </strong>
             <span className="text-ink-3">
               {resolution.lgaName
                 ? `, ${resolution.lgaName}`

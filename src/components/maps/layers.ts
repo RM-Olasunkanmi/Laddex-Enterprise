@@ -17,6 +17,10 @@ const mapTokens = {
   },
 };
 
+const reducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export const LGA_SOURCE = "lgas";
 export const STATE_SOURCE = "states";
 
@@ -35,6 +39,13 @@ export function addBoundaryLayers(
 ) {
   if (map.getSource(source)) return;
   map.addSource(source, { type: "geojson", data, promoteId: "id" });
+  const still = reducedMotion();
+  const target = [
+    "case",
+    ["boolean", ["feature-state", "hover"], false],
+    Math.min(1, (opts.fillOpacity ?? 0.7) + 0.2),
+    opts.fillOpacity ?? 0.7,
+  ] as unknown as number;
   const fillColor = [
     "coalesce",
     ["feature-state", "fill"],
@@ -47,12 +58,10 @@ export function addBoundaryLayers(
       source,
       paint: {
         "fill-color": fillColor,
-        "fill-opacity": [
-          "case",
-          ["boolean", ["feature-state", "hover"], false],
-          Math.min(1, (opts.fillOpacity ?? 0.7) + 0.2),
-          opts.fillOpacity ?? 0.7,
-        ] as unknown as number,
+        // Fades in from nothing, then follows the real value; colour changes glide instead of snapping.
+        "fill-opacity": still ? target : 0,
+        "fill-color-transition": { duration: still ? 0 : 700, delay: 0 },
+        "fill-opacity-transition": { duration: still ? 0 : 900, delay: 0 },
       },
     },
     opts.beforeId,
@@ -78,6 +87,12 @@ export function addBoundaryLayers(
     },
     opts.beforeId,
   );
+  if (!still)
+    requestAnimationFrame(
+      () =>
+        map.getLayer(`${source}-fill`) &&
+        map.setPaintProperty(`${source}-fill`, "fill-opacity", target),
+    );
   map.addLayer({
     id: `${source}-selected`,
     type: "line",
@@ -140,5 +155,25 @@ export function bindHover(
   return () => {
     map.off("mousemove", layer, move);
     map.off("mouseleave", layer, leave);
+  };
+}
+
+/**
+ * Gently pulses the outline of the selected unit. Returns a stop function. Does nothing under
+ * reduced motion.
+ */
+export function pulseSelection(map: MlMap, source: string, active: boolean) {
+  const layer = `${source}-selected`;
+  if (!active || reducedMotion() || !map.getLayer(layer))
+    return () => undefined;
+  const t0 = performance.now();
+  const id = window.setInterval(() => {
+    if (!map.getLayer(layer)) return;
+    const w = 3.2 + Math.sin((performance.now() - t0) / 380) * 1.4;
+    map.setPaintProperty(layer, "line-width", w);
+  }, 60);
+  return () => {
+    window.clearInterval(id);
+    if (map.getLayer(layer)) map.setPaintProperty(layer, "line-width", 3);
   };
 }

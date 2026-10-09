@@ -184,15 +184,17 @@ export const mapByTheme = {
 } as const;
 
 export const font = {
-  display: "'Fraunces Variable', Georgia, 'Times New Roman', serif",
-  body: "'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  display:
+    "'Bricolage Grotesque Variable', 'Plus Jakarta Sans Variable', system-ui, sans-serif",
+  accent: "'Instrument Serif', Georgia, 'Times New Roman', serif",
+  body: "'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif",
   mono: "'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace",
 } as const;
 
 /** 4px base. */
 export const space = [0, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128] as const;
 
-export const radius = { none: 0, sm: 2, md: 4, lg: 8 } as const;
+export const radius = { none: 0, sm: 6, md: 12, lg: 20, pill: 999 } as const;
 
 export const container = {
   page: 1280,

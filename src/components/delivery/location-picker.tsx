@@ -21,7 +21,11 @@ import {
   updateSource,
 } from "@/components/maps/layers";
 import { flyTo, useMapLibre } from "@/components/maps/use-maplibre";
-import { searchWithFallback } from "@/features/delivery/adapters/geocoders";
+import {
+  searchWithFallback,
+  searchWithin,
+  type SearchBox,
+} from "@/features/delivery/adapters/geocoders";
 import { estimateDelivery } from "@/features/delivery/pricing";
 import { resolveLocation } from "@/features/delivery/resolve";
 import {
@@ -55,7 +59,9 @@ function pinElement(label: string) {
   const el = document.createElement("div");
   el.setAttribute("role", "img");
   el.setAttribute("aria-label", label);
-  el.innerHTML = `<svg width="30" height="40" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38C15 38 28 25 28 14.5A13 13 0 0 0 2 14.5C2 25 15 38 15 38Z" fill="#B3261E" stroke="#17140F" stroke-width="2"/><circle cx="15" cy="14.5" r="5" fill="#FFF8F0"/></svg>`;
+  el.className = "pin-marker";
+  el.style.position = "relative";
+  el.innerHTML = `<span class="pin-pulse"></span><svg class="pin-svg" width="32" height="42" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38C15 38 28 25 28 14.5A13 13 0 0 0 2 14.5C2 25 15 38 15 38Z" fill="#B3261E" stroke="#17140F" stroke-width="2"/><circle cx="15" cy="14.5" r="5" fill="#FFF8F0"/></svg>`;
   el.style.cursor = "grab";
   return el;
 }
@@ -89,6 +95,11 @@ export function LocationPicker({
   const [searching, setSearching] = useState(false);
   const [degraded, setDegraded] = useState(false);
   const [pin, setPin] = useState<Pin | null>(null);
+  const [addressLine, setAddressLine] = useState("");
+  const [lmResults, setLmResults] = useState<GeocodeResult[] | null>(null);
+  const [lmBusy, setLmBusy] = useState(false);
+  const [lmMsg, setLmMsg] = useState<string | null>(null);
+  const [gpsBusy, setGpsBusy] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const markerRef = useRef<Marker | null>(null);
@@ -118,6 +129,7 @@ export function LocationPicker({
       precision: l.precision,
       source: l.source,
     });
+    setAddressLine(l.addressLine ?? "");
   }, [saved.location, savedHydrated]);
 
   // The state under the pin (cheap: 37 outlines), then that state's LGAs on demand.
@@ -194,14 +206,14 @@ export function LocationPicker({
       if (!isValidLngLat(position.lng, position.lat)) return;
       setPin({ position, label, precision, source });
       if (map && fly) {
-        const d = precision === "address" ? 0.01 : 0.12;
+        const d = precision === "address" || precision === "gps" ? 0.01 : 0.12;
         flyTo(map, {
           bounds: [
             [position.lng - d, position.lat - d],
             [position.lng + d, position.lat + d],
           ],
           padding: 60,
-          maxZoom: precision === "address" ? 14 : 9.5,
+          maxZoom: precision === "address" || precision === "gps" ? 15 : 9.5,
         });
       }
     },
@@ -360,6 +372,78 @@ export function LocationPicker({
     }
   };
 
+  const searchBox = (): SearchBox | null => {
+    const u =
+      lgas?.find((l) => l.id === resolution?.lgaId) ??
+      states?.find((x) => x.id === resolution?.stateId);
+    return u ? [u.bbox[0], u.bbox[1], u.bbox[2], u.bbox[3]] : null;
+  };
+  const areaName = resolution?.lgaName ?? resolution?.stateName ?? "your area";
+
+  /** Landmark or street search inside the chosen local government area (or state, if no area is chosen). */
+  const findLandmark = async (term: string) => {
+    const box = searchBox();
+    if (!box || term.trim().length < 3) {
+      setLmMsg(
+        "Type at least three letters, for example a street, market or church name.",
+      );
+      return;
+    }
+    setLmBusy(true);
+    setLmMsg(null);
+    try {
+      const out = await searchWithin(term, box);
+      setLmResults(out);
+      if (out.length === 0)
+        setLmMsg(
+          `Nothing found for "${term}" in ${areaName}. Try another spelling, or click the map to drop a pin and describe the place in the box above.`,
+        );
+    } catch {
+      setLmResults(null);
+      setLmMsg(
+        "Landmark search needs the live map service, which is not reachable right now. Describe the place in the box above and drop a pin on the map instead.",
+      );
+    } finally {
+      setLmBusy(false);
+    }
+  };
+
+  const locate = () => {
+    if (!("geolocation" in navigator)) {
+      setLmMsg(
+        "This browser cannot share your location. Choose your state and area, then drop a pin.",
+      );
+      return;
+    }
+    setGpsBusy(true);
+    setLmMsg(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsBusy(false);
+        place(
+          {
+            lng: Number(pos.coords.longitude.toFixed(5)),
+            lat: Number(pos.coords.latitude.toFixed(5)),
+          },
+          "My current location",
+          "gps",
+          "gps",
+        );
+      },
+      (err) => {
+        setGpsBusy(false);
+        setLmMsg(
+          err.code === err.PERMISSION_DENIED
+            ? "Location permission was refused. You can still choose your state and area, or drop a pin."
+            : "Your location could not be read. Try again outdoors, or drop a pin on the map.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 12000 },
+    );
+  };
+
+  const addressOk = addressLine.trim().length >= 5;
+
   const estimate = resolution
     ? estimateDelivery({ resolution, weightKg })
     : null;
@@ -367,12 +451,16 @@ export function LocationPicker({
     pin &&
     saved.location &&
     saved.location.position.lng === pin.position.lng &&
-    saved.location.position.lat === pin.position.lat
+    saved.location.position.lat === pin.position.lat &&
+    (saved.location.addressLine ?? "") === addressLine.trim()
   );
   const chosen = saved.optionId;
   const confirm = () => {
-    if (!pin || !resolution) return;
-    setDeliveryLocation({ ...pin, confirmed: true }, resolution);
+    if (!pin || !resolution || !addressOk) return;
+    setDeliveryLocation(
+      { ...pin, addressLine: addressLine.trim(), confirmed: true },
+      resolution,
+    );
   };
 
   const hoveredState = hover ? states?.find((s) => s.id === hover) : null;
@@ -392,9 +480,62 @@ export function LocationPicker({
   return (
     <div className={`grid gap-6 ${compact ? "" : "lg:grid-cols-[24rem_1fr]"}`}>
       <div className="space-y-5 order-2 lg:order-1">
+        <fieldset className="grid gap-3">
+          <legend className="label">No map? Choose your state and area</legend>
+          <div>
+            <label htmlFor="state-pick" className="sr-only">
+              State
+            </label>
+            <select
+              id="state-pick"
+              className="field"
+              value={stateOfPin ?? ""}
+              disabled={!states}
+              onChange={(e) => e.target.value && pickState(e.target.value)}
+            >
+              <option value="">Select a state</option>
+              {sortedStates?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="lga-pick" className="sr-only">
+              Local government area
+            </label>
+            <select
+              id="lga-pick"
+              className="field"
+              value={resolution?.lgaId ?? ""}
+              disabled={!sortedLgas}
+              onChange={(e) => e.target.value && pickLga(e.target.value)}
+            >
+              <option value="">
+                {sortedLgas
+                  ? "Select a local government area"
+                  : "Choose a state first"}
+              </option>
+              {sortedLgas?.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </fieldset>
+
+        {geoError && (
+          <Notice tone="warning">
+            Boundary data could not be loaded, so the state cannot be checked
+            right now. Try reloading the page.
+          </Notice>
+        )}
+
         <div role="search">
           <label htmlFor="addr" className="label">
-            Delivery address, town or city
+            Or search for a town or city
           </label>
           <div className="flex gap-2">
             <input
@@ -461,57 +602,104 @@ export function LocationPicker({
           </div>
         )}
 
-        <fieldset className="grid gap-3">
-          <legend className="label">No map? Choose your state and area</legend>
-          <div>
-            <label htmlFor="state-pick" className="sr-only">
-              State
-            </label>
-            <select
-              id="state-pick"
-              className="field"
-              value={stateOfPin ?? ""}
-              disabled={!states}
-              onChange={(e) => e.target.value && pickState(e.target.value)}
-            >
-              <option value="">Select a state</option>
-              {sortedStates?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="lga-pick" className="sr-only">
-              Local government area
-            </label>
-            <select
-              id="lga-pick"
-              className="field"
-              value={resolution?.lgaId ?? ""}
-              disabled={!sortedLgas}
-              onChange={(e) => e.target.value && pickLga(e.target.value)}
-            >
-              <option value="">
-                {sortedLgas
-                  ? "Select a local government area"
-                  : "Choose a state first"}
-              </option>
-              {sortedLgas?.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </fieldset>
-
-        {geoError && (
-          <Notice tone="warning">
-            Boundary data could not be loaded, so the state cannot be checked
-            right now. Try reloading the page.
-          </Notice>
+        {pin && resolution && resolution.coverage === "in-nigeria" && (
+          <section aria-labelledby="addr-step" className="panel p-4 space-y-3">
+            <h2 id="addr-step" className="!text-xl">
+              Your address in {areaName}
+            </h2>
+            <div>
+              <label htmlFor="addr-line" className="label">
+                House number, street, estate or nearest landmark
+              </label>
+              <textarea
+                id="addr-line"
+                className="field min-h-20"
+                value={addressLine}
+                onChange={(e) => setAddressLine(e.target.value)}
+                placeholder="e.g. 12 Adeola Street, behind the Total filling station"
+                autoComplete="street-address"
+              />
+              <p className="hint mt-1">
+                Write it the way you would tell a rider. This is what the
+                delivery person reads.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn btn-line btn-sm min-h-10"
+                onClick={locate}
+                disabled={gpsBusy}
+              >
+                {gpsBusy ? "Finding you" : "Use my current location"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ink btn-sm min-h-10"
+                onClick={() => void findLandmark(addressLine)}
+                disabled={lmBusy}
+              >
+                {lmBusy ? "Searching" : "Find it on the map"}
+              </button>
+            </div>
+            <div>
+              <p className="eyebrow mb-1.5">
+                Search the map for a landmark in {areaName}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Market",
+                  "Church",
+                  "Mosque",
+                  "School",
+                  "Filling station",
+                  "Bank",
+                  "Hospital",
+                  "Hotel",
+                ].map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    className="rounded-full border border-line-strong px-3 min-h-9 text-sm hover:border-ink hover:bg-paper-2 transition-colors"
+                    onClick={() => void findLandmark(t)}
+                    disabled={lmBusy}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div aria-live="polite">
+              {lmMsg && <p className="text-sm text-ink-2">{lmMsg}</p>}
+              {lmResults && lmResults.length > 0 && (
+                <ul className="mt-2 divide-y divide-line border border-line rounded-md list-none p-0 max-h-56 overflow-auto">
+                  {lmResults.map((r) => (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        className="w-full text-left px-3 py-2.5 min-h-11 hover:bg-paper-2"
+                        onClick={() => {
+                          place(r.position, r.label, "address", "search");
+                          setAddressLine((cur) =>
+                            cur.trim()
+                              ? cur
+                              : [r.label, r.secondary]
+                                  .filter(Boolean)
+                                  .join(", "),
+                          );
+                        }}
+                      >
+                        <span className="block font-medium">{r.label}</span>
+                        <span className="block text-xs text-ink-3">
+                          {r.secondary}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
         )}
 
         {pin && resolution ? (
@@ -533,11 +721,13 @@ export function LocationPicker({
               </dd>
               <dt className="text-ink-3">Precision</dt>
               <dd>
-                {pin.precision === "address"
-                  ? "Address-level"
-                  : pin.precision === "locality-centroid"
-                    ? "Area centre (several km)"
-                    : "Where you placed the pin"}
+                {pin.precision === "gps"
+                  ? "Your device location"
+                  : pin.precision === "address"
+                    ? "Address-level"
+                    : pin.precision === "locality-centroid"
+                      ? "Area centre (several km)"
+                      : "Where you placed the pin"}
               </dd>
               <dt className="text-ink-3">State</dt>
               <dd>{resolution.stateName ?? "Outside Nigeria"}</dd>
@@ -558,9 +748,15 @@ export function LocationPicker({
                 type="button"
                 className="btn btn-primary w-full"
                 onClick={confirm}
+                disabled={!addressOk}
               >
-                Confirm this location
+                Confirm this address
               </button>
+            )}
+            {!confirmed && !addressOk && (
+              <p className="hint">
+                Add your street or nearest landmark above to confirm.
+              </p>
             )}
           </section>
         ) : (

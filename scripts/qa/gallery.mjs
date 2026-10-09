@@ -99,7 +99,8 @@ await shoot("11-quote", "/wholesale/quote?pack=gi-25kg");
 await shoot("12-account-approved", "/account", { persona: approved, full: true });
 await shoot("13-delivery-confirmed", "/delivery?q=Enugu", {
   act: async (p) => {
-    await p.getByRole("button", { name: "Confirm this location" }).click();
+    await p.fill("#addr-line", "12 Adeola Street, behind the Total filling station");
+    await p.getByRole("button", { name: "Confirm this address" }).click();
     await p.waitForTimeout(800);
   },
   wait: 2500,
@@ -129,5 +130,7 @@ await shoot("27-dashboard-mobile-geo", "/dashboard/geography?role=admin", {
   act: (p) => p.getByRole("tab", { name: "Orders" }).click(),
 });
 await shoot("28-dashboard-geography-dark", "/dashboard/geography", { dark: true, wait: 3500 });
+await shoot("30-dashboard-stock", "/dashboard/stock", { wait: 2000 });
+await shoot("31-delivery-address-step", "/delivery?q=Enugu", { wait: 2500, act: async (p) => { await p.fill("#addr-line", "12 Adeola Street, behind the Total filling station"); await p.waitForTimeout(600); } });
 await shoot("29-loading-dashboard", "/dashboard?latency=4000", { wait: 600 });
 await browser.close();

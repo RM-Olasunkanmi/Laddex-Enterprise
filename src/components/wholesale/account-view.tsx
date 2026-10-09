@@ -171,7 +171,10 @@ export function AccountView() {
                     <li key={l.variantId} className="py-2 flex justify-between">
                       <span>
                         {l.qty} &times;{" "}
-                        {PRODUCTS.find((p) => p.id === l.variant.productId)?.name}{" "}
+                        {
+                          PRODUCTS.find((p) => p.id === l.variant.productId)
+                            ?.name
+                        }{" "}
                         {packLabel(l.variant)}
                       </span>
                       <span className="mono text-ink-3">

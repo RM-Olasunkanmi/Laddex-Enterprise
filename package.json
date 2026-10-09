@@ -26,9 +26,12 @@
     "cf:prepare": "bash scripts/deploy/cloudflare-prepare.sh"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/hanken-grotesk": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
     "@payloadcms/admin-bar": "3.90.1",
     "@payloadcms/db-postgres": "3.90.1",
     "@payloadcms/email-nodemailer": "3.90.1",

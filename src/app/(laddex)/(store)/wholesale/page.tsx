@@ -33,10 +33,11 @@ export default async function WholesalePage() {
               Buy in volume, priced by the pack.
             </h1>
             <p className="mt-5 text-lg text-ink-2 max-w-xl">
-              For shops, resellers, caterers and event suppliers. Price breaks are set
-              for each pack size, with a minimum order for each. Register a business to buy at your
-              tier, ask for a quote for an unusual volume, and reorder from past purchases. Buying
-              souvenirs for an event? See the events page.
+              For shops, resellers, caterers and event suppliers. Price breaks
+              are set for each pack size, with a minimum order for each.
+              Register a business to buy at your tier, ask for a quote for an
+              unusual volume, and reorder from past purchases. Buying souvenirs
+              for an event? See the events page.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <ButtonLink href="/wholesale/register">

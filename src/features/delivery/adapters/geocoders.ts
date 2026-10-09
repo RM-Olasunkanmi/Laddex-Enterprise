@@ -96,3 +96,44 @@ export async function searchWithFallback(
     return { results: await gazetteerGeocoder.search(query), degraded: true };
   }
 }
+
+/** [west, south, east, north] in degrees. */
+export type SearchBox = [number, number, number, number];
+
+/**
+ * Landmark and street search limited to a box (the chosen local government area). Uses the live
+ * service only: the offline list holds towns, not landmarks, so there is no fallback and the caller
+ * explains that. Sent only on an explicit action, never per keystroke.
+ */
+export async function searchWithin(
+  query: string,
+  box: SearchBox,
+  signal?: AbortSignal,
+): Promise<GeocodeResult[]> {
+  const q = query.trim();
+  if (q.length < 3) return [];
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("q", q);
+  url.searchParams.set("countrycodes", "ng");
+  url.searchParams.set("limit", "8");
+  url.searchParams.set("viewbox", `${box[0]},${box[3]},${box[2]},${box[1]}`);
+  url.searchParams.set("bounded", "1");
+  const res = await fetch(url, {
+    signal,
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error(`Geocoder responded ${res.status}`);
+  const items = (await res.json()) as NominatimItem[];
+  return items.map<GeocodeResult>((i) => {
+    const [first, ...rest] = i.display_name.split(",");
+    return {
+      id: `osm-${i.place_id}`,
+      label: first.trim(),
+      secondary: rest.slice(0, 3).join(",").trim(),
+      position: { lng: Number(i.lon), lat: Number(i.lat) },
+      precision: "address",
+      source: "nominatim",
+    };
+  });
+}

@@ -25,3 +25,11 @@ Unchanged principles: typed contracts with fixture adapters (`CatalogueService`,
 ## Not done
 
 Backend, payments, real inventory, real orders, authentication, server-side roles. The enquiry form and quote requests are not sent anywhere.
+
+## Revision 2 (design, delivery address, stock)
+
+- **Typography and look**: Bricolage Grotesque (headings), Instrument Serif italic (accent words), Plus Jakarta Sans (body), JetBrains Mono (labels). Pill buttons, larger radii, colour-blocked sections, grain texture.
+- **Motion**: staggered hero headline, floating photos, rotating badge, marquee, scroll-driven reveals (pure CSS, `animation-timeline: view()`, no JavaScript), count-up numbers, state-by-state map reveal, hover lifts, add-to-cart tick, page fade between routes. All of it is off under `prefers-reduced-motion`, and content is complete without it.
+- **Maps**: fills and bubbles fade and grow in, colours glide when filters change, the selected outline pulses, the dashboard opens with a settle onto the country, and the delivery pin drops with a pulse.
+- **Delivery address**: state, then local government area, then street or landmark (required to confirm). "Use my current location" uses the browser's geolocation. Landmark chips and "Find it on the map" search inside the chosen area through OpenStreetMap Nominatim (live only; when unreachable the page says so and the customer describes the place and drops a pin).
+- **Stock**: `/dashboard/stock` edits quantities per pack with a reason, a low-stock limit, and a movement log with CSV export. Saved levels change what the shop shows. They are stored in the browser only until a backend exists.

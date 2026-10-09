@@ -30,7 +30,7 @@ export function AddToCartButton({
     <>
       <button
         type="button"
-        className={`btn btn-primary ${className}`}
+        className={`btn btn-primary ${done ? "[animation:tick_450ms_var(--ease)]" : ""} ${className}`}
         disabled={disabled}
         title={disabled ? disabledReason : undefined}
         onClick={() => {
@@ -40,7 +40,7 @@ export function AddToCartButton({
           if (openDrawer) cartDrawer.set(true);
         }}
       >
-        {done ? "Added" : label}
+        {done ? "Added ✓" : label}
       </button>
       <span className="sr-only" role="status" aria-live="polite">
         {done ? "Added to cart" : ""}

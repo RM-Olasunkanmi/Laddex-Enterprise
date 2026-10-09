@@ -36,7 +36,7 @@ Review helpers: the black strip at the top of the storefront switches between gu
 pnpm typecheck && pnpm lint
 pnpm test                                  # 125 unit tests
 pnpm build && pnpm start -p 3355 &
-BASE=http://localhost:3355 pnpm test:e2e   # 22 browser checks (Chromium via playwright-core)
+BASE=http://localhost:3355 pnpm test:e2e   # 25 browser checks (Chromium via playwright-core)
 BASE=http://localhost:3355 node scripts/qa/a11y.mjs        # axe, add MOBILE=1 for phone width or DARK=1 for dark theme
 BASE=http://localhost:3355 node scripts/qa/perf.mjs
 BASE=http://localhost:3355 node scripts/qa/gallery.mjs     # refresh /screenshots

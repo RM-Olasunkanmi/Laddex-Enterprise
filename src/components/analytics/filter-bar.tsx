@@ -88,7 +88,8 @@ export function FilterBar() {
   const stateName = (id: string) =>
     dataset?.states.find((x) => x.id === id)?.name ?? id;
   const [open, setOpen] = useState(false);
-  const onMap = usePathname() === "/dashboard/geography";
+  const path = usePathname();
+  const onMap = path === "/dashboard/geography";
   const { filters: f, selection, role } = state;
   const cat = f.categories.length === 1 ? f.categories[0] : "all";
   const seg = f.segments.length === 1 ? f.segments[0] : "all";
@@ -310,6 +311,9 @@ export function FilterBar() {
       )}
     </div>
   );
+
+  // Stock editing is not affected by the order filters, so the bar would only be noise there.
+  if (path === "/dashboard/stock") return null;
 
   return (
     <div className="border-b border-line bg-card">

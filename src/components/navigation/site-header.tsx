@@ -56,7 +56,7 @@ export function Wordmark({
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 bg-paper/95 backdrop-blur-[2px] border-b border-line">
+    <header className="sticky top-0 z-40 bg-paper/85 backdrop-blur-md border-b border-line">
       <div className="bg-rail text-rail-text">
         <div className="wrap flex items-center justify-between gap-4 py-1.5 text-xs">
           <p className="truncate">
@@ -82,7 +82,7 @@ export function SiteHeader() {
               <div key={item.href} className="relative group">
                 <Link
                   href={item.href}
-                  className="btn btn-quiet btn-sm text-[0.9375rem]"
+                  className="btn btn-quiet btn-sm text-[0.9375rem] link-grow"
                 >
                   {item.label}
                   <span aria-hidden="true" className="text-ink-3 text-xs">
@@ -111,7 +111,7 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="btn btn-quiet btn-sm text-[0.9375rem]"
+                className="btn btn-quiet btn-sm text-[0.9375rem] link-grow"
               >
                 {item.label}
               </Link>

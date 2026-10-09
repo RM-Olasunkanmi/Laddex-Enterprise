@@ -34,6 +34,8 @@ export function RegionSketch({
         {NG_SKETCH.states.map((s) => (
           <path
             key={s.id}
+            className="path-in"
+            style={{ ["--i" as string]: Math.max(0, regionIdx(s.id)) }}
             d={s.d}
             fill={FILLS[regionIdx(s.id)] ?? "var(--color-paper-2)"}
             fillOpacity={0.55}

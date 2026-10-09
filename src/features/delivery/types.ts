@@ -55,8 +55,10 @@ export interface GeocodeResult {
 export interface DeliveryLocation {
   position: LngLat;
   label: string;
-  source: "search" | "map-pin";
-  precision: GeocodeResult["precision"] | "map-pin";
+  /** What the customer typed: house number, street, estate or a landmark ("opposite the market"). */
+  addressLine?: string;
+  source: "search" | "map-pin" | "gps";
+  precision: GeocodeResult["precision"] | "map-pin" | "gps";
   confirmed: boolean;
 }
 

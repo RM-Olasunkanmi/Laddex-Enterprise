@@ -20,17 +20,19 @@ import {
   tierSaving,
 } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
+import { useStockedProduct } from "@/features/catalogue/stock";
 import { customerStore } from "@/features/customer/store";
 import { isWholesale } from "@/features/customer/types";
 import { formatNaira, formatPercent } from "@/lib/formatters";
 
 export function ProductPurchase({
-  product,
+  product: baseProduct,
   initialPack,
 }: {
   product: Product;
   initialPack?: string;
 }) {
+  const product = useStockedProduct(baseProduct);
   const variants = useMemo(
     () => [...product.variants].sort((a, b) => a.contentBase - b.contentBase),
     [product],

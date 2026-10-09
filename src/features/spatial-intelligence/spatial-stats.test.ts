@@ -12,7 +12,6 @@ import {
   toSeries,
 } from "./spatial-stats";
 
-
 import type { AdminUnit } from "@/lib/geo/geography";
 
 import { testStates } from "@/test/geo";

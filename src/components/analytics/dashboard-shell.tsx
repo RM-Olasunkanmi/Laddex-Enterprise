@@ -33,6 +33,7 @@ export const DASH_NAV = [
     label: "Customers",
     note: "Segments and repeat buying",
   },
+  { href: "/dashboard/stock", label: "Stock", note: "Update what is on hand" },
   {
     href: "/dashboard/inventory",
     label: "Inventory",
