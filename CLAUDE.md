@@ -17,6 +17,7 @@ pnpm generate:types   # Regenerate Payload TypeScript types → src/lib/core/typ
 ## Workflow
 
 - Never run lint, typecheck, or any other verification/check command (`pnpm lint`, `pnpm lint:fix`, `tsc`, etc.) after making changes, unless explicitly asked to. Just make the edit.
+- Exception: work on the Laddex frontend (`src/app/(laddex)`, `src/features`, `src/components/{analytics,charts,commerce,delivery,maps,navigation,product,wholesale,checkout,lx}`) is verified before it is called done: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, then the scripts in `scripts/qa` (see README).
 
 ## Stack
 
@@ -28,6 +29,10 @@ pnpm generate:types   # Regenerate Payload TypeScript types → src/lib/core/typ
 - **next-intl** for i18n
 - **Playwright** for E2E tests
 - **pnpm** as package manager (Node >= 22)
+
+## Laddex frontend
+
+The Laddex storefront and spatial dashboard live in the `src/app/(laddex)` route group with its own root layout, fixture-backed adapters in `src/features/*`, and design tokens in `src/lib/design/tokens.ts` and `src/styles/laddex.css`. Read `README.md` and `docs/IMPLEMENTATION_REPORT.md` first. Fixture data is illustrative and must not be presented as real.
 
 ## Architecture
 

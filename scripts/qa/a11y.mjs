@@ -27,6 +27,7 @@ const routes = [
   "/dashboard?role=admin&unit=ikeja",
   "/dashboard/reports",
   "/dashboard/inventory",
+  "/products/palm-oil?pack=po-500ml",
 ];
 const browser = await chromium.launch({
   executablePath: find(),
