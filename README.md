@@ -46,6 +46,7 @@ BASE=http://localhost:3355 node scripts/qa/gallery.mjs     # refresh /screenshot
 - [Product imagery and replacing the development renders](docs/ASSETS.md)
 - [Backend integration requirements](docs/BACKEND_INTEGRATION.md)
 - [QA report](docs/QA_REPORT.md)
+- [Deploying to Cloudflare Workers](docs/DEPLOY_CLOUDFLARE.md)
 - Screenshots: [`/screenshots`](screenshots)
 
 ## Data and licences

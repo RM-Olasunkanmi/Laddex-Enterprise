@@ -22,7 +22,8 @@
     "reinstall:full": "rm -rf pnpm-lock.yaml .next .turbo node_modules && pnpm store prune && pnpm install",
     "test": "vitest run",
     "test:e2e": "node scripts/qa/e2e.mjs",
-    "geo:build": "tsx scripts/geo/build-boundaries.ts"
+    "geo:build": "tsx scripts/geo/build-boundaries.ts",
+    "cf:prepare": "bash scripts/deploy/cloudflare-prepare.sh"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import lagosLgas from "../../../public/geo/lagos-lgas.json";
 
 import type { PolygonalGeometry } from "@/lib/geo/pip";
 
@@ -13,10 +12,8 @@ import { toAdminUnits, type RawCollection } from "@/lib/geo/geography";
  * with latitude scaling (cos 6.5 degrees), used only for drawing.
  */
 export function ZoneSketch({ className = "" }: { className?: string }) {
-  const fc = JSON.parse(
-    readFileSync(join(process.cwd(), "public/geo/lagos-lgas.json"), "utf8"),
-  ) as RawCollection;
-  const units = toAdminUnits(fc);
+  // Bundled at build time (about 87 KB, server only): works on any runtime, including Cloudflare Workers.
+  const units = toAdminUnits(lagosLgas as unknown as RawCollection);
   const k = Math.cos((6.5 * Math.PI) / 180);
   const minX = 2.69;
   const maxY = 6.71;

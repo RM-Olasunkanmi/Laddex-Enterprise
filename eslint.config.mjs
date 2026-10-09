@@ -9,6 +9,7 @@ export default [
       "**/node_modules/**",
       "other/**",
       ".claude/**",
+      ".cf-build/**",
       "**/.next/**",
       "**/dist/**",
       "**/build/**",
