@@ -1,32 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCatalogue } from "@/components/lx/catalogue-provider";
-import { Notice } from "@/components/lx/primitives";
+import { BUSINESS_CONTACT } from "@/content/business";
 import { isNgPhone } from "@/features/cart/preview-order";
 import { activeTier } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
 import { deliveryStore } from "@/features/delivery/store";
-import { createPersistedStore } from "@/lib/data/persisted-store";
 import { formatNaira } from "@/lib/formatters";
 
 interface QuoteLine {
   variantId: string;
   qty: number;
 }
-interface SubmittedQuote {
-  reference: string;
-  business: string;
-  lines: { label: string; qty: number; indicativeKobo: number }[];
-  totalKobo: number;
-  area: string;
-}
-const quoteStore = createPersistedStore<SubmittedQuote | null>("quote", null);
-
 export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
+  const formRef = useRef<HTMLFormElement>(null);
   const { products } = useCatalogue();
   const all = useMemo(
     () => products.flatMap((p) => p.variants.map((v) => ({ p, v }))),
@@ -47,7 +38,6 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const loc = deliveryStore.use();
-  const submitted = quoteStore.use();
 
   const priced = lines.map((l) => {
     const x = all.find((a) => a.v.id === l.variantId)!;
@@ -71,47 +61,6 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
       ? `${loc.resolution.lgaName}, ${loc.resolution.stateName ?? "Nigeria"}`
       : "");
 
-  if (submitted) {
-    return (
-      <div className="max-w-2xl">
-        <Notice tone="sample" title="Quote request recorded (preview)">
-          Nothing was sent. In production this creates a quote record for staff
-          to price and answer in writing.
-        </Notice>
-        <p className="eyebrow mt-8">Reference</p>
-        <h2 className="text-4xl mt-1">{submitted.reference}</h2>
-        <p className="mt-2 text-ink-2">
-          {submitted.business}, delivering to{" "}
-          {submitted.area || "an area to be confirmed"}
-        </p>
-        <ul className="panel divide-y divide-line list-none p-0 mt-5">
-          {submitted.lines.map((l) => (
-            <li key={l.label} className="p-3 flex justify-between">
-              <span>
-                {l.qty} &times; {l.label}
-              </span>
-              <span className="mono">{formatNaira(l.indicativeKobo)}</span>
-            </li>
-          ))}
-          <li className="p-3 flex justify-between font-semibold">
-            <span>Indicative total</span>
-            <span className="mono">{formatNaira(submitted.totalKobo)}</span>
-          </li>
-        </ul>
-        <p className="hint mt-3">
-          The indicative total uses sample tier prices and excludes delivery. A
-          written quote supersedes it.
-        </p>
-        <button
-          className="btn btn-line mt-6"
-          onClick={() => quoteStore.set(null)}
-        >
-          Start another quote
-        </button>
-      </div>
-    );
-  }
-
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const er: Record<string, string> = {};
@@ -121,22 +70,29 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
       er.phone = "Enter a Nigerian mobile number such as 0803 123 4567.";
     if (lines.length === 0) er.lines = "Add at least one pack.";
     setErrors(er);
-    if (Object.keys(er).length) return;
-    quoteStore.set({
-      reference: `QUOTE-${Date.now().toString(36).toUpperCase().slice(-6)}`,
-      business: f.business,
-      lines: priced.map((l) => ({
-        label: `${l.p.name} ${packLabel(l.v)}`,
-        qty: l.qty,
-        indicativeKobo: l.totalKobo,
-      })),
-      totalKobo: total,
-      area,
-    });
+    if (Object.keys(er).length) {
+      requestAnimationFrame(() =>
+        formRef.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus(),
+      );
+      return;
+    }
+    const message = [
+      "Hello Laddex Enterprise, I would like a wholesale quote.",
+      `Business: ${f.business.trim()}`,
+      `Contact: ${f.contact.trim()} (${f.phone.trim()})`,
+      ...priced.map((l) => `${l.qty} x ${l.p.name} ${packLabel(l.v)}`),
+      `Illustrative catalogue total: ${formatNaira(total)} (delivery excluded)`,
+      `Delivery area: ${area || "To be confirmed"}`,
+      f.notes.trim() ? `Notes: ${f.notes.trim()}` : "",
+    ].filter(Boolean).join("\n");
+    window.location.assign(
+      `${BUSINESS_CONTACT.whatsappHref}?text=${encodeURIComponent(message)}`,
+    );
   };
 
   return (
     <form
+      ref={formRef}
       onSubmit={submit}
       noValidate
       className="grid gap-8 lg:grid-cols-[1fr_22rem]"
@@ -262,10 +218,11 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
                   value={f[id]}
                   onChange={(e) => setF({ ...f, [id]: e.target.value })}
                   aria-invalid={!!errors[id]}
+                  aria-describedby={errors[id] ? `q-${id}-error` : undefined}
                   inputMode={id === "phone" ? "tel" : undefined}
                 />
                 {errors[id] && (
-                  <p role="alert" className="text-sm text-danger mt-1">
+                  <p id={`q-${id}-error`} role="alert" className="text-sm text-danger mt-1">
                     {errors[id]}
                   </p>
                 )}
@@ -340,7 +297,10 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
           Uses sample tier prices, excludes delivery, and is not an offer. Staff
           confirm a quote in writing.
         </p>
-        <button className="btn btn-primary w-full">Send quote request</button>
+        <p className="hint">
+          Continuing opens WhatsApp. Review and send the request there.
+        </p>
+        <button className="btn btn-primary w-full">Continue on WhatsApp</button>
       </aside>
     </form>
   );

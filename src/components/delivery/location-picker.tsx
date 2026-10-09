@@ -761,7 +761,7 @@ export function LocationPicker({
           </section>
         ) : (
           <Notice className="text-sm">
-            Search, choose a state or place a pin to see delivery options.
+            Search, choose a state or place a pin to check delivery availability.
           </Notice>
         )}
 
@@ -769,7 +769,7 @@ export function LocationPicker({
           <section aria-labelledby="opts" className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 id="opts" className="!text-xl">
-                Delivery options
+                Illustrative delivery options
               </h2>
               <Tag tone="sample">Sample rates</Tag>
             </div>
@@ -822,7 +822,8 @@ export function LocationPicker({
         )}
         <p className="hint">
           Delivery rates are sample values per region and order weight. They are
-          not Laddex&rsquo;s confirmed prices, and no delivery time is promised.
+          not Laddex&rsquo;s confirmed prices or coverage. Confirm availability
+          directly with Laddex; no delivery time is promised.
         </p>
       </div>
 

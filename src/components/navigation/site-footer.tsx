@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Wordmark } from "./site-header";
 
-import { BUSINESS } from "@/content/business";
+import { BUSINESS, BUSINESS_CONTACT } from "@/content/business";
 
 const col = (title: string, items: { href: string; label: string }[]) => (
   <div>
@@ -32,16 +32,29 @@ export function SiteFooter() {
           <Wordmark />
           <p className="mt-4 text-ink-2 text-sm">
             Palm oil, tapioca flakes and garri, for households, shops and
-            events. Delivery across Nigeria. Prices in Nigerian Naira.
+            events. Ask us to check delivery availability for your location.
+            Prices are in Nigerian Naira.
           </p>
           {(BUSINESS.phone ||
             BUSINESS.whatsapp ||
             BUSINESS.email ||
             BUSINESS.address) && (
             <ul className="mt-4 space-y-1 text-sm text-ink-2 list-none p-0">
-              {BUSINESS.phone && <li>Phone: {BUSINESS.phone}</li>}
-              {BUSINESS.whatsapp && <li>WhatsApp: {BUSINESS.whatsapp}</li>}
-              {BUSINESS.email && <li>{BUSINESS.email}</li>}
+              {BUSINESS.phone && (
+                <li>
+                  <a className="underline underline-offset-4" href={BUSINESS_CONTACT.phoneHref}>
+                    Phone: {BUSINESS.phone}
+                  </a>
+                </li>
+              )}
+              {BUSINESS.whatsapp && (
+                <li>
+                  <a className="underline underline-offset-4" href={BUSINESS_CONTACT.whatsappHref}>
+                    WhatsApp: {BUSINESS.whatsapp}
+                  </a>
+                </li>
+              )}
+              {BUSINESS.email && <li><a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a></li>}
               {BUSINESS.address && <li>{BUSINESS.address}</li>}
             </ul>
           )}
@@ -61,17 +74,19 @@ export function SiteFooter() {
           { href: "/contact", label: "Contact us" },
         ])}
         {col("Delivery", [
-          { href: "/delivery", label: "Delivery across Nigeria" },
+          { href: "/delivery", label: "Check delivery availability" },
           { href: "/order", label: "Checkout preview" },
-          { href: "/dashboard", label: "Business intelligence (staff)" },
+          { href: "/privacy", label: "Privacy" },
+          { href: "/terms", label: "Terms" },
+          { href: "/delivery-policy", label: "Delivery policy" },
+          { href: "/returns-refunds", label: "Returns & refunds" },
         ])}
       </div>
       <div className="border-t border-line">
         <div className="wrap py-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-xs text-ink-3">
           <p>
-            &copy; Laddex Enterprise. Prototype build: product sizes, prices,
-            stock, delivery rates and orders are illustrative until real data is
-            connected.
+            &copy; Laddex Enterprise. Catalogue sizes, prices, stock and delivery
+            rates are illustrative until confirmed by Laddex.
           </p>
           <p className="mono">
             Map data &copy; OpenStreetMap contributors. Boundaries:

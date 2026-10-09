@@ -15,7 +15,6 @@ import { RegionSketch } from "@/components/product/region-sketch";
 import { BUSINESS } from "@/content/business";
 import { getCatalogue } from "@/features/catalogue";
 import { REGIONS } from "@/fixtures/geography/regions";
-import { CATEGORIES } from "@/fixtures/products/products";
 
 const TINT: Record<string, string> = {
   "palm-oil": "bg-ember-tint",
@@ -47,7 +46,15 @@ const CATEGORY_PHOTO: Record<
 };
 
 export default async function HomePage() {
-  const products = await getCatalogue().listProducts();
+  const catalogue = getCatalogue();
+  const [products, categories] = await Promise.all([
+    catalogue.listProducts(),
+    catalogue.listCategories(),
+  ]);
+  const hasIllustrativeProducts = products.some((product) =>
+    product.variants.some((variant) => variant.dataStatus === "illustrative"),
+  );
+  const paymentsEnabled = process.env.NEXT_PUBLIC_ENABLE_PAYSTACK === "true";
   const stateCount = REGIONS.reduce((n, r) => n + r.stateIds.length, 0);
 
   return (
@@ -71,7 +78,7 @@ export default async function HomePage() {
                 aria-hidden="true"
                 className="size-2 rounded-full bg-leaf"
               />{" "}
-              Delivered across Nigeria
+              Request delivery availability
             </p>
             <h1 className="text-[3.25rem] sm:text-7xl lg:text-[6rem] leading-[0.92]">
               <span className="hero-line">
@@ -94,8 +101,9 @@ export default async function HomePage() {
               style={{ ["--i" as string]: 1 }}
             >
               Palm oil, tapioca flakes, Garri Igbo and Ijebu Garri, for your
-              kitchen, your shop or your event. Buy a single pack online, or buy
-              in volume to resell.
+              kitchen, your shop or your event. {paymentsEnabled
+                ? "Buy a single pack online, or buy in volume to resell."
+                : "Choose your packs, then send the order to Laddex for confirmation."}
             </p>
             <div
               className="hero-fade mt-9 flex flex-wrap gap-3"
@@ -185,7 +193,7 @@ export default async function HomePage() {
           "Garri Igbo",
           "Ijebu Garri",
           "Tapioca flakes",
-          "Delivered across Nigeria",
+          "Delivery availability on request",
           "Retail and wholesale",
           "Souvenirs and events",
         ]}
@@ -207,9 +215,9 @@ export default async function HomePage() {
               The same stock serves {BUSINESS.buyers.join(", ").toLowerCase()}.
             </p>
             <p>
-              Orders go to every state in Nigeria. Delivery is priced by weight
-              and region, and you can check the cost for your address before you
-              buy.
+              Ask Laddex to confirm delivery availability for your location.
+              Illustrative estimates are based on weight and region and must be
+              confirmed before you buy.
             </p>
             <Link
               href="/contact"
@@ -217,6 +225,20 @@ export default async function HomePage() {
             >
               Ask a question or request a quote
             </Link>
+            {BUSINESS.address && (
+              <p className="pt-2 border-t border-line">
+                <span className="font-medium text-ink">
+                  Visit the Epe store:
+                </span>{" "}
+                {BUSINESS.address} &middot; {BUSINESS.hours}{" "}
+                <Link
+                  href="/contact#visit"
+                  className="underline underline-offset-4 text-ink font-medium"
+                >
+                  Map &amp; directions
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -233,13 +255,13 @@ export default async function HomePage() {
           />
         </div>
         <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {CATEGORIES.map((c) => {
+          {categories.map((c, index) => {
             const ph = CATEGORY_PHOTO[c.id];
             return (
               <Link
                 key={c.id}
                 href={`/shop/${c.id}`}
-                style={{ ["--i" as string]: CATEGORIES.indexOf(c) }}
+                style={{ ["--i" as string]: index }}
                 className="rv group panel lift overflow-hidden flex flex-col rounded-[1.5rem]"
               >
                 <div className={`aspect-[4/3] overflow-hidden ${TINT[c.id]}`}>
@@ -306,14 +328,14 @@ export default async function HomePage() {
             [
               "For the household",
               "Buy a pack at list price",
-              "Choose a size, check delivery to your address and pay for what you need.",
+              "Choose a size, then request delivery availability for your address.",
               "/shop",
               "Browse products",
             ],
             [
               "For shops and resellers",
               "Buy in volume, priced in tiers",
-              "Price breaks apply once a business account is approved. Until then tiers are indicative, not an offer.",
+              "Catalogue price breaks are indicative. Request a current wholesale quote before ordering.",
               "/wholesale",
               "Wholesale pricing",
             ],
@@ -355,13 +377,13 @@ export default async function HomePage() {
 
       <section
         className="mt-24 bg-rail text-rail-text relative overflow-hidden"
-        aria-label="Delivery coverage in numbers"
+        aria-label="Locations available for delivery checks"
       >
         <div className="wrap py-14 grid gap-10 sm:grid-cols-3 text-center">
           {[
-            [stateCount, "states and the FCT", "All delivered to"],
-            [774, "local government areas", "Down to"],
-            [REGIONS.length, "delivery regions", "Priced in"],
+            [stateCount, "states and the FCT", "Search across"],
+            [774, "local government areas", "Check by"],
+            [REGIONS.length, "illustrative regions", "Estimates grouped into"],
           ].map(([n, label, lead], i) => (
             <div
               key={String(label)}
@@ -391,13 +413,15 @@ export default async function HomePage() {
             <PackTable key={p.id} product={p} />
           ))}
         </div>
-        <p className="mt-4 hint">
-          <SampleTag />{" "}
-          <span className="ml-2">
-            Sizes and prices are illustrative until Laddex confirms the
-            catalogue.
-          </span>
-        </p>
+        {hasIllustrativeProducts && (
+          <p className="mt-4 hint">
+            <SampleTag />{" "}
+            <span className="ml-2">
+              Sizes and prices are illustrative until Laddex confirms the
+              catalogue.
+            </span>
+          </p>
+        )}
       </section>
 
       <section className="wrap pt-20" aria-labelledby="deliv">
@@ -405,16 +429,16 @@ export default async function HomePage() {
           <div className="p-6 sm:p-10 flex flex-col">
             <p className="eyebrow">Delivery</p>
             <h2 id="deliv" className="text-3xl md:text-4xl mt-2">
-              Delivered across Nigeria
+              Check delivery availability
             </h2>
             <p className="mt-3 text-ink-2">
-              All {stateCount} states including the FCT, in six delivery
-              regions. Pick your state and local government area to see the
-              delivery estimate for your cart weight.
+              Search all {stateCount} states including the FCT. Pick your state
+              and local government area to see an illustrative estimate, then
+              confirm that delivery is available with Laddex.
             </p>
             <form
               action="/delivery"
-              className="mt-6 flex gap-2"
+              className="mt-6 flex flex-col gap-2 sm:flex-row"
               role="search"
               aria-label="Find a delivery address"
             >
@@ -424,10 +448,10 @@ export default async function HomePage() {
               <input
                 id="home-addr"
                 name="q"
-                className="field"
+                className="field min-w-0 flex-1"
                 placeholder="Try Ibadan, Enugu or Kano"
               />
-              <button className="btn btn-ink">Search</button>
+              <button className="btn btn-ink w-full sm:w-auto">Search</button>
             </form>
             <Notice
               tone="sample"
@@ -456,8 +480,8 @@ export default async function HomePage() {
               "Each pack lists its price per litre or kilo next to the pack price.",
             ],
             [
-              "Wholesale tiers need approval",
-              "Volume prices apply to approved business accounts. Others see them as indicative only.",
+              "Wholesale tiers need confirmation",
+              "Volume prices are illustrative until Laddex provides a current quote.",
             ],
             [
               "Delivery is estimated, not promised",
@@ -484,8 +508,8 @@ export default async function HomePage() {
               order?
             </h2>
             <p className="mt-2 text-ink-2">
-              Send an enquiry and we will reply with availability, price and
-              delivery.
+              Send the details to Laddex on WhatsApp to request availability,
+              price and delivery information.
             </p>
           </div>
           <ButtonLink href="/contact">Contact us</ButtonLink>

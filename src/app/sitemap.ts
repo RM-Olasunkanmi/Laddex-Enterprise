@@ -1,42 +1,39 @@
 import type { MetadataRoute } from "next";
 
-import appConfig from "@/lib/core/config";
-import DAL from "@/lib/core/dal";
-import { RoutePath } from "@/lib/core/types/types";
+import { getCatalogue } from "@/features/catalogue";
+
+const baseUrl = (
+  process.env.NEXT_PUBLIC_BASE_URL ??
+  process.env.NEXT_PUBLIC_SERVER_URL ??
+  "http://localhost:3344"
+).replace(/\/$/, "");
+
+if (process.env.VERCEL_ENV === "production" && !baseUrl.startsWith("https://")) {
+  throw new Error("NEXT_PUBLIC_BASE_URL must be the production HTTPS origin.");
+}
+
+const staticRoutes = [
+  "",
+  "/shop",
+  "/wholesale",
+  "/events",
+  "/delivery",
+  "/contact",
+];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  try {
-    const { products, categories, pages } = await DAL.querySitemapData();
-
-    const result: MetadataRoute.Sitemap = [];
-    const home = pages.find((page) => page.slug === appConfig.HOME_SLUG);
-
-    if (home) {
-      result.push({
-        url: `${appConfig.BASE_URL}/`,
-        lastModified: home.updatedAt,
-      });
-    }
-
-    result.push(
-      ...pages
-        .filter((page) => page.slug !== appConfig.HOME_SLUG)
-        .map((page) => ({
-          url: `${appConfig.BASE_URL}/${encodeURIComponent(page.slug)}`,
-          lastModified: page.updatedAt,
-        })),
-      ...categories.map((category) => ({
-        url: `${appConfig.BASE_URL}/${RoutePath.category}/${encodeURIComponent(category.slug)}`,
-        lastModified: category.updatedAt,
-      })),
-      ...products.map((product) => ({
-        url: `${appConfig.BASE_URL}/${RoutePath.product}/${encodeURIComponent(product.slug)}`,
-        lastModified: product.updatedAt,
-      })),
-    );
-
-    return result;
-  } catch {
-    return [];
-  }
+  const catalogue = getCatalogue();
+  const [categories, products] = await Promise.all([
+    catalogue.listCategories(),
+    catalogue.listProducts(),
+  ]);
+  return [
+    ...staticRoutes.map((path) => ({ url: `${baseUrl}${path || "/"}` })),
+    ...categories.map((category) => ({
+      url: `${baseUrl}/shop/${encodeURIComponent(category.id)}`,
+    })),
+    ...products.map((product) => ({
+      url: `${baseUrl}/products/${encodeURIComponent(product.slug)}`,
+    })),
+  ];
 }

@@ -19,7 +19,11 @@ interface Errors {
   street?: string;
   delivery?: string;
   cart?: string;
+  payment?: string;
 }
+
+const PAYSTACK_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_PAYSTACK === "true";
 
 export function CheckoutPreview() {
   const router = useRouter();
@@ -28,6 +32,10 @@ export function CheckoutPreview() {
   const [contact, setContact] = useState({ name: "", phone: "", email: "" });
   const [addr, setAddr] = useState({ street: "", landmark: "", notes: "" });
   const [errors, setErrors] = useState<Errors>({});
+  const [paying, setPaying] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState(() =>
+    globalThis.crypto.randomUUID(),
+  );
 
   if (cart.hydrated && cart.lines.length === 0) {
     return (
@@ -50,7 +58,9 @@ export function CheckoutPreview() {
     if (!isNgPhone(contact.phone))
       er.phone =
         "Enter a Nigerian mobile number such as 0803 123 4567 or +234 803 123 4567.";
-    if (contact.email && !/^\S+@\S+\.\S+$/.test(contact.email))
+    if (PAYSTACK_ENABLED && !/^\S+@\S+\.\S+$/.test(contact.email))
+      er.email = "Email is required for the Paystack receipt.";
+    else if (contact.email && !/^\S+@\S+\.\S+$/.test(contact.email))
       er.email = "Check the email address.";
     if (addr.street.trim().length < 4)
       er.street = "Enter the house or plot number and street.";
@@ -65,6 +75,10 @@ export function CheckoutPreview() {
           Object.keys(er)[0] === "delivery" ? "delivery-step" : "contact-step",
         )
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (PAYSTACK_ENABLED) {
+      void payWithPaystack();
       return;
     }
     previewOrderStore.set({
@@ -92,6 +106,58 @@ export function CheckoutPreview() {
       access: cart.access,
     });
     router.push("/order/confirmation");
+  };
+
+  /** Server prices everything; the client only sends lines and contact. */
+  const payWithPaystack = async () => {
+    setPaying(true);
+    setErrors((prev) => ({ ...prev, payment: undefined }));
+    try {
+      const res = await fetch("/api/paystack/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lines: cart.lines.map((l) => ({ variantId: l.variant.id, qty: l.qty })),
+          email: contact.email,
+          name: contact.name,
+          phone: contact.phone,
+          fulfilment: "delivery",
+          position: totals.location?.position,
+          label: totals.location?.label,
+          street: addr.street,
+          landmark: addr.landmark,
+          notes: addr.notes,
+          state: totals.resolution?.stateName,
+          lga: totals.resolution?.lgaName,
+          idempotencyKey,
+        }),
+      });
+      const body = (await res.json()) as {
+        authorizationUrl?: string;
+        message?: string;
+        whatsappFallback?: boolean;
+      };
+      if (res.ok && body.authorizationUrl) {
+        window.location.href = body.authorizationUrl;
+        return;
+      }
+      setErrors((prev) => ({
+        ...prev,
+        payment:
+          body.whatsappFallback || res.status === 409
+            ? "Card payment is not live on this catalogue yet — please order this cart on WhatsApp and we will confirm payment there."
+            : (body.message ?? "Payment could not start. Try again."),
+      }));
+      setIdempotencyKey(globalThis.crypto.randomUUID());
+    } catch {
+      setErrors((prev) => ({
+        ...prev,
+        payment: "Payment could not start. Check your connection and try again.",
+      }));
+      setIdempotencyKey(globalThis.crypto.randomUUID());
+    } finally {
+      setPaying(false);
+    }
   };
 
   const field = (
@@ -229,17 +295,34 @@ export function CheckoutPreview() {
           <h2 id="s3" className="text-2xl mb-4">
             <span className="mono text-ember text-base mr-2">3</span>Payment
           </h2>
-          <p className="text-ink-2 max-w-prose">
-            Payment methods are not configured in this phase. When they are,
-            they appear here and the order total below is what you are charged.
-          </p>
+          {PAYSTACK_ENABLED ? (
+            <p className="text-ink-2 max-w-prose">
+              Pay securely with Paystack — cards, bank transfers and USSD.
+              Totals are recomputed on the server before you are redirected,
+              so the charged figure is always the catalogue figure.
+            </p>
+          ) : (
+            <p className="text-ink-2 max-w-prose">
+              Payment methods are not configured in this phase. When they are,
+              they appear here and the order total below is what you are charged.
+            </p>
+          )}
+          {errors.payment && (
+            <p className="text-sm text-danger mt-3" role="alert">
+              {errors.payment}
+            </p>
+          )}
         </section>
       </div>
 
       <div className="space-y-4">
         <OrderSummary />
-        <button type="submit" className="btn btn-primary w-full">
-          Place preview order
+        <button type="submit" className="btn btn-primary w-full" disabled={paying}>
+          {paying
+            ? "Starting secure payment…"
+            : PAYSTACK_ENABLED
+              ? "Pay with Paystack"
+              : "Place preview order"}
         </button>
         <Link
           href="/cart"

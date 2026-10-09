@@ -8,7 +8,7 @@ import { Notice } from "@/components/lx/primitives";
 export const metadata: Metadata = {
   title: "Delivery",
   description:
-    "Find your address on the map and see delivery options anywhere in Nigeria.",
+    "Find your address and request a delivery availability check from Laddex.",
 };
 
 export default async function DeliveryPage({
@@ -26,14 +26,14 @@ export default async function DeliveryPage({
             Where should we deliver?
           </h1>
           <p className="mt-3 text-ink-2 max-w-xl">
-            We deliver to every state in Nigeria. Search for a town, choose your
-            state and area, or drop a pin to see the delivery options and an
-            estimate for your order weight.
+            Search for a town, choose your state and area, or drop a pin to see
+            an illustrative estimate. Confirm availability and the current fee
+            with Laddex before ordering.
           </p>
         </div>
-        <Notice tone="sample" title="Sample rates">
-          Delivery is nationwide. The fees below are sample rates per region and
-          weight band, not Laddex&rsquo;s confirmed prices.
+        <Notice tone="sample" title="Availability must be confirmed">
+          The fees below are illustrative rates per region and weight band, not
+          confirmed delivery coverage or prices.
         </Notice>
       </header>
       <Suspense fallback={null}>

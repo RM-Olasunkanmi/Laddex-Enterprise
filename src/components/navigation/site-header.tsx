@@ -1,12 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import {
-  CartButton,
-  DeliveryChip,
-  MobileNavButton,
-  PersonaSelect,
-} from "./header-client";
+import { CartButton, MobileNavButton } from "./header-client";
 import { ThemeToggle } from "./theme-toggle";
 
 export const NAV = [
@@ -47,7 +42,7 @@ export function Wordmark({
         priority
         className="rounded-full"
       />
-      <span className="font-display text-[1.5rem] leading-none tracking-tight font-semibold">
+      <span className="font-display text-[1.5rem] leading-none tracking-tight font-semibold max-[359px]:sr-only">
         Laddex<span className="text-ember">.</span>
       </span>
     </Link>
@@ -57,25 +52,12 @@ export function Wordmark({
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 bg-paper/85 backdrop-blur-md border-b border-line">
-      <div className="bg-rail text-rail-text">
-        <div className="wrap flex items-center justify-between gap-4 py-1.5 text-xs">
-          <p className="truncate">
-            <span className="mono tracking-wider uppercase text-ochre">
-              Prototype
-            </span>
-            <span className="ml-2 hidden xs:inline">
-              Sample sizes, prices and stock. Not a live offer.
-            </span>
-          </p>
-          <PersonaSelect />
-        </div>
-      </div>
-      <div className="wrap flex h-[4.5rem] items-center gap-6">
+      <div className="wrap flex h-16 sm:h-[4.5rem] items-center gap-2 sm:gap-4">
         <MobileNavButton />
         <Wordmark />
         <nav
           aria-label="Primary"
-          className="hidden lg:flex items-center gap-1 ml-6"
+          className="hidden xl:flex items-center gap-1 ml-2"
         >
           {NAV.map((item) =>
             "children" in item ? (
@@ -119,7 +101,6 @@ export function SiteHeader() {
           )}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <DeliveryChip />
           <ThemeToggle />
           <CartButton />
         </div>

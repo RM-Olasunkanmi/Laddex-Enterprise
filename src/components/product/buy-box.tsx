@@ -14,16 +14,12 @@ import { Notice, StockTag, Tag } from "@/components/lx/primitives";
 import { ProductGallery } from "@/components/product/gallery";
 import { TierChart } from "@/components/product/tier-chart";
 import {
-  activeTier,
   pricePerBaseUnit,
   priceFor,
-  tierSaving,
 } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
 import { useStockedProduct } from "@/features/catalogue/stock";
-import { customerStore } from "@/features/customer/store";
-import { isWholesale } from "@/features/customer/types";
-import { formatNaira, formatPercent } from "@/lib/formatters";
+import { formatNaira } from "@/lib/formatters";
 
 export function ProductPurchase({
   product: baseProduct,
@@ -44,9 +40,6 @@ export function ProductPurchase({
   );
   const variant = variants.find((v) => v.id === variantId)!;
   const [qty, setQty] = useState(1);
-  const profile = customerStore.use();
-  const access = customerStore.useHydrated() ? profile.access : "guest";
-  const wholesaleUser = isWholesale(access);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -54,12 +47,9 @@ export function ProductPurchase({
     window.history.replaceState(null, "", url);
   }, [variantId]);
 
-  const price = priceFor(variant, qty, access);
+  const price = priceFor(variant, qty, "guest");
   const total = price.unitPriceKobo * qty;
   const out = variant.stock.status === "out-of-stock";
-  const tier = activeTier(variant.wholesaleTiers, qty);
-  const belowMin =
-    access === "wholesale-approved" && qty < variant.wholesaleMinQty;
   const unit = product.baseUnit === "l" ? "L" : "kg";
 
   return (
@@ -132,11 +122,7 @@ export function ProductPurchase({
           <div className="mt-6 border-t border-b border-line py-5">
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div>
-                <p className="eyebrow">
-                  {price.basis === "account-tier"
-                    ? "Your account price"
-                    : "Price"}
-                </p>
+                <p className="eyebrow">Price</p>
                 <p className="mt-1 flex items-baseline gap-3">
                   <Price kobo={total} className="text-4xl font-semibold" />
                   <span className="mono text-sm text-ink-3">
@@ -179,47 +165,23 @@ export function ProductPurchase({
                 quote for a restock date.
               </p>
             )}
-            {belowMin && (
-              <p className="mt-3 text-sm text-warning" role="alert">
-                Wholesale orders of this pack start at {variant.wholesaleMinQty}
-                . Below that, list price applies.
-              </p>
-            )}
           </div>
 
-          {/* Volume pricing: wording depends on who is looking */}
           <section aria-labelledby="tiers" className="mt-6">
             <div className="flex items-center justify-between gap-3">
               <h2 id="tiers" className="!text-xl">
                 Volume pricing
               </h2>
-              {access === "wholesale-approved" ? (
-                <Tag tone="success">Applies to your account</Tag>
-              ) : (
-                <Tag tone="info">Indicative only</Tag>
-              )}
+              <Tag tone="info">Indicative only</Tag>
             </div>
-            {access === "wholesale-approved" ? (
-              <p className="text-sm text-ink-2 mt-1">
-                Your approved account is charged the tier for the quantity you
-                buy.
-                {tier
-                  ? ` At ${qty} packs: ${formatPercent(tierSaving(variant, tier), 0)} below list.`
-                  : ""}
-              </p>
-            ) : (
-              <Notice tone="info" className="mt-2">
-                {access === "wholesale-pending"
-                  ? "Your wholesale application is awaiting approval. These tiers are indicative and are not charged until it is approved."
-                  : "Tiers apply to approved wholesale accounts, from " +
-                    variant.wholesaleMinQty +
-                    " packs. Shown for planning, not as an offer. List price is charged today."}
-              </Notice>
-            )}
+            <Notice tone="info" className="mt-2">
+              Tiers are shown for planning from {variant.wholesaleMinQty} packs.
+              Request a current wholesale quote before ordering.
+            </Notice>
             <div className="mt-4">
               <TierChart
                 variant={variant}
-                activeQty={access === "wholesale-approved" ? qty : undefined}
+                activeQty={undefined}
               />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -229,14 +191,12 @@ export function ProductPurchase({
               >
                 Request a wholesale quote
               </Link>
-              {!wholesaleUser && (
-                <Link
-                  href="/wholesale/register"
-                  className="btn btn-quiet btn-sm min-h-11 underline underline-offset-4"
-                >
-                  Register a business
-                </Link>
-              )}
+              <Link
+                href="/wholesale/register"
+                className="btn btn-quiet btn-sm min-h-11 underline underline-offset-4"
+              >
+                Send business details
+              </Link>
             </div>
           </section>
 

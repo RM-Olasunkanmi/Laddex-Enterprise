@@ -39,3 +39,12 @@ yarn-error.log*
 
 
 .cf-build/
+
+# env backups (contain real secrets)
+.env.backup*
+
+# Payload local upload fallback when STORAGE_PROVIDER has no working token.
+# Uploads land at the repo root rather than public/<slug> in that case.
+/gallery-media/
+/seo-media/
+/media/

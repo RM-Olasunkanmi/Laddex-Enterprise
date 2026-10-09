@@ -9,6 +9,7 @@ import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCart } from "@/components/commerce/use-customer-pricing";
 import { Notice, Tag } from "@/components/lx/primitives";
 import { ProductPhoto } from "@/components/product/product-photo";
+import { WhatsAppOrderButton } from "@/components/store/whatsapp-order";
 import { clearCart, removeFromCart, setQty } from "@/features/cart/store";
 import { pricePerBaseUnit, activeTier } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
@@ -143,6 +144,12 @@ export function CartView() {
                       kobo={l.totalKobo}
                       className="font-semibold ml-auto"
                     />
+                    <button
+                      className="text-sm underline underline-offset-4 text-ink-2 min-h-11"
+                      onClick={() => removeFromCart(l.variant.id)}
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
                 <div className="hidden sm:flex flex-col items-end justify-between">
@@ -171,6 +178,7 @@ export function CartView() {
         <Link href="/order" className="btn btn-primary w-full">
           Continue to checkout preview
         </Link>
+        <WhatsAppOrderButton />
         <Link href="/delivery" className="btn btn-line w-full">
           Check delivery first
         </Link>

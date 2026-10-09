@@ -2,7 +2,7 @@ import type { LocationResolution } from "@/features/delivery/types";
 
 import { Tag } from "@/components/lx/primitives";
 
-/** States the coverage result in words, with a marker. The rates behind it are still sample rates. */
+/** States whether the location can be checked against the illustrative delivery regions. */
 export function CoverageBadge({
   resolution,
 }: {
@@ -11,7 +11,7 @@ export function CoverageBadge({
   if (resolution.coverage === "in-nigeria") {
     return (
       <p className="flex flex-wrap items-center gap-2 text-sm">
-        <Tag tone="success">We deliver here</Tag>
+        <Tag tone="info">Availability check available</Tag>
         <span>
           {resolution.stateName}
           {resolution.regionName ? `, ${resolution.regionName} region` : ""}

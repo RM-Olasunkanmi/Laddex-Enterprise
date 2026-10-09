@@ -54,7 +54,7 @@ export function PackTable({ product: baseProduct }: { product: Product }) {
               key={v.id}
               className="max-sm:grid max-sm:grid-cols-2 max-sm:gap-y-1 max-sm:py-3 max-sm:border-b max-sm:border-line"
             >
-              <td className="font-display text-lg whitespace-nowrap max-sm:border-0">
+              <td data-label="Pack" className="font-display text-lg whitespace-nowrap max-sm:border-0 before:content-[attr(data-label)] before:block before:text-xs before:text-ink-3 before:font-sans sm:before:hidden">
                 <Link
                   href={`/products/${product.slug}?pack=${v.id}`}
                   className="underline-offset-4 hover:underline"
@@ -62,22 +62,22 @@ export function PackTable({ product: baseProduct }: { product: Product }) {
                   {packLabel(v)}
                 </Link>
               </td>
-              <td className="max-md:hidden">{PACKAGING_LABEL[v.packaging]}</td>
-              <td className="max-sm:border-0">
+              <td data-label="Packaging" className="max-md:hidden">{PACKAGING_LABEL[v.packaging]}</td>
+              <td data-label="Format" className="max-sm:border-0 max-sm:text-right before:content-[attr(data-label)] before:block before:text-xs before:text-ink-3 before:font-sans sm:before:hidden">
                 <Tag tone={v.format === "bulk" ? "sample" : "default"}>
                   {v.format}
                 </Tag>
               </td>
-              <td className="r max-sm:border-0">
+              <td data-label="Price" className="r max-sm:border-0 before:content-[attr(data-label)] before:float-left before:text-ink-3 before:font-sans sm:before:hidden">
                 {formatNaira(v.retailPriceKobo)}
               </td>
-              <td className="r text-ink-3 max-sm:border-0">
+              <td data-label={`Per ${unit}`} className="r text-ink-3 max-sm:border-0 before:content-[attr(data-label)] before:float-left before:font-sans sm:before:hidden">
                 {formatNaira(pricePerBaseUnit(v))}
               </td>
-              <td className="r max-lg:hidden">
+              <td data-label="Wholesale from" className="r max-lg:hidden">
                 {v.wholesaleTiers.length ? `${v.wholesaleMinQty}+ packs` : "—"}
               </td>
-              <td className="whitespace-nowrap max-sm:col-span-2 max-sm:border-0">
+              <td data-label="Stock" className="whitespace-nowrap max-sm:col-span-2 max-sm:border-0 before:content-[attr(data-label)] before:mr-3 before:text-ink-3 sm:before:hidden">
                 <StockTag status={v.stock.status} />
               </td>
             </tr>

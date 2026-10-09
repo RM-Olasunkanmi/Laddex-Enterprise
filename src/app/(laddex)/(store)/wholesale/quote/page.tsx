@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 
 import { QuoteBuilder } from "@/components/wholesale/quote-builder";
 
-export const metadata: Metadata = { title: "Request a wholesale quote" };
+export const metadata: Metadata = {
+  title: "Request a wholesale quote",
+  robots: { index: false, follow: false },
+};
 
 export default async function QuotePage({
   searchParams,
@@ -16,7 +19,7 @@ export default async function QuotePage({
       <h1 className="text-4xl md:text-5xl mb-3">Request a quote</h1>
       <p className="text-ink-2 max-w-xl mb-8">
         List the packs and quantities you need. You see an indicative total as
-        you build the request, and staff confirm the real price in writing.
+        you build the request, then continue to WhatsApp to review and send it.
       </p>
       <QuoteBuilder initialPack={pack} />
     </div>

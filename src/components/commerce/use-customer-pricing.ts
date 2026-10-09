@@ -2,20 +2,20 @@
 
 import { useMemo } from "react";
 
+import type { CustomerAccess } from "@/features/customer/types";
+
 import { useCatalogue } from "@/components/lx/catalogue-provider";
 import { summariseCart } from "@/features/cart/selectors";
 import { cartStore } from "@/features/cart/store";
-import { customerStore } from "@/features/customer/store";
 
-/** Cart contents priced for the current customer. Server render shows an empty cart; the client hydrates from storage. */
+/** Public cart contents use catalogue list prices. Server render shows an empty cart. */
 export function useCart() {
   const { products } = useCatalogue();
   const items = cartStore.use();
-  const profile = customerStore.use();
   const hydrated = cartStore.useHydrated();
   const summary = useMemo(
-    () => summariseCart(items, products, profile.access),
-    [items, products, profile.access],
+    () => summariseCart(items, products, "guest"),
+    [items, products],
   );
-  return { ...summary, items, access: profile.access, hydrated };
+  return { ...summary, items, access: "guest" as CustomerAccess, hydrated };
 }

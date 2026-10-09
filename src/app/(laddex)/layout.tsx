@@ -10,13 +10,29 @@ import type { ReactNode } from "react";
 
 import { themeScript } from "@/lib/design/theme-script";
 
+const publicUrl =
+  process.env.NEXT_PUBLIC_BASE_URL ??
+  process.env.NEXT_PUBLIC_SERVER_URL ??
+  "http://localhost:3344";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(publicUrl),
   title: {
     default: "Laddex Enterprise: palm oil, tapioca flakes and garri",
     template: "%s | Laddex Enterprise",
   },
   description:
-    "Palm oil, tapioca flakes, Garri Igbo and Ijebu Garri for homes, shops and events. Delivery across Nigeria.",
+    "Palm oil, tapioca flakes, Garri Igbo and Ijebu Garri for homes, shops and events. Request delivery availability for your location.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "en_NG",
+    siteName: "Laddex Enterprise",
+    title: "Laddex Enterprise: palm oil, tapioca flakes and garri",
+    description:
+      "Palm oil, tapioca flakes, Garri Igbo and Ijebu Garri for homes, shops and events.",
+    url: "/",
+  },
   icons: { icon: "/brand/laddex-logo-64.png", apple: "/brand/laddex-logo.png" },
 };
 

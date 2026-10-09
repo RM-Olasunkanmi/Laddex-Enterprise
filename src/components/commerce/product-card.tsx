@@ -64,28 +64,31 @@ export function ProductCard({
             : "Sold by the kilo"}
         </p>
 
-        <div
-          role="radiogroup"
-          aria-label={`${product.name} size`}
-          className="mt-3 flex flex-wrap gap-1.5"
-        >
+        <fieldset className="mt-3 flex flex-wrap gap-1.5">
+          <legend className="sr-only">{product.name} size</legend>
           {variants.map((v) => {
             const sel = v.id === id;
             const sold = v.stock.status === "out-of-stock";
             return (
-              <button
+              <label
                 key={v.id}
-                type="button"
-                role="radio"
-                aria-checked={sel}
-                onClick={() => setId(v.id)}
-                className={`min-h-9 min-w-11 px-2.5 rounded-full border text-sm mono transition-transform duration-200 active:scale-95 ${sel ? "border-ember bg-ember-tint text-ink" : "border-line-strong bg-card hover:border-ink"} ${sold && !sel ? "border-dashed text-ink-3" : ""}`}
+                className="cursor-pointer"
               >
-                {packLabel(v)}
-              </button>
+                <input
+                  className="peer sr-only"
+                  type="radio"
+                  name={`pack-${product.id}`}
+                  value={v.id}
+                  checked={sel}
+                  onChange={() => setId(v.id)}
+                />
+                <span className={`inline-flex min-h-9 min-w-11 items-center justify-center px-2.5 rounded-full border text-sm mono transition-transform duration-200 active:scale-95 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 ${sel ? "border-ember bg-ember-tint text-ink" : "border-line-strong bg-card hover:border-ink"} ${sold && !sel ? "border-dashed text-ink-3" : ""}`}>
+                  {packLabel(v)}
+                </span>
+              </label>
             );
           })}
-        </div>
+        </fieldset>
 
         <div className="mt-3 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>

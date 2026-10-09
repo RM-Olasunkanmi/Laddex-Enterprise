@@ -8,6 +8,7 @@ import { Price } from "@/components/commerce/money";
 import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCart } from "@/components/commerce/use-customer-pricing";
 import { ProductPhoto } from "@/components/product/product-photo";
+import { WhatsAppOrderButton } from "@/components/store/whatsapp-order";
 import { removeFromCart, setQty } from "@/features/cart/store";
 import { packLabel } from "@/features/catalogue/selectors";
 import { cartDrawer, navDrawer } from "@/lib/data/ui-store";
@@ -90,7 +91,7 @@ export function CartDrawer() {
         ) : (
           <ul className="divide-y divide-line">
             {cart.lines.map((l) => (
-              <li key={l.variant.id} className="py-4 flex gap-4">
+              <li key={l.variant.id} className="py-4 flex gap-3 sm:gap-4">
                 <ProductPhoto
                   product={l.product}
                   sizes="80px"
@@ -109,7 +110,7 @@ export function CartDrawer() {
                   <p className="mono text-xs text-ink-3 mt-0.5">
                     {formatNaira(l.price.unitPriceKobo)} each
                   </p>
-                  <div className="mt-2 flex items-center justify-between">
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
                     <QuantityStepper
                       size="sm"
                       label={`${l.product.name} ${packLabel(l.variant)} quantity`}
@@ -118,6 +119,7 @@ export function CartDrawer() {
                       onChange={(n) => setQty(l.variant.id, n)}
                     />
                     <button
+                      type="button"
                       className="text-sm underline underline-offset-4 text-ink-2 min-h-11 px-2"
                       onClick={() => removeFromCart(l.variant.id)}
                     >
@@ -147,6 +149,7 @@ export function CartDrawer() {
               Checkout preview
             </Link>
           </div>
+          <WhatsAppOrderButton className="btn btn-line w-full" />
         </div>
       )}
     </Drawer>
@@ -159,12 +162,14 @@ export function NavDrawer() {
   const pathname = usePathname();
   useEffect(() => navDrawer.set(false), [pathname]);
   const links = [
-    { href: "/shop/palm-oil", label: "Palm oil", note: "By the litre" },
-    { href: "/shop/tapioca", label: "Tapioca", note: "By the kilo" },
-    { href: "/shop", label: "All packs", note: "" },
-    { href: "/wholesale", label: "Wholesale", note: "Volume pricing" },
-    { href: "/delivery", label: "Delivery", note: "Check your address" },
-    { href: "/account", label: "Account", note: "" },
+    { href: "/shop", label: "Shop", note: "All products" },
+    { href: "/shop/palm-oil", label: "Palm oil", note: "" },
+    { href: "/shop/tapioca", label: "Tapioca", note: "" },
+    { href: "/shop/garri", label: "Garri", note: "" },
+    { href: "/wholesale", label: "Wholesale", note: "" },
+    { href: "/events", label: "Events", note: "" },
+    { href: "/delivery", label: "Delivery", note: "" },
+    { href: "/contact", label: "Contact", note: "" },
   ];
   return (
     <Drawer open={open} onClose={close} side="left" label="Menu">
@@ -193,16 +198,6 @@ export function NavDrawer() {
             </li>
           ))}
         </ul>
-        <div className="p-5">
-          <Link
-            href="/dashboard"
-            className="btn btn-line w-full"
-            onClick={close}
-          >
-            Open spatial dashboard
-          </Link>
-          <p className="hint mt-2">Business tool. Uses synthetic data.</p>
-        </div>
       </nav>
     </Drawer>
   );

@@ -4,32 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { useCart } from "@/components/commerce/use-customer-pricing";
-import { PERSONAS, customerStore, setPersona } from "@/features/customer/store";
-import { ACCESS_LABEL, type CustomerAccess } from "@/features/customer/types";
 import { deliveryStore } from "@/features/delivery/store";
 import { cartDrawer, navDrawer } from "@/lib/data/ui-store";
-
-export function PersonaSelect() {
-  const profile = customerStore.use();
-  const hydrated = customerStore.useHydrated();
-  return (
-    <label className="flex items-center gap-2">
-      <span className="text-rail-text/80">Viewing as</span>
-      <select
-        aria-label="Preview the storefront as a customer type"
-        className="bg-rail text-rail-text border border-rail-line rounded-sm px-2 py-1 text-xs"
-        value={hydrated ? profile.access : "guest"}
-        onChange={(e) => setPersona(e.target.value as CustomerAccess)}
-      >
-        {(Object.keys(PERSONAS) as CustomerAccess[]).map((k) => (
-          <option key={k} value={k}>
-            {ACCESS_LABEL[k]}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 export function CartButton() {
   const { packCount, hydrated } = useCart();
@@ -115,7 +91,7 @@ export function MobileNavButton() {
   return (
     <button
       type="button"
-      className="lg:hidden btn btn-line btn-sm min-h-11 w-11 px-0"
+      className="xl:hidden btn btn-line btn-sm min-h-11 w-11 shrink-0 px-0"
       onClick={() => navDrawer.set(true)}
       aria-label="Open menu"
     >

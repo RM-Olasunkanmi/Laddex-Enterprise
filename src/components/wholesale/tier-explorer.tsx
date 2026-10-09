@@ -8,17 +8,25 @@ import { Notice, Tag } from "@/components/lx/primitives";
 import { TierChart } from "@/components/product/tier-chart";
 import { pricePerBaseUnit, tierSaving } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
-import { customerStore } from "@/features/customer/store";
 import { formatNaira, formatPercent } from "@/lib/formatters";
 
 export function TierExplorer() {
   const { products } = useCatalogue();
-  const [id, setId] = useState("gi-25kg");
-  const profile = customerStore.use();
-  const hydrated = customerStore.useHydrated();
-  const access = hydrated ? profile.access : "guest";
-  const all = products.flatMap((p) => p.variants.map((v) => ({ p, v })));
-  const sel = all.find((x) => x.v.id === id)!;
+  const all = products.flatMap((p) =>
+    p.variants
+      .filter((v) => v.wholesaleTiers.length > 0)
+      .map((v) => ({ p, v })),
+  );
+  const [id, setId] = useState(all[0]?.v.id ?? "");
+  const sel = all.find((x) => x.v.id === id) ?? all[0];
+  if (!sel) {
+    return (
+      <Notice tone="info" title="Wholesale prices are provided by quote">
+        Send the products and quantities you need. Laddex will confirm current
+        pack availability, minimum quantities and pricing before you order.
+      </Notice>
+    );
+  }
   const unit = sel.p.baseUnit === "l" ? "L" : "kg";
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
@@ -34,7 +42,7 @@ export function TierExplorer() {
         >
           {products.map((p) => (
             <optgroup key={p.id} label={p.name}>
-              {p.variants.map((v) => (
+              {p.variants.filter((v) => v.wholesaleTiers.length > 0).map((v) => (
                 <option key={v.id} value={v.id}>
                   {packLabel(v)} {v.packaging}
                 </option>
@@ -69,15 +77,9 @@ export function TierExplorer() {
         <Notice
           tone="info"
           className="mt-5"
-          title={
-            access === "wholesale-approved"
-              ? "These tiers apply to your account"
-              : "Indicative until your account is approved"
-          }
+          title="Indicative wholesale tiers"
         >
-          {access === "wholesale-approved"
-            ? "You are charged the tier for the quantity you order."
-            : "Tier prices are shown for planning. They are charged only to approved wholesale accounts, and a written quote overrides them."}
+          Tier prices are shown for planning. Ask Laddex for a current quote before ordering.
         </Notice>
         <div className="mt-5 flex gap-2 flex-wrap">
           <Link
@@ -97,9 +99,7 @@ export function TierExplorer() {
       <div className="panel p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="!text-xl">Price per pack by quantity</h3>
-          <Tag tone={access === "wholesale-approved" ? "success" : "info"}>
-            {access === "wholesale-approved" ? "Your pricing" : "Indicative"}
-          </Tag>
+          <Tag tone="info">Indicative</Tag>
         </div>
         <TierChart variant={sel.v} />
       </div>

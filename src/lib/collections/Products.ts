@@ -6,12 +6,14 @@ import {
   DESCRIPTION_FIELD,
   FAQS_FIELD,
   adminOnlyAccess,
+  isAdmin,
   makeAdminPreview,
   metaTab,
   mixedSlugField,
   patchPricesGroupField,
 } from "@/lib/collections/base-fields";
 import { makeRevalidateHooks, normalizeFaqs } from "@/lib/collections/hooks";
+import { laddexProductGroup } from "@/lib/collections/laddex-fields";
 import { CollectionName, RoutePath } from "@/lib/core/types/types";
 
 const getFieldName = (field: Field) =>
@@ -24,6 +26,14 @@ const isSidebarField = (field: Field) =>
 
 const enhanceVariantField = (field: Field): Field => {
   const name = getFieldName(field);
+
+  if (name === "inventory") {
+    const current = field as Field & { access?: Record<string, unknown> };
+    return {
+      ...current,
+      access: { ...(current.access ?? {}), read: isAdmin },
+    } as Field;
+  }
 
   if (name === "enableVariants") {
     return {
@@ -136,15 +146,20 @@ export const Products: CollectionOverride = ({ defaultCollection }) => {
   const variantFields = allFields.filter((field) =>
     variantNames.has(getFieldName(field) ?? ""),
   );
-  const detailsFields = allFields.filter(
-    (field) => !sidebarFields.includes(field) && !variantFields.includes(field),
-  );
+  const detailsFields = [
+    ...allFields.filter(
+      (field) =>
+        !sidebarFields.includes(field) && !variantFields.includes(field),
+    ),
+    laddexProductGroup,
+  ];
 
   return {
     ...defaultCollection,
     access: {
       ...adminOnlyAccess,
-      read: () => true,
+      read: ({ req }) =>
+        isAdmin({ req }) ? true : { _status: { equals: "published" } },
     },
     admin: {
       ...defaultCollection?.admin,

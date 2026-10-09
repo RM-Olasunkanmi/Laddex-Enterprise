@@ -36,7 +36,7 @@ export function DeliveryCheck({
       {!hydrated || !location || !resolution || !estimate ? (
         <div className="mt-2">
           <p className="text-sm text-ink-2">
-            Choose your state to see the delivery estimate for this order.
+            Choose your state to request delivery availability and see an illustrative estimate.
           </p>
           <Link href="/delivery" className="btn btn-ink btn-sm min-h-11 mt-3">
             Check my address

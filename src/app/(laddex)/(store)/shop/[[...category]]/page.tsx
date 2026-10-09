@@ -5,7 +5,6 @@ import type { CategoryId } from "@/features/catalogue/types";
 
 import { CatalogueBrowser } from "@/components/commerce/catalogue-browser";
 import { ShopSkeleton } from "@/components/commerce/shop-skeleton";
-import { getCatalogue } from "@/features/catalogue";
 
 export async function generateMetadata({
   params,
@@ -26,18 +25,12 @@ export async function generateMetadata({
   };
 }
 
-/**
- * `?latency=ms` and `?fail=catalogue` exercise the loading and error states during design
- * review. They only affect the fixture adapter.
- */
 export default async function ShopPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ category?: string[] }>;
-  searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const [{ category }, sp] = await Promise.all([params, searchParams]);
+  const { category } = await params;
   const slug = category?.[0];
   if (
     category &&
@@ -45,11 +38,6 @@ export default async function ShopPage({
       (slug !== "palm-oil" && slug !== "tapioca" && slug !== "garri"))
   )
     notFound();
-  // Awaiting the catalogue here (not only in the layout) lets the diagnostics apply to this route.
-  await getCatalogue({
-    latencyMs: Number(sp.latency) || 0,
-    fail: sp.fail === "catalogue",
-  }).listProducts();
   return (
     <Suspense fallback={<ShopSkeleton />}>
       <CatalogueBrowser category={(slug as CategoryId | undefined) ?? "all"} />

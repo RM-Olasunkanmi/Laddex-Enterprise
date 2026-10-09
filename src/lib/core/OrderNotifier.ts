@@ -3,7 +3,8 @@ import type { Payload } from "payload";
 
 import appConfig from "@/lib/core/config";
 import { type OrderItem, CollectionName } from "@/lib/core/types/types";
-import { formatPrice, resolveMediaUrl } from "@/lib/core/util";
+import { resolveMediaUrl } from "@/lib/core/util";
+import { formatNaira } from "@/lib/formatters";
 import { messages } from "@/lib/intl/request";
 
 type EmailItem = {
@@ -118,8 +119,8 @@ export class OrderNotifier {
   </td>
   <td style="padding: 8px;">${item.title}</td>
   <td style="padding: 8px;">${item.quantity}</td>
-    <td style="padding: 8px;">${formatPrice(item.unitPrice)}</td>
-    <td style="padding: 8px;"><strong>${formatPrice(item.lineTotal)}</strong></td>
+    <td style="padding: 8px;">${formatNaira(item.unitPrice)}</td>
+    <td style="padding: 8px;"><strong>${formatNaira(item.lineTotal)}</strong></td>
 </tr>
 `,
       )
@@ -151,7 +152,7 @@ export class OrderNotifier {
   </table>
 
   <h3 style="margin-top: 20px;">
-${messages.order_notifier.email.total} ${formatPrice(order.amount!)}
+${messages.order_notifier.email.total} ${formatNaira(order.amount!)}
   </h3>
 
   <p>

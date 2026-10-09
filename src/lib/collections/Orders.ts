@@ -4,6 +4,7 @@ import type { Variant } from "@/lib/core/types/payload-types";
 import type { CollectionOverride } from "@payloadcms/plugin-ecommerce/types";
 import type {
   CollectionAfterChangeHook,
+  CollectionBeforeChangeHook,
   CollectionBeforeValidateHook,
 } from "payload";
 
@@ -23,11 +24,10 @@ import {
   OrderStatus,
 } from "@/lib/core/types/types";
 import { isValidOrderStatusTransition } from "@/lib/core/util";
-import { stripeConfig } from "@/lib/stripe/config";
-import {
-  stripePaymentIntentField,
-  verifyStripePaymentIntent,
-} from "@/lib/stripe/server";
+import { stripePaymentIntentField } from "@/lib/stripe/server";
+
+const trustedPaystackOrder = (req: { context?: Record<string, unknown> }) =>
+  req.context?.trustedOrderSource === "paystack-webhook";
 
 export const Orders: CollectionOverride = ({ defaultCollection }) => {
   return {
@@ -41,7 +41,7 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
 
     access: {
       ...adminOnlyAccess,
-      create: () => true,
+      create: ({ req }) => isAdmin({ req }) || trustedPaystackOrder(req),
     },
 
     fields: [
@@ -101,8 +101,59 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
         relationTo: "carts",
         admin: { position: "sidebar", readOnly: true },
       },
-      // Stripe integration touch point 1/2 — see @/lib/stripe/server
+      {
+        name: "checkoutSession",
+        type: "relationship",
+        relationTo: "checkout-sessions",
+        unique: true,
+        admin: { position: "sidebar", readOnly: true },
+      },
       stripePaymentIntentField,
+      {
+        name: "laddex",
+        label: "Laddex fulfilment",
+        type: "group",
+        fields: [
+          { name: "lng", type: "number", admin: { description: "Exact delivery longitude. Personal data." } },
+          { name: "lat", type: "number", admin: { description: "Exact delivery latitude. Personal data." } },
+          { name: "street", type: "text", maxLength: 240 },
+          { name: "landmark", type: "text", maxLength: 240 },
+          { name: "notes", type: "textarea", maxLength: 1000 },
+          { name: "locationLabel", type: "text", maxLength: 240 },
+          { name: "state", type: "text", maxLength: 100 },
+          { name: "lga", type: "text", maxLength: 100 },
+          {
+            name: "fulfilment",
+            type: "select",
+            defaultValue: "delivery",
+            options: [
+              { label: "Delivery", value: "delivery" },
+              { label: "Pickup at Epe store", value: "pickup" },
+            ],
+          },
+          {
+            name: "channel",
+            type: "select",
+            defaultValue: "online",
+            options: [
+              { label: "Online store", value: "online" },
+              { label: "Phone", value: "phone" },
+              { label: "Sales desk", value: "sales-desk" },
+            ],
+          },
+          {
+            name: "feeBasis",
+            type: "select",
+            defaultValue: "none",
+            options: [
+              { label: "Region rule", value: "region-rule" },
+              { label: "Manual quote", value: "manual-quote" },
+              { label: "None", value: "none" },
+            ],
+          },
+          { name: "feeKobo", type: "number", min: 0, defaultValue: 0 },
+        ],
+      },
       {
         name: "OrderView",
         type: "ui",
@@ -196,43 +247,55 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
     hooks: {
       ...(defaultCollection.hooks || {}),
 
+      beforeChange: [
+        ...((defaultCollection.hooks?.beforeChange || []) as CollectionBeforeChangeHook[]),
+        async ({ data, operation, req }) => {
+          if (operation !== "create" || !Array.isArray(data.items)) return data;
+
+          // The order create and these conditional reservations share Payload's
+          // request transaction, so a later failure rolls all inventory back.
+          for (const item of data.items) {
+            const variantId =
+              typeof item?.variant === "object" ? item.variant?.id : item?.variant;
+            const quantity = Number(item?.quantity);
+            if (!variantId || !Number.isSafeInteger(quantity) || quantity < 1) {
+              throw new Error("Every order line requires a variant and whole-number quantity.");
+            }
+            const updated = await req.payload.db.updateOne({
+              collection: "variants",
+              where: {
+                and: [
+                  { id: { equals: variantId } },
+                  { inventory: { greater_than_equal: quantity } },
+                ],
+              },
+              data: { inventory: { $inc: -quantity } },
+              req,
+            });
+            if (!updated || Number(updated.inventory) < 0) {
+              throw new Error("Insufficient inventory for this order.");
+            }
+          }
+          return data;
+        },
+      ],
+
       afterChange: [
         ...((defaultCollection.hooks?.afterChange ||
           []) as CollectionAfterChangeHook[]),
 
         async (args) => {
           const { operation, doc, req } = args;
-          if (operation !== "create" || req.context?.skipOrderNotification)
-            return doc;
+          if (operation !== "create") return doc;
 
           const items: OrderItem[] = Array.isArray(doc.items) ? doc.items : [];
-          const touchedProductIds = new Set<number>();
-
-          for (const item of items) {
-            const quantity = Number(item?.quantity ?? 0);
-            if (!quantity) continue;
-
-            const variantId =
-              typeof item.variant === "object"
-                ? item.variant?.id
-                : item.variant;
-            const productId =
-              typeof item.product === "object"
-                ? item.product?.id
-                : item.product;
-
-            const targetId = variantId ?? productId;
-            if (!targetId) continue;
-
-            await req.payload.db.updateOne({
-              collection: variantId ? "variants" : CollectionName.products,
-              id: targetId,
-              data: { inventory: { $inc: quantity * -1 } },
-              req,
-            });
-
-            if (productId) touchedProductIds.add(productId);
-          }
+          const touchedProductIds = new Set(
+            items
+              .map((item) =>
+                typeof item.product === "object" ? item.product?.id : item.product,
+              )
+              .filter((id): id is number => typeof id === "number"),
+          );
 
           if (touchedProductIds.size) {
             const products = await req.payload.find({
@@ -274,21 +337,115 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
         async ({ data, req, operation }) => {
           if (!data) return data;
 
-          if (operation === "create") data.status = OrderStatus.NEW;
+          let paidLineSnapshot:
+            | {
+                product: number;
+                variant: number;
+                title: string;
+                quantity: number;
+                unitPrice: number;
+                lineTotal: number;
+              }[]
+            | undefined;
+
+          if (operation === "create") {
+            if (!isAdmin({ req }) && !trustedPaystackOrder(req)) {
+              throw new Error(
+                "Orders may only be created by staff or a verified payment webhook.",
+              );
+            }
+            data.status = OrderStatus.NEW;
+          }
+
+          if (operation === "create" && trustedPaystackOrder(req)) {
+            const rawSession = data.checkoutSession;
+            const sessionId =
+              typeof rawSession === "object" ? rawSession?.id : rawSession;
+            if (!sessionId) throw new Error("A checkout session is required.");
+            const session = await req.payload.findByID({
+              collection: "checkout-sessions",
+              id: sessionId,
+              depth: 0,
+              overrideAccess: true,
+            });
+            if (
+              session.status !== "paid" ||
+              session.feeBasis === "manual-quote" ||
+              session.reference !== data.paymentIntentId
+            ) {
+              throw new Error(
+                "Checkout session is not authorized for order creation.",
+              );
+            }
+            data.cart =
+              typeof session.cart === "object"
+                ? session.cart?.id
+                : session.cart;
+            data.name = session.name;
+            data.phone = session.phone;
+            data.email = session.email;
+            data.amount = session.grandTotalKobo;
+            paidLineSnapshot = (session.lines ?? []).map((line) => ({
+              product:
+                typeof line.product === "object" ? line.product.id : line.product,
+              variant:
+                typeof line.variant === "object" ? line.variant.id : line.variant,
+              title: line.title,
+              quantity: line.quantity,
+              unitPrice: line.unitPriceKobo,
+              lineTotal: line.lineTotalKobo,
+            }));
+            if (
+              paidLineSnapshot.length === 0 ||
+              paidLineSnapshot.reduce((sum, line) => sum + line.lineTotal, 0) !==
+                session.goodsTotalKobo
+            ) {
+              throw new Error("Checkout session line snapshot is invalid.");
+            }
+            data.laddex = {
+              lng: session.address?.lng,
+              lat: session.address?.lat,
+              street: session.address?.street,
+              landmark: session.address?.landmark,
+              notes: session.address?.notes,
+              locationLabel: session.address?.locationLabel,
+              state: session.address?.state,
+              lga: session.address?.lga,
+              fulfilment: session.fulfilment,
+              channel: "online",
+              feeBasis: session.feeBasis,
+              feeKobo: session.deliveryTotalKobo,
+            };
+          }
 
           const rawCart = data.cart;
           const cartId = typeof rawCart === "object" ? rawCart?.id : rawCart;
-          if (!cartId) return data;
+          if (!cartId) {
+            if (operation === "create") {
+              throw new Error("An order must be created from a cart.");
+            }
+            return data;
+          }
 
           const cart = await req.payload.findByID({
             collection: "carts",
             id: cartId,
             depth: 3,
+            overrideAccess: true,
           });
 
-          const items: CartItem[] = Array.isArray(cart?.items)
-            ? cart.items
-            : [];
+          const items: CartItem[] = paidLineSnapshot
+            ? paidLineSnapshot.map((line) => ({
+                product: line.product,
+                variant: line.variant,
+                quantity: line.quantity,
+              }))
+            : Array.isArray(cart?.items)
+              ? cart.items
+              : [];
+          if (operation === "create" && items.length === 0) {
+            throw new Error("An order cannot be created from an empty cart.");
+          }
 
           if (operation === "create") {
             for (const item of items) {
@@ -301,7 +458,12 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
                   ? item.variant?.id
                   : item.variant;
 
-              if (!variantId) continue;
+              const quantity = Number(item.quantity);
+              if (!variantId || !Number.isSafeInteger(quantity) || quantity < 1) {
+                throw new Error(
+                  "Cart lines require a variant and whole-number quantity.",
+                );
+              }
 
               const variant =
                 typeof item.variant === "object" && item.variant
@@ -310,7 +472,7 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
                       collection: "variants",
                       id: variantId,
                       depth: 0,
-                      select: { product: true },
+                      select: { product: true, inventory: true, laddex: true },
                     });
               const variantProductId =
                 typeof variant.product === "object"
@@ -323,21 +485,10 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
               ) {
                 throw new Error("Cart variant does not belong to its product.");
               }
+              if (Number(variant.inventory) < quantity) {
+                throw new Error("Cart quantity exceeds available inventory.");
+              }
             }
-          }
-
-          // Stripe integration touch point 2/2 — see @/lib/stripe/server
-          if (
-            stripeConfig.ENABLED &&
-            operation === "create" &&
-            !isAdmin({ req })
-          ) {
-            await verifyStripePaymentIntent({
-              paymentIntentId: data.paymentIntentId,
-              cartId,
-              expectedAmount: cart?.subtotal ?? 0,
-              payload: req.payload,
-            });
           }
 
           const snapshot = items
@@ -370,10 +521,10 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
                 ? `${product.title} – ${optionLabels.join(" / ")}`
                 : (product.title ?? "");
 
-              const unitPrice =
-                variant?.priceInUSDEnabled && variant.priceInUSD != null
-                  ? Number(variant.priceInUSD)
-                  : Number(product.priceInUSD ?? 0);
+              const unitPrice = Number(
+                variant?.laddex?.retailPriceKobo ?? 0,
+              );
+              if (!Number.isSafeInteger(unitPrice) || unitPrice < 0) return null;
 
               return {
                 product: productId,
@@ -397,8 +548,8 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
               } => Boolean(x),
             );
 
-          data.items = snapshot;
-          data.amount = cart.subtotal;
+          data.items = paidLineSnapshot ?? snapshot;
+          if (!trustedPaystackOrder(req)) data.amount = cart.subtotal;
 
           return data;
         },

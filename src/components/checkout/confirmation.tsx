@@ -1,12 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 
 import { Price } from "@/components/commerce/money";
 import { Notice } from "@/components/lx/primitives";
 import { previewOrderStore } from "@/features/cart/preview-order";
 import { clearCart } from "@/features/cart/store";
 import { formatDate, formatNaira } from "@/lib/formatters";
+
+/** Empties the local cart once a Paystack payment is confirmed. */
+export function ClearCartOnPaid() {
+  useEffect(() => {
+    clearCart();
+  }, []);
+  return null;
+}
 
 export function ConfirmationPreview() {
   const order = previewOrderStore.use();

@@ -31,6 +31,8 @@
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
+    "public/geo/ng-states.json",
+    "public/geo/lga/lagos.json",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "next.config.ts"

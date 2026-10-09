@@ -1,11 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { Notice } from "@/components/lx/primitives";
+import { BUSINESS_CONTACT } from "@/content/business";
 import { isNgPhone } from "@/features/cart/preview-order";
-import { submitWholesaleApplication } from "@/features/customer/store";
 
 const KINDS = [
   ["distributor", "Distributor or reseller"],
@@ -16,7 +14,7 @@ const KINDS = [
 ] as const;
 
 export function RegisterForm() {
-  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [v, setV] = useState({
     business: "",
     kind: "distributor",
@@ -37,12 +35,25 @@ export function RegisterForm() {
     if (!/^\S+@\S+\.\S+$/.test(v.email))
       er.email = "Enter a valid email address.";
     setErrors(er);
-    if (Object.keys(er).length) return;
-    submitWholesaleApplication({
-      name: v.business.trim(),
-      kind: v.kind as "distributor",
-    });
-    router.push("/account");
+    if (Object.keys(er).length) {
+      requestAnimationFrame(() =>
+        formRef.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus(),
+      );
+      return;
+    }
+    const kind = KINDS.find(([id]) => id === v.kind)?.[1] ?? v.kind;
+    const message = [
+      "Hello Laddex Enterprise, I would like to register my business for wholesale enquiries.",
+      `Business: ${v.business.trim()}`,
+      `Business type: ${kind}`,
+      `Contact person: ${v.contact.trim()}`,
+      `Phone: ${v.phone.trim()}`,
+      `Email: ${v.email.trim()}`,
+      v.volume.trim() ? `Expected monthly order: ${v.volume.trim()}` : "",
+    ].filter(Boolean).join("\n");
+    window.location.assign(
+      `${BUSINESS_CONTACT.whatsappHref}?text=${encodeURIComponent(message)}`,
+    );
   };
   const input = (
     id: keyof typeof v,
@@ -70,11 +81,10 @@ export function RegisterForm() {
     </div>
   );
   return (
-    <form onSubmit={submit} noValidate className="max-w-2xl space-y-5">
-      <Notice tone="sample" title="Prototype form">
-        Nothing is sent. Submitting switches this browser to the &ldquo;awaiting
-        approval&rdquo; sample state so you can see how the account behaves.
-      </Notice>
+    <form ref={formRef} onSubmit={submit} noValidate className="max-w-2xl space-y-5">
+      <p className="text-sm text-ink-2">
+        Continuing opens WhatsApp with your application details. Review and send the message there.
+      </p>
       {input("business", "Business name", { autoComplete: "organization" })}
       <div>
         <label className="label" htmlFor="kind">
@@ -117,7 +127,7 @@ export function RegisterForm() {
           Helps staff review the application. Not a commitment.
         </p>
       </div>
-      <button className="btn btn-primary">Submit application</button>
+      <button className="btn btn-primary">Continue on WhatsApp</button>
     </form>
   );
 }

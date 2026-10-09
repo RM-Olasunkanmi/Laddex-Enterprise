@@ -73,7 +73,7 @@ export default async function EventsPage() {
       >
         <div>
           <SectionHeading title="Planning an event?">
-            Send the details and we will come back with a quote.
+            Continue to WhatsApp with the details and send them to request a quote.
           </SectionHeading>
           <div className="mt-6">
             <ButtonLink href="/wholesale/quote" variant="line">

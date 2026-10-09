@@ -1,6 +1,11 @@
 {
-  "name": "",
-  "short_name": "",
+  "name": "Laddex Enterprise",
+  "short_name": "Laddex",
+  "description": "Shop Laddex palm oil, tapioca flakes and garri.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "en-NG",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -13,7 +18,8 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "theme_color": "#F8F6F0",
+  "background_color": "#F8F6F0",
+  "display": "standalone",
+  "orientation": "any"
 }

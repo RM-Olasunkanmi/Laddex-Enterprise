@@ -7,11 +7,10 @@ import { ProductPurchase } from "@/components/product/buy-box";
 import { getCatalogue } from "@/features/catalogue";
 import { cheapestPerUnit } from "@/features/catalogue/pricing";
 import { relatedProducts } from "@/features/catalogue/selectors";
-import { PRODUCTS } from "@/fixtures/products/products";
 import { formatNaira } from "@/lib/formatters";
 
-export const generateStaticParams = () =>
-  PRODUCTS.map((p) => ({ slug: p.slug }));
+export const generateStaticParams = async () =>
+  (await getCatalogue().listProducts()).map((product) => ({ slug: product.slug }));
 
 export async function generateMetadata({
   params,
@@ -38,6 +37,9 @@ export default async function ProductPage({
   const related = relatedProducts(product, all);
   const best = cheapestPerUnit(product)!;
   const unit = product.baseUnit === "l" ? "litre" : "kilo";
+  const isIllustrative = product.variants.some(
+    (variant) => variant.dataStatus === "illustrative",
+  );
   return (
     <div className="wrap py-8 pb-28 lg:pb-12">
       <nav aria-label="Breadcrumb" className="text-sm text-ink-3 mb-6">
@@ -82,8 +84,8 @@ export default async function ProductPage({
             ))}
           </ul>
           <p className="mt-6 text-sm text-ink-3">
-            Larger packs cost less per {unit}. In these sample prices the lowest
-            is {formatNaira(best.perUnitKobo)} per {unit}.
+            Larger packs cost less per {unit}. The lowest listed unit price is{" "}
+            {formatNaira(best.perUnitKobo)} per {unit}.
           </p>
         </section>
 
@@ -115,11 +117,13 @@ export default async function ProductPage({
               <li key={n}>{n}</li>
             ))}
           </ul>
-          <Notice tone="sample" className="mt-6" title="Illustrative catalogue">
-            Sizes, prices and stock are sample values. Specification fields
-            marked &ldquo;to be confirmed&rdquo; are left open on purpose.{" "}
-            <SampleTag />
-          </Notice>
+          {isIllustrative && (
+            <Notice tone="sample" className="mt-6" title="Illustrative catalogue">
+              Sizes, prices and stock are sample values. Specification fields
+              marked &ldquo;to be confirmed&rdquo; are left open on purpose.{" "}
+              <SampleTag />
+            </Notice>
+          )}
         </section>
       </div>
 

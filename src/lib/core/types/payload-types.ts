@@ -10,8 +10,7 @@
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "OrderStatus".
  */
-export type OrderStatus =
-  ("new" | "ready" | "done" | "canceled" | "refunded") | null;
+export type OrderStatus = ('new' | 'ready' | 'done' | 'canceled' | 'refunded') | null;
 /**
  * Supported timezones in IANA format.
  *
@@ -19,53 +18,53 @@ export type OrderStatus =
  * via the `definition` "supportedTimezones".
  */
 export type SupportedTimezones =
-  | "Pacific/Midway"
-  | "Pacific/Niue"
-  | "Pacific/Honolulu"
-  | "Pacific/Rarotonga"
-  | "America/Anchorage"
-  | "Pacific/Gambier"
-  | "America/Los_Angeles"
-  | "America/Tijuana"
-  | "America/Denver"
-  | "America/Phoenix"
-  | "America/Chicago"
-  | "America/Guatemala"
-  | "America/New_York"
-  | "America/Bogota"
-  | "America/Caracas"
-  | "America/Santiago"
-  | "America/Buenos_Aires"
-  | "America/Sao_Paulo"
-  | "Atlantic/South_Georgia"
-  | "Atlantic/Azores"
-  | "Atlantic/Cape_Verde"
-  | "Europe/London"
-  | "Europe/Berlin"
-  | "Africa/Lagos"
-  | "Europe/Athens"
-  | "Africa/Cairo"
-  | "Europe/Moscow"
-  | "Asia/Riyadh"
-  | "Asia/Dubai"
-  | "Asia/Baku"
-  | "Asia/Karachi"
-  | "Asia/Tashkent"
-  | "Asia/Calcutta"
-  | "Asia/Dhaka"
-  | "Asia/Almaty"
-  | "Asia/Jakarta"
-  | "Asia/Bangkok"
-  | "Asia/Shanghai"
-  | "Asia/Singapore"
-  | "Asia/Tokyo"
-  | "Asia/Seoul"
-  | "Australia/Brisbane"
-  | "Australia/Sydney"
-  | "Pacific/Guam"
-  | "Pacific/Noumea"
-  | "Pacific/Auckland"
-  | "Pacific/Fiji";
+  | 'Pacific/Midway'
+  | 'Pacific/Niue'
+  | 'Pacific/Honolulu'
+  | 'Pacific/Rarotonga'
+  | 'America/Anchorage'
+  | 'Pacific/Gambier'
+  | 'America/Los_Angeles'
+  | 'America/Tijuana'
+  | 'America/Denver'
+  | 'America/Phoenix'
+  | 'America/Chicago'
+  | 'America/Guatemala'
+  | 'America/New_York'
+  | 'America/Bogota'
+  | 'America/Caracas'
+  | 'America/Santiago'
+  | 'America/Buenos_Aires'
+  | 'America/Sao_Paulo'
+  | 'Atlantic/South_Georgia'
+  | 'Atlantic/Azores'
+  | 'Atlantic/Cape_Verde'
+  | 'Europe/London'
+  | 'Europe/Berlin'
+  | 'Africa/Lagos'
+  | 'Europe/Athens'
+  | 'Africa/Cairo'
+  | 'Europe/Moscow'
+  | 'Asia/Riyadh'
+  | 'Asia/Dubai'
+  | 'Asia/Baku'
+  | 'Asia/Karachi'
+  | 'Asia/Tashkent'
+  | 'Asia/Calcutta'
+  | 'Asia/Dhaka'
+  | 'Asia/Almaty'
+  | 'Asia/Jakarta'
+  | 'Asia/Bangkok'
+  | 'Asia/Shanghai'
+  | 'Asia/Singapore'
+  | 'Asia/Tokyo'
+  | 'Asia/Seoul'
+  | 'Australia/Brisbane'
+  | 'Australia/Sydney'
+  | 'Pacific/Guam'
+  | 'Pacific/Noumea'
+  | 'Pacific/Auckland'
+  | 'Pacific/Fiji';
 
 export interface Config {
   auth: {
@@ -79,27 +78,32 @@ export interface Config {
     pages: Page;
     category: Category;
     media: Media;
-    "seo-media": SeoMedia;
-    "gallery-media": GalleryMedia;
+    'seo-media': SeoMedia;
+    'gallery-media': GalleryMedia;
     reviews: Review;
     variants: Variant;
     variantTypes: VariantType;
     variantOptions: VariantOption;
     users: User;
     transactions: Transaction;
+    'checkout-sessions': CheckoutSession;
+    'delivery-zones': DeliveryZone;
+    'distribution-points': DistributionPoint;
+    'wholesale-applications': WholesaleApplication;
+    'quote-requests': QuoteRequest;
     addresses: Address;
-    "payload-kv": PayloadKv;
-    "payload-locked-documents": PayloadLockedDocument;
-    "payload-preferences": PayloadPreference;
-    "payload-migrations": PayloadMigration;
+    'payload-kv': PayloadKv;
+    'payload-locked-documents': PayloadLockedDocument;
+    'payload-preferences': PayloadPreference;
+    'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {
     products: {
-      reviews: "reviews";
-      variants: "variants";
+      reviews: 'reviews';
+      variants: 'variants';
     };
     variantTypes: {
-      options: "variantOptions";
+      options: 'variantOptions';
     };
   };
   collectionsSelect: {
@@ -109,32 +113,34 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     category: CategorySelect<false> | CategorySelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
-    "seo-media": SeoMediaSelect<false> | SeoMediaSelect<true>;
-    "gallery-media": GalleryMediaSelect<false> | GalleryMediaSelect<true>;
+    'seo-media': SeoMediaSelect<false> | SeoMediaSelect<true>;
+    'gallery-media': GalleryMediaSelect<false> | GalleryMediaSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     variants: VariantsSelect<false> | VariantsSelect<true>;
     variantTypes: VariantTypesSelect<false> | VariantTypesSelect<true>;
     variantOptions: VariantOptionsSelect<false> | VariantOptionsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
+    'checkout-sessions': CheckoutSessionsSelect<false> | CheckoutSessionsSelect<true>;
+    'delivery-zones': DeliveryZonesSelect<false> | DeliveryZonesSelect<true>;
+    'distribution-points': DistributionPointsSelect<false> | DistributionPointsSelect<true>;
+    'wholesale-applications': WholesaleApplicationsSelect<false> | WholesaleApplicationsSelect<true>;
+    'quote-requests': QuoteRequestsSelect<false> | QuoteRequestsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
-    "payload-kv": PayloadKvSelect<false> | PayloadKvSelect<true>;
-    "payload-locked-documents":
-      PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
-    "payload-preferences":
-      PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
-    "payload-migrations":
-      PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
+    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
+    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
     defaultIDType: number;
   };
   fallbackLocale: null;
   globals: {
-    "site-settings": SiteSetting;
+    'site-settings': SiteSetting;
   };
   globalsSelect: {
-    "site-settings": SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -208,8 +214,8 @@ export interface Product {
         version: number;
         [k: string]: unknown;
       }[];
-      direction: ("ltr" | "rtl") | null;
-      format: "left" | "start" | "center" | "right" | "end" | "justify" | "";
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
       indent: number;
       version: number;
     };
@@ -233,6 +239,40 @@ export interface Product {
     docs?: (number | Review)[];
     hasNextPage?: boolean;
     totalDocs?: number;
+  };
+  /**
+   * Maps this product to the Laddex storefront catalogue (palm oil by the litre, tapioca and garri by the kilo).
+   */
+  laddex: {
+    category: 'palm-oil' | 'tapioca' | 'garri';
+    baseUnit: 'l' | 'kg';
+    summary?: string | null;
+    details?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    specs?:
+      | {
+          label: string;
+          value: string;
+          note?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    packagingNotes?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    usage?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
   };
   /**
    * Use combinations such as Color + Size. Every combination can have its own inventory and an optional custom price.
@@ -261,7 +301,7 @@ export interface Product {
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
-  _status?: ("draft" | "published") | null;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -278,8 +318,8 @@ export interface Category {
         version: number;
         [k: string]: unknown;
       }[];
-      direction: ("ltr" | "rtl") | null;
-      format: "left" | "start" | "center" | "right" | "end" | "justify" | "";
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
       indent: number;
       version: number;
     };
@@ -307,7 +347,7 @@ export interface Category {
   slug: string;
   updatedAt: string;
   createdAt: string;
-  _status?: ("draft" | "published") | null;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Images for SEO, social sharing, and listing cards. Use Media for heroes and content, or Gallery Media for galleries.
@@ -318,8 +358,6 @@ export interface Category {
 export interface SeoMedia {
   id: number;
   alt: string;
-  prefix?: string | null;
-  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -359,8 +397,6 @@ export interface SeoMedia {
 export interface GalleryMedia {
   id: number;
   alt: string;
-  prefix?: string | null;
-  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -414,7 +450,7 @@ export interface VariantType {
   /**
    * Choose how this variant type appears in the storefront.
    */
-  selectorStyle: "swatch" | "buttons" | "select";
+  selectorStyle: 'swatch' | 'buttons' | 'select';
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -468,10 +504,53 @@ export interface Variant {
    * Original price before discount (optional). Shown as a strikethrough price when set.
    */
   originalPriceInUSD?: number | null;
+  /**
+   * Pack size, kobo pricing, wholesale tiers and stock for the Laddex storefront.
+   */
+  laddex: {
+    /**
+     * Pack code, e.g. "PO-25L". Used as the storefront variant id.
+     */
+    sku: string;
+    /**
+     * Pack size number, e.g. 25 for a 25 L jerrycan.
+     */
+    sizeAmount: number;
+    sizeUnit: 'ml' | 'l' | 'g' | 'kg';
+    /**
+     * Contents in the product base unit (litres or kg) for per-unit pricing.
+     */
+    contentBase: number;
+    packaging: 'bottle' | 'pouch' | 'bag' | 'sack';
+    format: 'packaged' | 'bulk';
+    /**
+     * List price for one pack in kobo (integer, never floats).
+     */
+    retailPriceKobo: number;
+    /**
+     * Volume breaks. Returned ONLY to approved wholesale accounts.
+     */
+    wholesaleTiers?:
+      | {
+          minQty: number;
+          unitPriceKobo: number;
+          id?: string | null;
+        }[]
+      | null;
+    wholesaleMinQty: number;
+    /**
+     * At or below this, the storefront shows low stock.
+     */
+    lowStockThreshold?: number | null;
+    /**
+     * Filled pack weight in kg (contents plus packaging).
+     */
+    shippingWeightKg: number;
+  };
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
-  _status?: ("draft" | "published") | null;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -486,10 +565,31 @@ export interface Order {
   phone: string;
   email: string;
   cart?: (number | null) | Cart;
+  checkoutSession?: (number | null) | CheckoutSession;
   /**
    * Stripe PaymentIntent ID
    */
   paymentIntentId?: string | null;
+  laddex?: {
+    /**
+     * Exact delivery longitude. Personal data.
+     */
+    lng?: number | null;
+    /**
+     * Exact delivery latitude. Personal data.
+     */
+    lat?: number | null;
+    street?: string | null;
+    landmark?: string | null;
+    notes?: string | null;
+    locationLabel?: string | null;
+    state?: string | null;
+    lga?: string | null;
+    fulfilment?: ('delivery' | 'pickup') | null;
+    channel?: ('online' | 'phone' | 'sales-desk') | null;
+    feeBasis?: ('region-rule' | 'manual-quote' | 'none') | null;
+    feeKobo?: number | null;
+  };
   items: {
     product: number | Product;
     variant?: (number | null) | Variant;
@@ -508,7 +608,13 @@ export interface Order {
  */
 export interface User {
   id: number;
-  roles?: ("admin" | "customer")[] | null;
+  roles?: ('admin' | 'analyst' | 'customer')[] | null;
+  phone?: string | null;
+  businessName?: string | null;
+  /**
+   * Approved unlocks wholesale tier pricing in the catalogue adapter. Set by staff after reviewing a wholesale application.
+   */
+  wholesaleStatus?: ('none' | 'pending' | 'approved') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -527,7 +633,7 @@ export interface User {
       }[]
     | null;
   password?: string | null;
-  collection: "users";
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -546,9 +652,53 @@ export interface Cart {
   secret?: string | null;
   customer?: (number | null) | User;
   purchasedAt?: string | null;
-  status?: ("active" | "purchased" | "abandoned") | null;
+  status?: ('active' | 'purchased' | 'abandoned') | null;
   subtotal?: number | null;
-  currency?: "USD" | null;
+  currency?: 'USD' | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "checkout-sessions".
+ */
+export interface CheckoutSession {
+  id: number;
+  reference: string;
+  idempotencyKey: string;
+  authorizationUrl?: string | null;
+  cart: number | Cart;
+  lines: {
+    product: number | Product;
+    variant: number | Variant;
+    title: string;
+    quantity: number;
+    unitPriceKobo: number;
+    lineTotalKobo: number;
+    id?: string | null;
+  }[];
+  name: string;
+  phone: string;
+  email: string;
+  address?: {
+    street?: string | null;
+    landmark?: string | null;
+    notes?: string | null;
+    locationLabel?: string | null;
+    state?: string | null;
+    lga?: string | null;
+    lng?: number | null;
+    lat?: number | null;
+  };
+  fulfilment: 'delivery' | 'pickup';
+  goodsTotalKobo: number;
+  deliveryTotalKobo: number;
+  grandTotalKobo: number;
+  feeBasis: 'region-rule' | 'manual-quote' | 'none';
+  currency: 'NGN';
+  status: 'created' | 'initialized' | 'paid' | 'order-created' | 'failed' | 'expired';
+  order?: (number | null) | Order;
+  failureReason?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -560,7 +710,7 @@ export interface Page {
   id: number;
   title: string;
   hero: {
-    type: "none" | "highImpact" | "mediumImpact" | "lowImpact";
+    type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
     richText?: {
       root: {
         type: string;
@@ -569,8 +719,8 @@ export interface Page {
           version: number;
           [k: string]: unknown;
         }[];
-        direction: ("ltr" | "rtl") | null;
-        format: "left" | "start" | "center" | "right" | "end" | "justify" | "";
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
         indent: number;
         version: number;
       };
@@ -579,38 +729,31 @@ export interface Page {
     links?:
       | {
           link: {
-            type?: ("reference" | "custom") | null;
+            type?: ('reference' | 'custom') | null;
             reference?:
               | ({
-                  relationTo: "pages";
+                  relationTo: 'pages';
                   value: number | Page;
                 } | null)
               | ({
-                  relationTo: "products";
+                  relationTo: 'products';
                   value: number | Product;
                 } | null)
               | ({
-                  relationTo: "category";
+                  relationTo: 'category';
                   value: number | Category;
                 } | null);
             url?: string | null;
             label: string;
             newTab?: boolean | null;
-            appearance?: ("default" | "outline") | null;
+            appearance?: ('default' | 'outline') | null;
           };
           id?: string | null;
         }[]
       | null;
     media?: (number | null) | Media;
   };
-  layout: (
-    | CallToActionBlock
-    | ArchiveBlock
-    | FaqBlock
-    | ContentBlock
-    | GalleryBlock
-    | HtmlEmbedBlock
-  )[];
+  layout: (CallToActionBlock | ArchiveBlock | FaqBlock | ContentBlock | GalleryBlock | HtmlEmbedBlock)[];
   meta: {
     title: string;
     /**
@@ -626,7 +769,7 @@ export interface Page {
   slug: string;
   updatedAt: string;
   createdAt: string;
-  _status?: ("draft" | "published") | null;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -635,8 +778,6 @@ export interface Page {
 export interface Media {
   id: number;
   alt: string;
-  prefix?: string | null;
-  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -662,8 +803,8 @@ export interface CallToActionBlock {
         version: number;
         [k: string]: unknown;
       }[];
-      direction: ("ltr" | "rtl") | null;
-      format: "left" | "start" | "center" | "right" | "end" | "justify" | "";
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
       indent: number;
       version: number;
     };
@@ -672,31 +813,31 @@ export interface CallToActionBlock {
   links?:
     | {
         link: {
-          type?: ("reference" | "custom") | null;
+          type?: ('reference' | 'custom') | null;
           reference?:
             | ({
-                relationTo: "pages";
+                relationTo: 'pages';
                 value: number | Page;
               } | null)
             | ({
-                relationTo: "products";
+                relationTo: 'products';
                 value: number | Product;
               } | null)
             | ({
-                relationTo: "category";
+                relationTo: 'category';
                 value: number | Category;
               } | null);
           url?: string | null;
           label: string;
           newTab?: boolean | null;
-          appearance?: ("default" | "outline") | null;
+          appearance?: ('default' | 'outline') | null;
         };
         id?: string | null;
       }[]
     | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: "cta";
+  blockType: 'cta';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -711,17 +852,17 @@ export interface ArchiveBlock {
         version: number;
         [k: string]: unknown;
       }[];
-      direction: ("ltr" | "rtl") | null;
-      format: "left" | "start" | "center" | "right" | "end" | "justify" | "";
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
       indent: number;
       version: number;
     };
     [k: string]: unknown;
   } | null;
-  introAlignment: "start" | "center";
-  contentType: "products" | "pages" | "categories";
-  displayMode: "grid" | "autoScroll";
-  populateBy: "collection" | "selection";
+  introAlignment: 'start' | 'center';
+  contentType: 'products' | 'pages' | 'categories';
+  displayMode: 'grid' | 'autoScroll';
+  populateBy: 'collection' | 'selection';
   categories?: (number | Category)[] | null;
   limit?: number | null;
   selectedDocs?: (number | Product)[] | null;
@@ -729,7 +870,7 @@ export interface ArchiveBlock {
   selectedCategories?: (number | Category)[] | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: "archive";
+  blockType: 'archive';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -745,7 +886,7 @@ export interface FaqBlock {
     | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: "faq";
+  blockType: 'faq';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -754,7 +895,7 @@ export interface FaqBlock {
 export interface ContentBlock {
   columns?:
     | {
-        size: "oneThird" | "half" | "twoThirds" | "full";
+        size: 'oneThird' | 'half' | 'twoThirds' | 'full';
         richText?: {
           root: {
             type: string;
@@ -763,9 +904,8 @@ export interface ContentBlock {
               version: number;
               [k: string]: unknown;
             }[];
-            direction: ("ltr" | "rtl") | null;
-            format:
-              "left" | "start" | "center" | "right" | "end" | "justify" | "";
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
             indent: number;
             version: number;
           };
@@ -773,18 +913,18 @@ export interface ContentBlock {
         } | null;
         enableLink?: boolean | null;
         link?: {
-          type?: ("reference" | "custom") | null;
+          type?: ('reference' | 'custom') | null;
           reference?:
             | ({
-                relationTo: "pages";
+                relationTo: 'pages';
                 value: number | Page;
               } | null)
             | ({
-                relationTo: "products";
+                relationTo: 'products';
                 value: number | Product;
               } | null)
             | ({
-                relationTo: "category";
+                relationTo: 'category';
                 value: number | Category;
               } | null);
           url?: string | null;
@@ -796,7 +936,7 @@ export interface ContentBlock {
     | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: "content";
+  blockType: 'content';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -810,7 +950,7 @@ export interface GalleryBlock {
   }[];
   id?: string | null;
   blockName?: string | null;
-  blockType: "gallery";
+  blockType: 'gallery';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -820,7 +960,7 @@ export interface HtmlEmbedBlock {
   contentHtml: string;
   id?: string | null;
   blockName?: string | null;
-  blockType: "htmlEmbed";
+  blockType: 'htmlEmbed';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -849,20 +989,96 @@ export interface Transaction {
     country?: string | null;
     phone?: string | null;
   };
-  status:
-    | "pending"
-    | "processing"
-    | "succeeded"
-    | "failed"
-    | "cancelled"
-    | "expired"
-    | "refunded";
+  status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'cancelled' | 'expired' | 'refunded';
   customer?: (number | null) | User;
   customerEmail?: string | null;
   order?: (number | null) | Order;
   cart?: (number | null) | Cart;
   amount?: number | null;
-  currency?: "USD" | null;
+  currency?: 'USD' | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "delivery-zones".
+ */
+export interface DeliveryZone {
+  id: number;
+  regionId: 'south-west' | 'south-east' | 'south-south' | 'north-central' | 'north-west' | 'north-east';
+  name: string;
+  /**
+   * Heaviest band decides the freight-quote threshold.
+   */
+  bands: {
+    upToKg: number;
+    feeKobo: number;
+    id?: string | null;
+  }[];
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "distribution-points".
+ */
+export interface DistributionPoint {
+  id: number;
+  name: string;
+  address?: string | null;
+  lng: number;
+  lat: number;
+  openingHours?: string | null;
+  phone?: string | null;
+  /**
+   * Only verified points appear on shopper maps.
+   */
+  verified?: boolean | null;
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wholesale-applications".
+ */
+export interface WholesaleApplication {
+  id: number;
+  businessName: string;
+  businessType: 'retailer' | 'caterer' | 'restaurant' | 'distributor' | 'processor' | 'other';
+  contactName: string;
+  phone: string;
+  email: string;
+  state?: string | null;
+  message?: string | null;
+  status?: ('pending' | 'approved' | 'rejected') | null;
+  reviewerNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quote-requests".
+ */
+export interface QuoteRequest {
+  id: number;
+  lines: {
+    variantSku: string;
+    qty: number;
+    id?: string | null;
+  }[];
+  contactName: string;
+  phone: string;
+  email: string;
+  businessName?: string | null;
+  note?: string | null;
+  status?: ('new' | 'priced' | 'responded' | 'closed') | null;
+  /**
+   * Staff's quoted total in kobo.
+   */
+  staffPriceKobo?: number | null;
+  staffResponse?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -883,46 +1099,46 @@ export interface Address {
   state?: string | null;
   postalCode?: string | null;
   country:
-    | "US"
-    | "GB"
-    | "CA"
-    | "AU"
-    | "AT"
-    | "BE"
-    | "BR"
-    | "BG"
-    | "CY"
-    | "CZ"
-    | "DK"
-    | "EE"
-    | "FI"
-    | "FR"
-    | "DE"
-    | "GR"
-    | "HK"
-    | "HU"
-    | "IN"
-    | "IE"
-    | "IT"
-    | "JP"
-    | "LV"
-    | "LT"
-    | "LU"
-    | "MY"
-    | "MT"
-    | "MX"
-    | "NL"
-    | "NZ"
-    | "NO"
-    | "PL"
-    | "PT"
-    | "RO"
-    | "SG"
-    | "SK"
-    | "SI"
-    | "ES"
-    | "SE"
-    | "CH";
+    | 'US'
+    | 'GB'
+    | 'CA'
+    | 'AU'
+    | 'AT'
+    | 'BE'
+    | 'BR'
+    | 'BG'
+    | 'CY'
+    | 'CZ'
+    | 'DK'
+    | 'EE'
+    | 'FI'
+    | 'FR'
+    | 'DE'
+    | 'GR'
+    | 'HK'
+    | 'HU'
+    | 'IN'
+    | 'IE'
+    | 'IT'
+    | 'JP'
+    | 'LV'
+    | 'LT'
+    | 'LU'
+    | 'MY'
+    | 'MT'
+    | 'MX'
+    | 'NL'
+    | 'NZ'
+    | 'NO'
+    | 'PL'
+    | 'PT'
+    | 'RO'
+    | 'SG'
+    | 'SK'
+    | 'SI'
+    | 'ES'
+    | 'SE'
+    | 'CH';
   phone?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -952,68 +1168,88 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: "products";
+        relationTo: 'products';
         value: number | Product;
       } | null)
     | ({
-        relationTo: "orders";
+        relationTo: 'orders';
         value: number | Order;
       } | null)
     | ({
-        relationTo: "carts";
+        relationTo: 'carts';
         value: number | Cart;
       } | null)
     | ({
-        relationTo: "pages";
+        relationTo: 'pages';
         value: number | Page;
       } | null)
     | ({
-        relationTo: "category";
+        relationTo: 'category';
         value: number | Category;
       } | null)
     | ({
-        relationTo: "media";
+        relationTo: 'media';
         value: number | Media;
       } | null)
     | ({
-        relationTo: "seo-media";
+        relationTo: 'seo-media';
         value: number | SeoMedia;
       } | null)
     | ({
-        relationTo: "gallery-media";
+        relationTo: 'gallery-media';
         value: number | GalleryMedia;
       } | null)
     | ({
-        relationTo: "reviews";
+        relationTo: 'reviews';
         value: number | Review;
       } | null)
     | ({
-        relationTo: "variants";
+        relationTo: 'variants';
         value: number | Variant;
       } | null)
     | ({
-        relationTo: "variantTypes";
+        relationTo: 'variantTypes';
         value: number | VariantType;
       } | null)
     | ({
-        relationTo: "variantOptions";
+        relationTo: 'variantOptions';
         value: number | VariantOption;
       } | null)
     | ({
-        relationTo: "users";
+        relationTo: 'users';
         value: number | User;
       } | null)
     | ({
-        relationTo: "transactions";
+        relationTo: 'transactions';
         value: number | Transaction;
       } | null)
     | ({
-        relationTo: "addresses";
+        relationTo: 'checkout-sessions';
+        value: number | CheckoutSession;
+      } | null)
+    | ({
+        relationTo: 'delivery-zones';
+        value: number | DeliveryZone;
+      } | null)
+    | ({
+        relationTo: 'distribution-points';
+        value: number | DistributionPoint;
+      } | null)
+    | ({
+        relationTo: 'wholesale-applications';
+        value: number | WholesaleApplication;
+      } | null)
+    | ({
+        relationTo: 'quote-requests';
+        value: number | QuoteRequest;
+      } | null)
+    | ({
+        relationTo: 'addresses';
         value: number | Address;
       } | null);
   globalSlug?: string | null;
   user: {
-    relationTo: "users";
+    relationTo: 'users';
     value: number | User;
   };
   updatedAt: string;
@@ -1026,7 +1262,7 @@ export interface PayloadLockedDocument {
 export interface PayloadPreference {
   id: number;
   user: {
-    relationTo: "users";
+    relationTo: 'users';
     value: number | User;
   };
   key?: string | null;
@@ -1082,6 +1318,39 @@ export interface ProductsSelect<T extends boolean = true> {
         id?: T;
       };
   reviews?: T;
+  laddex?:
+    | T
+    | {
+        category?: T;
+        baseUnit?: T;
+        summary?: T;
+        details?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        specs?:
+          | T
+          | {
+              label?: T;
+              value?: T;
+              note?: T;
+              id?: T;
+            };
+        packagingNotes?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        usage?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+      };
   enableVariants?: T;
   variantTypes?: T;
   variants?: T;
@@ -1109,7 +1378,24 @@ export interface OrdersSelect<T extends boolean = true> {
   phone?: T;
   email?: T;
   cart?: T;
+  checkoutSession?: T;
   paymentIntentId?: T;
+  laddex?:
+    | T
+    | {
+        lng?: T;
+        lat?: T;
+        street?: T;
+        landmark?: T;
+        notes?: T;
+        locationLabel?: T;
+        state?: T;
+        lga?: T;
+        fulfilment?: T;
+        channel?: T;
+        feeBasis?: T;
+        feeKobo?: T;
+      };
   items?:
     | T
     | {
@@ -1336,8 +1622,6 @@ export interface CategorySelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
-  prefix?: T;
-  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1356,8 +1640,6 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface SeoMediaSelect<T extends boolean = true> {
   alt?: T;
-  prefix?: T;
-  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1400,8 +1682,6 @@ export interface SeoMediaSelect<T extends boolean = true> {
  */
 export interface GalleryMediaSelect<T extends boolean = true> {
   alt?: T;
-  prefix?: T;
-  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1454,6 +1734,27 @@ export interface VariantsSelect<T extends boolean = true> {
   priceInUSDEnabled?: T;
   priceInUSD?: T;
   originalPriceInUSD?: T;
+  laddex?:
+    | T
+    | {
+        sku?: T;
+        sizeAmount?: T;
+        sizeUnit?: T;
+        contentBase?: T;
+        packaging?: T;
+        format?: T;
+        retailPriceKobo?: T;
+        wholesaleTiers?:
+          | T
+          | {
+              minQty?: T;
+              unitPriceKobo?: T;
+              id?: T;
+            };
+        wholesaleMinQty?: T;
+        lowStockThreshold?: T;
+        shippingWeightKg?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   deletedAt?: T;
@@ -1492,6 +1793,9 @@ export interface VariantOptionsSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   roles?: T;
+  phone?: T;
+  businessName?: T;
+  wholesaleStatus?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1545,6 +1849,127 @@ export interface TransactionsSelect<T extends boolean = true> {
   cart?: T;
   amount?: T;
   currency?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "checkout-sessions_select".
+ */
+export interface CheckoutSessionsSelect<T extends boolean = true> {
+  reference?: T;
+  idempotencyKey?: T;
+  authorizationUrl?: T;
+  cart?: T;
+  lines?:
+    | T
+    | {
+        product?: T;
+        variant?: T;
+        title?: T;
+        quantity?: T;
+        unitPriceKobo?: T;
+        lineTotalKobo?: T;
+        id?: T;
+      };
+  name?: T;
+  phone?: T;
+  email?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        landmark?: T;
+        notes?: T;
+        locationLabel?: T;
+        state?: T;
+        lga?: T;
+        lng?: T;
+        lat?: T;
+      };
+  fulfilment?: T;
+  goodsTotalKobo?: T;
+  deliveryTotalKobo?: T;
+  grandTotalKobo?: T;
+  feeBasis?: T;
+  currency?: T;
+  status?: T;
+  order?: T;
+  failureReason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "delivery-zones_select".
+ */
+export interface DeliveryZonesSelect<T extends boolean = true> {
+  regionId?: T;
+  name?: T;
+  bands?:
+    | T
+    | {
+        upToKg?: T;
+        feeKobo?: T;
+        id?: T;
+      };
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "distribution-points_select".
+ */
+export interface DistributionPointsSelect<T extends boolean = true> {
+  name?: T;
+  address?: T;
+  lng?: T;
+  lat?: T;
+  openingHours?: T;
+  phone?: T;
+  verified?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wholesale-applications_select".
+ */
+export interface WholesaleApplicationsSelect<T extends boolean = true> {
+  businessName?: T;
+  businessType?: T;
+  contactName?: T;
+  phone?: T;
+  email?: T;
+  state?: T;
+  message?: T;
+  status?: T;
+  reviewerNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quote-requests_select".
+ */
+export interface QuoteRequestsSelect<T extends boolean = true> {
+  lines?:
+    | T
+    | {
+        variantSku?: T;
+        qty?: T;
+        id?: T;
+      };
+  contactName?: T;
+  phone?: T;
+  email?: T;
+  businessName?: T;
+  note?: T;
+  status?: T;
+  staffPriceKobo?: T;
+  staffResponse?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1621,18 +2046,18 @@ export interface SiteSetting {
     navItems?:
       | {
           link: {
-            type?: ("reference" | "custom") | null;
+            type?: ('reference' | 'custom') | null;
             reference?:
               | ({
-                  relationTo: "pages";
+                  relationTo: 'pages';
                   value: number | Page;
                 } | null)
               | ({
-                  relationTo: "products";
+                  relationTo: 'products';
                   value: number | Product;
                 } | null)
               | ({
-                  relationTo: "category";
+                  relationTo: 'category';
                   value: number | Category;
                 } | null);
             url?: string | null;
@@ -1658,18 +2083,18 @@ export interface FooterNavBlock {
   links?:
     | {
         link: {
-          type?: ("reference" | "custom") | null;
+          type?: ('reference' | 'custom') | null;
           reference?:
             | ({
-                relationTo: "pages";
+                relationTo: 'pages';
                 value: number | Page;
               } | null)
             | ({
-                relationTo: "products";
+                relationTo: 'products';
                 value: number | Product;
               } | null)
             | ({
-                relationTo: "category";
+                relationTo: 'category';
                 value: number | Category;
               } | null);
           url?: string | null;
@@ -1681,7 +2106,7 @@ export interface FooterNavBlock {
     | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: "footerNav";
+  blockType: 'footerNav';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1692,29 +2117,29 @@ export interface FooterIconsBlock {
   items?:
     | {
         icon:
-          | "instagram"
-          | "facebook"
-          | "tiktok"
-          | "linkedin"
-          | "youtube"
-          | "x"
-          | "whatsapp"
-          | "website"
-          | "phone"
-          | "email";
+          | 'instagram'
+          | 'facebook'
+          | 'tiktok'
+          | 'linkedin'
+          | 'youtube'
+          | 'x'
+          | 'whatsapp'
+          | 'website'
+          | 'phone'
+          | 'email';
         link: {
-          type?: ("reference" | "custom") | null;
+          type?: ('reference' | 'custom') | null;
           reference?:
             | ({
-                relationTo: "pages";
+                relationTo: 'pages';
                 value: number | Page;
               } | null)
             | ({
-                relationTo: "products";
+                relationTo: 'products';
                 value: number | Product;
               } | null)
             | ({
-                relationTo: "category";
+                relationTo: 'category';
                 value: number | Category;
               } | null);
           url?: string | null;
@@ -1726,7 +2151,7 @@ export interface FooterIconsBlock {
     | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: "footerIcons";
+  blockType: 'footerIcons';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1826,7 +2251,7 @@ export interface CollectionsWidget {
   data?: {
     [k: string]: unknown;
   };
-  width: "full";
+  width: 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1836,6 +2261,7 @@ export interface Auth {
   [k: string]: unknown;
 }
 
-declare module "payload" {
+
+declare module 'payload' {
   export interface GeneratedTypes extends Config {}
 }

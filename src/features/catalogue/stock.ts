@@ -83,7 +83,9 @@ export function useStocked(products: Product[]): Product[] {
       hydrated && Object.keys(s.qty).length
         ? products.map((p) => ({
             ...p,
-            variants: p.variants.map((v) => withStock(v, s)),
+            variants: p.variants.map((v) =>
+              v.dataStatus === "illustrative" ? withStock(v, s) : v,
+            ),
           }))
         : products,
     [products, s, hydrated],

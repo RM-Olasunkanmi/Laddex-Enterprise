@@ -176,7 +176,7 @@ const OrderDashboardInner = () => {
       tooltip: {
         shared: true,
         y: [
-          { formatter: (value) => currencyFormatter.format(value) },
+          { formatter: (value) => currencyFormatter.format(value / 100) },
           { formatter: (value) => numberFormatter.format(value) },
         ],
       },
@@ -335,7 +335,7 @@ const OrderDashboardInner = () => {
         <MetricCard
           label={t("totalRevenue")}
           value={
-            data ? currencyFormatter.format(data.metrics.totalRevenue) : "—"
+            data ? currencyFormatter.format(data.metrics.totalRevenue / 100) : "—"
           }
           icon={<FaWallet />}
         />
@@ -347,7 +347,7 @@ const OrderDashboardInner = () => {
         <MetricCard
           label={t("periodRevenue")}
           value={
-            data ? currencyFormatter.format(data.metrics.periodRevenue) : "—"
+            data ? currencyFormatter.format(data.metrics.periodRevenue / 100) : "—"
           }
           change={data?.metrics.revenueChange}
           icon={<FaChartLine />}
@@ -416,7 +416,7 @@ const OrderDashboardInner = () => {
                           {tStatus(order.status)}
                         </span>
                       </td>
-                      <td>{currencyFormatter.format(order.amount)}</td>
+                      <td>{currencyFormatter.format(order.amount / 100)}</td>
                     </tr>
                   ))}
                 </tbody>

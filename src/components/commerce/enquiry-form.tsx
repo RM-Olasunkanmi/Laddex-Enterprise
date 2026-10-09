@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { Notice } from "@/components/lx/primitives";
-import { ENQUIRY_TOPICS, type EnquiryTopic } from "@/content/business";
+import {
+  BUSINESS_CONTACT,
+  ENQUIRY_TOPICS,
+  type EnquiryTopic,
+} from "@/content/business";
 
 interface Values {
   name: string;
@@ -20,11 +23,6 @@ const EMPTY: Values = {
   message: "",
 };
 
-/**
- * Frontend-only enquiry form. Nothing is transmitted: the submission is kept in this browser's
- * memory to show the confirmation state. A backend adapter replaces the submit handler later
- * (docs/BACKEND_INTEGRATION.md).
- */
 export function EnquiryForm({
   defaultTopic = "order",
 }: {
@@ -34,7 +32,7 @@ export function EnquiryForm({
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>(
     {},
   );
-  const [done, setDone] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const set = <K extends keyof Values>(k: K, val: Values[K]) =>
     setV((x) => ({ ...x, [k]: val }));
 
@@ -52,29 +50,25 @@ export function EnquiryForm({
     if (v.message.trim().length < 10)
       next.message = "Tell us a little more (at least 10 characters)";
     setErrors(next);
-    if (Object.keys(next).length === 0) setDone(true);
-  }
-
-  if (done)
-    return (
-      <div role="status" className="panel p-6">
-        <h2 className="text-2xl">Enquiry recorded in this preview</h2>
-        <p className="mt-2 text-ink-2">
-          Thank you, {v.name.trim()}. Nothing was sent: this is a design preview
-          with no backend connected. Once connected, this form creates an
-          enquiry record for staff and the reply goes to {v.contact.trim()}.
-        </p>
-        <button
-          className="btn btn-line mt-5 min-h-11"
-          onClick={() => {
-            setV({ ...EMPTY, topic: defaultTopic });
-            setDone(false);
-          }}
-        >
-          Send another
-        </button>
-      </div>
+    if (Object.keys(next).length) {
+      requestAnimationFrame(() =>
+        formRef.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus(),
+      );
+      return;
+    }
+    const topic = ENQUIRY_TOPICS.find((item) => item.id === v.topic)!.label;
+    const message = [
+      "Hello Laddex Enterprise, I would like to make an enquiry.",
+      `Name: ${v.name.trim()}`,
+      `Contact: ${v.contact.trim()}`,
+      `Topic: ${topic}`,
+      v.state.trim() ? `State: ${v.state.trim()}` : "",
+      `Message: ${v.message.trim()}`,
+    ].filter(Boolean).join("\n");
+    window.location.assign(
+      `${BUSINESS_CONTACT.whatsappHref}?text=${encodeURIComponent(message)}`,
     );
+  }
 
   const field = (id: keyof Values, label: string, input: React.ReactNode) => (
     <div>
@@ -96,7 +90,7 @@ export function EnquiryForm({
   });
 
   return (
-    <form onSubmit={submit} noValidate className="panel p-5 sm:p-7 grid gap-4">
+    <form ref={formRef} onSubmit={submit} noValidate className="panel p-5 sm:p-7 grid gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
         {field(
           "name",
@@ -160,12 +154,12 @@ export function EnquiryForm({
           onChange={(e) => set("message", e.target.value)}
         />,
       )}
-      <Notice tone="sample">
-        Preview only. This form does not send anything yet.
-      </Notice>
+      <p className="text-sm text-ink-2">
+        Continuing opens WhatsApp with these details. Review and send the message there.
+      </p>
       <div>
         <button type="submit" className="btn btn-primary min-h-11">
-          Send enquiry
+          Continue on WhatsApp
         </button>
       </div>
     </form>

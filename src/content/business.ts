@@ -7,11 +7,11 @@ export const BUSINESS = {
   tagline: "Pure. Natural. Royal.",
   country: "Nigeria",
   /** Confirmed contact details. Empty strings are hidden. */
-  phone: "",
-  whatsapp: "",
+  phone: "0812 108 8635",
+  whatsapp: "0812 108 8635",
   email: "",
-  address: "",
-  hours: "",
+  address: "9 Adeboale Street, Epe, Lagos State, Nigeria",
+  hours: "8:00 am – 5:00 pm, pickup and walk-in. Please book before you come.",
   /** What Laddex supplies, as stated by the owner. */
   products: ["Palm oil", "Tapioca flakes", "Garri Igbo", "Ijebu Garri"],
   /** Who Laddex supplies, as stated by the owner. */
@@ -21,6 +21,12 @@ export const BUSINESS = {
     "Caterers and restaurants",
     "Event organisers (souvenirs and bulk gifts)",
   ],
+} as const;
+
+export const BUSINESS_CONTACT = {
+  phoneHref: "tel:+2348121088635",
+  whatsappNumber: "2348121088635",
+  whatsappHref: "https://wa.me/2348121088635",
 } as const;
 
 export const ENQUIRY_TOPICS = [

@@ -15,13 +15,18 @@ import {
   SeoMedia,
   SiteSettings,
   Category,
+  CheckoutSessions,
+  DeliveryZones,
+  DistributionPoints,
+  QuoteRequests,
   Users,
   Reviews,
+  WholesaleApplications,
 } from "@/lib/collections";
 import { baseEditor } from "@/lib/collections/base-fields";
 import appConfig from "@/lib/core/config";
+import { paystackEndpoints } from "@/lib/payments/endpoints";
 import { plugins } from "@/lib/providers/plugins";
-import { stripeEndpoints } from "@/lib/stripe/endpoints";
 
 export default buildConfig({
   admin: {
@@ -68,8 +73,24 @@ export default buildConfig({
 
   sharp,
 
-  collections: [Users, Pages, Category, Media, SeoMedia, GalleryMedia, Reviews],
+  collections: [
+    Users,
+    Pages,
+    Category,
+    Media,
+    SeoMedia,
+    GalleryMedia,
+    Reviews,
+    CheckoutSessions,
+    DeliveryZones,
+    DistributionPoints,
+    WholesaleApplications,
+    QuoteRequests,
+  ],
   db: postgresAdapter({
+    // Laddex owns its own Postgres schema so the Supabase project it shares
+    // can keep unrelated tables in `public` untouched.
+    schemaName: "laddex",
     pool: {
       connectionString: appConfig.DATABASE_URL,
     },
@@ -91,7 +112,7 @@ export default buildConfig({
       })
     : undefined,
   cors: [appConfig.BASE_URL],
-  endpoints: stripeEndpoints,
+  endpoints: paystackEndpoints,
   plugins,
   secret: appConfig.PAYLOAD_SECRET,
   typescript: {

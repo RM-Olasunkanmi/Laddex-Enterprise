@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 
 import { CheckoutPreview } from "@/components/checkout/checkout-preview";
 
-export const metadata: Metadata = { title: "Checkout preview" };
+export const metadata: Metadata = {
+  title: "Checkout preview",
+  robots: { index: false, follow: false },
+};
 
 export default function OrderPage() {
   return (
