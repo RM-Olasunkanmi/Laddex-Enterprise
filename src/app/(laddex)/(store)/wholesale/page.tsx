@@ -73,7 +73,13 @@ export default async function WholesalePage() {
         </SectionHeading>
         <div className="mt-8 grid gap-6">
           {products.map((p) => (
-            <div key={p.id} className="panel overflow-x-auto">
+            <div
+              key={p.id}
+              className="panel overflow-x-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Wholesale price breaks, scrollable"
+            >
               <table className="dtable min-w-[40rem]">
                 <caption className="text-left px-4 py-3 border-b border-line font-display text-lg">
                   {p.name}

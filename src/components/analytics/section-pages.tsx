@@ -153,7 +153,12 @@ export function CustomersPage() {
         {formatPercent(data.repRetail, 0)}, wholesale{" "}
         {formatPercent(data.repWhole, 0)}. A short date range understates it.
       </p>
-      <div className="panel overflow-x-auto">
+      <div
+        className="panel overflow-x-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="Largest customers table"
+      >
         <table className="dtable min-w-[32rem]">
           <caption className="text-left px-4 py-3 border-b border-line font-display text-lg">
             Largest customers by gross sales {admin ? "" : "(references only)"}
@@ -253,7 +258,12 @@ export function InventoryPage() {
             }))}
         />
       </ChartFrame>
-      <div className="panel overflow-x-auto">
+      <div
+        className="panel overflow-x-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="Inventory table"
+      >
         <table className="dtable min-w-[40rem]">
           <thead>
             <tr>

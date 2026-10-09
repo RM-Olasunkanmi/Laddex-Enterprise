@@ -26,12 +26,10 @@ export function GeoWorkspace() {
       const reduce = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
-      document
-        .getElementById("panel-map")
-        ?.scrollIntoView({
-          behavior: reduce ? "auto" : "smooth",
-          block: "start",
-        });
+      document.getElementById("panel-map")?.scrollIntoView({
+        behavior: reduce ? "auto" : "smooth",
+        block: "start",
+      });
     } else {
       setTab("insights");
     }

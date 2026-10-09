@@ -27,7 +27,6 @@ export function ProductCard({
       <Link
         href={href}
         className="relative block bg-paper-2 aspect-[4/3] sm:aspect-[5/4] px-3 pt-3 sm:px-6 sm:pt-6"
-        aria-label={`${product.name} ${packLabel(variant)}`}
         data-priority={priority || undefined}
       >
         <PackVisual
@@ -36,8 +35,12 @@ export function ProductCard({
           sizeLabel={packLabel(variant)}
           scale={packScale(variant, product)}
           caption={false}
+          decorative
           className="w-full h-full transition-transform duration-[var(--d-slow)] ease-[var(--ease)] group-hover:-translate-y-0.5"
         />
+        <span className="sr-only">
+          {product.name} {packLabel(variant)}
+        </span>
         <span className="absolute left-3 top-3 flex gap-1.5">
           <Tag tone={variant.format === "bulk" ? "sample" : "default"}>
             {variant.format === "bulk" ? "Bulk" : "Packaged"}

@@ -38,11 +38,9 @@ export function ChartFrame({
         </figcaption>
         {def && (
           <details className="relative group shrink-0">
-            <summary
-              className="list-none text-xs text-ink-3 hover:text-ink underline underline-offset-4 min-h-6"
-              aria-label={`How ${def.label} is calculated`}
-            >
+            <summary className="list-none text-xs text-ink-3 hover:text-ink underline underline-offset-4 min-h-6">
               How calculated
+              <span className="sr-only"> for {def.label}</span>
             </summary>
             <div className="absolute right-0 z-20 mt-1 w-72 panel shadow-pop p-3 text-xs space-y-1.5">
               <p className="font-semibold text-sm">{def.label}</p>
@@ -62,7 +60,12 @@ export function ChartFrame({
           <summary className="text-xs text-ink-3 hover:text-ink underline underline-offset-4 cursor-pointer w-fit">
             Table view
           </summary>
-          <div className="mt-2 max-h-56 overflow-auto border border-line rounded-sm">
+          <div
+            className="mt-2 max-h-56 overflow-auto border border-line rounded-sm"
+            tabIndex={0}
+            role="region"
+            aria-label="Chart data table"
+          >
             {table}
           </div>
         </details>

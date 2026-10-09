@@ -23,7 +23,12 @@ export function AreaList() {
       <summary className="px-4 py-3 cursor-pointer text-sm font-medium min-h-11">
         Areas as a list (keyboard alternative to the map)
       </summary>
-      <div className="max-h-72 overflow-auto px-4 pb-4">
+      <div
+        className="max-h-72 overflow-auto px-4 pb-4"
+        tabIndex={0}
+        role="region"
+        aria-label="Areas table"
+      >
         <table className="dtable">
           <caption className="sr-only">
             Areas at the current scale with sales, orders and the map statistic

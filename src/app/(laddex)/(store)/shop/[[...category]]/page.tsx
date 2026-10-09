@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import type { CategoryId } from "@/features/catalogue/types";
 
 import { CatalogueBrowser } from "@/components/commerce/catalogue-browser";
+import { ShopSkeleton } from "@/components/commerce/shop-skeleton";
 import { getCatalogue } from "@/features/catalogue";
 
 export async function generateMetadata({
@@ -43,7 +44,7 @@ export default async function ShopPage({
     fail: sp.fail === "catalogue",
   }).listProducts();
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ShopSkeleton />}>
       <CatalogueBrowser category={(slug as CategoryId | undefined) ?? "all"} />
     </Suspense>
   );

@@ -19,6 +19,8 @@ interface Props {
   /** Show the small "development render" caption inside the drawing. */
   caption?: boolean;
   title?: string;
+  /** Hide from assistive tech when the surrounding link or heading already names the pack. */
+  decorative?: boolean;
 }
 
 const STROKE = color.ink;
@@ -35,6 +37,7 @@ export function PackVisual({
   className,
   caption = true,
   title,
+  decorative = false,
 }: Props) {
   const palm = category === "palm-oil";
   const fill = palm ? OIL : STARCH;
@@ -48,12 +51,13 @@ export function PackVisual({
   return (
     <svg
       viewBox="0 0 240 300"
-      role="img"
-      aria-label={label}
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : label}
+      aria-hidden={decorative || undefined}
       className={className}
       preserveAspectRatio="xMidYMax meet"
     >
-      <title>{label}</title>
+      {!decorative && <title>{label}</title>}
       <line
         x1="20"
         y1="268"

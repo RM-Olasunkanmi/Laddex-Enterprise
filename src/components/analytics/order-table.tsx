@@ -76,7 +76,12 @@ export function OrderTable() {
           Individual orders and customer locations require the admin role.
           Switch role in the filter bar to review order-level records.
         </p>
-        <div className="overflow-x-auto border border-line rounded-sm">
+        <div
+          className="overflow-x-auto border border-line rounded-sm"
+          tabIndex={0}
+          role="region"
+          aria-label="Areas in this selection"
+        >
           <table className="dtable">
             <thead>
               <tr>
@@ -157,7 +162,12 @@ export function OrderTable() {
         </h2>
         <Tag tone="sample">Admin: order-level</Tag>
       </div>
-      <div className="overflow-x-auto border border-line rounded-sm max-h-[26rem] overflow-y-auto">
+      <div
+        className="overflow-x-auto border border-line rounded-sm max-h-[26rem] overflow-y-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="Orders table"
+      >
         <table className="dtable min-w-[40rem]">
           <thead>
             <tr>

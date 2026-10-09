@@ -98,7 +98,7 @@ export function ProductPurchase({
                       setVariantId(v.id);
                       setQty(1);
                     }}
-                    className={`text-left min-h-[4.5rem] p-3 rounded-md border transition-colors duration-[var(--d-fast)] ${sel ? "border-ember border-2 bg-ember-tint/60" : "border-line-strong bg-card hover:border-ink"} ${v.stock.status === "out-of-stock" ? "opacity-70" : ""}`}
+                    className={`text-left min-h-[4.5rem] p-3 rounded-md border transition-colors duration-[var(--d-fast)] ${sel ? "border-ember border-2 bg-ember-tint/60" : "border-line-strong bg-card hover:border-ink"} ${v.stock.status === "out-of-stock" && !sel ? "bg-paper-2 border-dashed" : ""}`}
                   >
                     <span className="flex items-baseline justify-between gap-2">
                       <span className="font-display text-xl">
@@ -113,9 +113,14 @@ export function ProductPurchase({
                     <span className="block mono text-xs mt-1">
                       {formatNaira(v.retailPriceKobo)}
                     </span>
-                    <span className="block mono text-[0.6875rem] text-ink-3">
+                    <span className="block mono text-[0.6875rem] text-ink-2">
                       {formatNaira(pricePerBaseUnit(v))} / {unit}
                     </span>
+                    {v.stock.status === "out-of-stock" && (
+                      <span className="block text-[0.6875rem] text-danger">
+                        Out of stock
+                      </span>
+                    )}
                   </button>
                 );
               })}

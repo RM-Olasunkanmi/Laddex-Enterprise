@@ -50,7 +50,6 @@ export function CartButton() {
       type="button"
       className="btn btn-line btn-sm relative min-h-11"
       onClick={() => cartDrawer.set(true)}
-      aria-label={`Open cart, ${count} ${count === 1 ? "pack" : "packs"}`}
     >
       <svg
         width="18"
@@ -69,11 +68,12 @@ export function CartButton() {
         <circle cx="9.5" cy="19" r="1.2" fill="currentColor" stroke="none" />
         <circle cx="16.5" cy="19" r="1.2" fill="currentColor" stroke="none" />
       </svg>
-      <span className="hidden sm:inline">Cart</span>
+      <span className="sr-only sm:not-sr-only">Cart</span>
       <span
         className={`mono min-w-5 text-center rounded-sm px-1 text-xs ${count ? "bg-ember text-on-ember" : "bg-paper-2 text-ink-3"} ${bump ? "animate-[bump_.35s_var(--ease)]" : ""}`}
       >
         {count}
+        <span className="sr-only"> {count === 1 ? "pack" : "packs"}</span>
       </span>
     </button>
   );
@@ -86,7 +86,6 @@ export function DeliveryChip() {
     <Link
       href="/delivery"
       className="hidden md:inline-flex btn btn-quiet btn-sm min-h-11 max-w-56 items-center gap-2"
-      aria-label="Choose delivery location"
     >
       <svg
         width="16"

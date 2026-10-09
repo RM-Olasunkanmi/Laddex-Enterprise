@@ -55,6 +55,7 @@ async function newPage(opts = {}) {
   page.on("console", (m) => {
     if (m.type() !== "error") return;
     const t = m.text();
+    if (page.url().includes("fail=")) return; // intentional diagnostic failure routes
     // The online basemap and live geocoder are unreachable in the sandbox; the app is designed to fall back.
     if (
       /ERR_TUNNEL|ERR_NAME_NOT_RESOLVED|Failed to load resource|CatalogueUnavailable|orders service did not respond/.test(
@@ -421,8 +422,14 @@ const go = (page, path) =>
     "dashboard: loads data, map canvas and KPIs; loading state shown first",
     async () => {
       const p = await newPage();
-      await go(p, "/dashboard?latency=1500");
-      await p.waitForTimeout(300);
+      // latency=4000 so the skeleton is observable even on a fast machine
+      await p.goto(BASE + "/dashboard?latency=4000", {
+        waitUntil: "domcontentloaded",
+      });
+      await p
+        .getByLabel("Loading statistics")
+        .first()
+        .waitFor({ timeout: 3000 });
       assert(
         (await p.getByLabel("Loading statistics").count()) > 0,
         "skeleton while loading",
@@ -635,7 +642,7 @@ const go = (page, path) =>
       await page.waitForFunction(
         () => document.querySelectorAll("article").length === 4,
       );
-      await page.getByRole("button", { name: /Open cart/ }).focus();
+      await page.getByRole("button", { name: /^Cart/ }).focus();
       await page.keyboard.press("Enter");
       await page.getByRole("dialog", { name: "Cart" }).waitFor();
       await page.keyboard.press("Escape");
