@@ -8,7 +8,7 @@ import { Notice } from "@/components/lx/primitives";
 export const metadata: Metadata = {
   title: "Delivery",
   description:
-    "Find your address on the map and see delivery options for Lagos.",
+    "Find your address on the map and see delivery options anywhere in Nigeria.",
 };
 
 export default async function DeliveryPage({
@@ -26,15 +26,14 @@ export default async function DeliveryPage({
             Where should we deliver?
           </h1>
           <p className="mt-3 text-ink-2 max-w-xl">
-            Search for an address or drop a pin. We check it against the sample
-            service zones and show the options and a cost estimate where a
-            pricing rule exists.
+            We deliver to every state in Nigeria. Search for a town, choose your
+            state and area, or drop a pin to see the delivery options and an
+            estimate for your order weight.
           </p>
         </div>
-        <Notice tone="sample" title="Prototype coverage">
-          Zones and fees below are sample configuration. They show how the
-          experience will work; they are not Laddex&rsquo;s confirmed delivery
-          areas.
+        <Notice tone="sample" title="Sample rates">
+          Delivery is nationwide. The fees below are sample rates per region
+          and weight band, not Laddex&rsquo;s confirmed prices.
         </Notice>
       </header>
       <Suspense fallback={null}>

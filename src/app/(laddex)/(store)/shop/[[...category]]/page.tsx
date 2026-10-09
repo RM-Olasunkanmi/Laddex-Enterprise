@@ -16,7 +16,13 @@ export async function generateMetadata({
   const c = category?.[0];
   return {
     title:
-      c === "palm-oil" ? "Palm oil" : c === "tapioca" ? "Tapioca" : "All packs",
+      c === "palm-oil"
+        ? "Palm oil"
+        : c === "tapioca"
+          ? "Tapioca flakes"
+          : c === "garri"
+            ? "Garri"
+            : "All products",
   };
 }
 
@@ -35,7 +41,7 @@ export default async function ShopPage({
   const slug = category?.[0];
   if (
     category &&
-    (category.length > 1 || (slug !== "palm-oil" && slug !== "tapioca"))
+    (category.length > 1 || (slug !== "palm-oil" && slug !== "tapioca" && slug !== "garri"))
   )
     notFound();
   // Awaiting the catalogue here (not only in the layout) lets the diagnostics apply to this route.

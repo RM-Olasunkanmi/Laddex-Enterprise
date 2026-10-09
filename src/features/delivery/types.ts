@@ -5,15 +5,6 @@ export interface LngLat {
   lat: number;
 }
 
-/** SAMPLE configuration. A zone here is a grouping of real LGAs used to build the interface. */
-export interface SampleZone {
-  id: string;
-  name: string;
-  short: string;
-  lgaIds: string[];
-  pricing: ZonePricing | null;
-}
-
 export interface WeightBand {
   upToKg: number;
   feeKobo: Kobo;
@@ -24,30 +15,30 @@ export interface ZonePricing {
   bands: WeightBand[];
 }
 
-export interface PickupPoint {
+/** One of Nigeria's six geopolitical zones. The `pricing` is SAMPLE configuration. */
+export interface Region {
   id: string;
   name: string;
-  position: LngLat;
-  zoneId: string;
+  stateIds: string[];
+  pricing: ZonePricing;
 }
 
 /**
- * - sample-zone: inside an LGA that the sample configuration groups into a zone.
- * - outside-sample-zones: inside Lagos but not part of any sample zone.
- * - outside-lagos: outside the Lagos LGAs loaded for this prototype.
- * None of these states means Laddex verifiably delivers there.
+ * - in-nigeria: the point is inside a Nigerian state boundary. Laddex delivers nationwide; the
+ *   fee shown is still a sample rate.
+ * - outside-nigeria: not inside any state boundary (another country or open water). Not delivered.
  */
-export type CoverageStatus =
-  "sample-zone" | "outside-sample-zones" | "outside-lagos";
+export type CoverageStatus = "in-nigeria" | "outside-nigeria";
 
 export interface LocationResolution {
   position: LngLat;
-  lgaId: string | null;
-  lgaName: string | null;
   stateId: string | null;
   stateName: string | null;
-  zoneId: string | null;
-  zoneName: string | null;
+  regionId: string | null;
+  regionName: string | null;
+  /** Null until the state's LGA file has been loaded, or when the point falls in no LGA. */
+  lgaId: string | null;
+  lgaName: string | null;
   coverage: CoverageStatus;
 }
 
@@ -69,7 +60,7 @@ export interface DeliveryLocation {
   confirmed: boolean;
 }
 
-export type DeliveryOptionKind = "home-delivery" | "pickup" | "freight-quote";
+export type DeliveryOptionKind = "home-delivery" | "freight-quote";
 
 export interface DeliveryOption {
   id: string;
@@ -78,9 +69,8 @@ export interface DeliveryOption {
   detail: string;
   /** Null when no rule exists: the UI must say a quote is required, never guess. */
   feeKobo: Kobo | null;
-  feeBasis: "sample-rule" | "none" | "quote-required";
+  feeBasis: "sample-rule" | "quote-required";
   available: boolean;
-  /** Extra context such as a straight-line distance label. */
   note?: string;
 }
 

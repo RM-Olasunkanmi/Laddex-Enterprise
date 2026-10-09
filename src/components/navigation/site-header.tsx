@@ -1,4 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
+
+import { ThemeToggle } from "./theme-toggle";
 
 import {
   CartButton,
@@ -13,23 +16,24 @@ export const NAV = [
     label: "Shop",
     children: [
       { href: "/shop/palm-oil", label: "Palm oil", note: "By the litre" },
-      { href: "/shop/tapioca", label: "Tapioca", note: "By the kilo" },
-      { href: "/shop", label: "All packs", note: "Compare sizes" },
+      { href: "/shop/tapioca", label: "Tapioca flakes", note: "By the kilo" },
+      { href: "/shop/garri", label: "Garri", note: "Igbo and Ijebu" },
+      { href: "/shop", label: "All products", note: "Compare sizes" },
     ],
   },
   { href: "/wholesale", label: "Wholesale" },
+  { href: "/events", label: "Events" },
   { href: "/delivery", label: "Delivery" },
-  { href: "/account", label: "Account" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
-export function Wordmark({ className = "" }: { className?: string }) {
+export function Wordmark({ className = "", size = 44 }: { className?: string; size?: number }) {
   return (
-    <Link
-      href="/"
-      className={`font-display text-[1.65rem] leading-none tracking-tight font-semibold text-ink ${className}`}
-      aria-label="Laddex Enterprise, home"
-    >
-      Laddex<span className="text-ember">.</span>
+    <Link href="/" className={`inline-flex items-center gap-2.5 text-ink ${className}`} aria-label="Laddex Enterprise, home">
+      <Image src="/brand/laddex-logo.png" alt="" width={size} height={size} priority className="rounded-full" />
+      <span className="font-display text-[1.5rem] leading-none tracking-tight font-semibold">
+        Laddex<span className="text-ember">.</span>
+      </span>
     </Link>
   );
 }
@@ -44,13 +48,13 @@ export function SiteHeader() {
               Prototype
             </span>
             <span className="ml-2 hidden xs:inline">
-              Sample prices, stock and delivery zones. Not a live offer.
+              Sample sizes, prices and stock. Not a live offer.
             </span>
           </p>
           <PersonaSelect />
         </div>
       </div>
-      <div className="wrap flex h-[4.25rem] items-center gap-6">
+      <div className="wrap flex h-[4.5rem] items-center gap-6">
         <MobileNavButton />
         <Wordmark />
         <nav
@@ -100,6 +104,7 @@ export function SiteHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <DeliveryChip />
+          <ThemeToggle />
           <CartButton />
         </div>
       </div>

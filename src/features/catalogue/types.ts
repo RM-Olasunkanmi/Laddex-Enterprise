@@ -1,10 +1,9 @@
 import type { Kobo, Unit } from "@/lib/formatters";
 
-export type CategoryId = "palm-oil" | "tapioca";
+export type CategoryId = "palm-oil" | "tapioca" | "garri";
 export type UnitKind = "volume" | "mass";
 export type SalesFormat = "packaged" | "bulk";
-export type PackagingType =
-  "bottle" | "jerrycan" | "drum" | "pouch" | "bag" | "sack";
+export type PackagingType = "bottle" | "pouch" | "bag" | "sack";
 
 /** Marks values that come from development fixtures rather than confirmed Laddex data. */
 export type DataStatus = "illustrative" | "confirmed";
@@ -48,10 +47,15 @@ export interface ProductSpec {
 
 export interface ProductImage {
   id: string;
-  /** "photograph" is supplied Laddex photography; "development-render" is a placeholder. */
-  kind: "photograph" | "development-render";
-  src?: string;
+  /** Path under /public. Replace with original photography (see docs/ASSETS.md). */
+  src: string;
   alt: string;
+  width: number;
+  height: number;
+  /** CSS object-position for cropped display, e.g. "50% 20%". */
+  position?: string;
+  /** Provenance shown to the viewer, e.g. "Sample photo supplied by Laddex". */
+  note?: string;
 }
 
 export interface Product {
@@ -67,7 +71,7 @@ export interface Product {
   packagingNotes: string[];
   usage: string[];
   variants: PackVariant[];
-  /** Real photographs go here when supplied; until then the UI shows labelled development renders. */
+  /** First image is used on cards and as the main gallery image. */
   photographs: ProductImage[];
 }
 

@@ -2,58 +2,73 @@
 
 /* Tokens mirror src/lib/design/tokens.ts (checked by tokens.test.ts). */
 @theme {
-  --color-paper: #f6f2ea;
-  --color-paper-2: #ece6da;
-  --color-card: #fffdf8;
-  --color-ink: #1e1b17;
-  --color-ink-2: #4a453d;
+  --color-paper: #f8f6f0;
+  --color-paper-2: #efebe1;
+  --color-card: #ffffff;
+  --color-ink: #17140f;
+  --color-ink-2: #46413a;
   --color-ink-3: #675f54;
-  --color-line: #d9d1c2;
+  --color-line: #ddd6c8;
   --color-line-strong: #b5ab97;
-
-  --color-ember: #b23a0e;
-  --color-ember-deep: #8a2a06;
-  --color-ember-tint: #f3dccb;
-  --color-on-ember: #fff8f0;
-
-  --color-slate: #3f6fb5;
-  --color-slate-deep: #244a82;
-  --color-slate-tint: #dce6f4;
-
+  --color-ember: #b3261e;
+  --color-ember-deep: #861510;
+  --color-ember-tint: #f8dedb;
+  --color-on-ember: #ffffff;
+  --color-leaf: #2e7d4f;
+  --color-leaf-deep: #1e5636;
+  --color-leaf-tint: #ddeee3;
+  --color-sky: #3f6fb5;
+  --color-sky-deep: #244a82;
+  --color-sky-tint: #dce6f4;
   --color-ochre: #e3b04b;
   --color-ochre-deep: #7a5200;
   --color-ochre-tint: #f6e6bf;
-
   --color-success: #2e6b45;
   --color-success-tint: #d9ebdf;
   --color-warning: #8a5a00;
   --color-warning-tint: #f7e7c2;
   --color-danger: #a12525;
   --color-danger-tint: #f4d6d6;
-
-  --color-rail: #1e1b17;
+  --color-rail: #17140f;
   --color-rail-line: #38332c;
   --color-rail-text: #e9e2d3;
 
   --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
-  --font-sans:
-    "Hanken Grotesk Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono:
-    "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Hanken Grotesk Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 8px;
 
-  --shadow-rule: 0 1px 0 rgba(30, 27, 23, 0.08);
-  --shadow-raised:
-    0 1px 2px rgba(30, 27, 23, 0.1), 0 4px 12px -6px rgba(30, 27, 23, 0.18);
-  --shadow-pop: 0 10px 30px -12px rgba(30, 27, 23, 0.35);
+  --shadow-rule: 0 1px 0 rgba(23, 20, 15, 0.08);
+  --shadow-raised: 0 1px 2px rgba(23, 20, 15, 0.1), 0 4px 12px -6px rgba(23, 20, 15, 0.18);
+  --shadow-pop: 0 10px 30px -12px rgba(23, 20, 15, 0.35);
 
   --breakpoint-xs: 30rem;
 }
 
 :root {
+  color-scheme: light;
+  --chart-palm: #b3261e;
+  --chart-tapioca: #b07f10;
+  --chart-garri: #2e7d4f;
+  --chart-retail: #3f6fb5;
+  --chart-wholesale: #b04a8f;
+  --chart-events: #7a7468;
+  --chart-neutral: #8c8374;
+  --chart-prior: #8c8374;
+  --chart-grid: #e6e0d3;
+  --seq-1: #fcebe9;
+  --seq-2: #f5c2bc;
+  --seq-3: #e98d83;
+  --seq-4: #cf4e42;
+  --seq-5: #8e1b14;
+  --div-1: #3f6fb5;
+  --div-2: #9db8df;
+  --div-3: #e6e3db;
+  --div-4: #9fd0ab;
+  --div-5: #2e7d4f;
   --d-fast: 120ms;
   --d-base: 200ms;
   --d-slow: 320ms;
@@ -66,6 +81,63 @@
   :root {
     --gutter: 2rem;
   }
+}
+
+/* Dark theme: same names, different values. Set on <html data-theme="dark"> by the theme script. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: #14110d;
+  --color-paper-2: #1c1812;
+  --color-card: #1e1a15;
+  --color-ink: #f2ede2;
+  --color-ink-2: #cfc8b8;
+  --color-ink-3: #a59d8d;
+  --color-line: #38322a;
+  --color-line-strong: #5c5445;
+  --color-ember: #ef6a5e;
+  --color-ember-deep: #f59a91;
+  --color-ember-tint: #3a1b18;
+  --color-on-ember: #14110d;
+  --color-leaf: #5cb36a;
+  --color-leaf-deep: #93d69f;
+  --color-leaf-tint: #17301d;
+  --color-sky: #6fa0e8;
+  --color-sky-deep: #a9c8f5;
+  --color-sky-tint: #1b2a44;
+  --color-ochre: #e3b04b;
+  --color-ochre-deep: #f0ce7e;
+  --color-ochre-tint: #3a2e12;
+  --color-success: #6cc287;
+  --color-success-tint: #173323;
+  --color-warning: #e0b04a;
+  --color-warning-tint: #3a2c0f;
+  --color-danger: #f28b82;
+  --color-danger-tint: #3f1c1a;
+  --color-rail: #0e0c09;
+  --color-rail-line: #2a251e;
+  --color-rail-text: #e9e2d3;
+  --chart-palm: #d9483d;
+  --chart-tapioca: #b88a14;
+  --chart-garri: #3a9a66;
+  --chart-retail: #4f86d6;
+  --chart-wholesale: #b4609e;
+  --chart-events: #9a9384;
+  --chart-neutral: #8c8374;
+  --chart-prior: #8c8374;
+  --chart-grid: #2e2922;
+  --seq-1: #2a1714;
+  --seq-2: #5a2520;
+  --seq-3: #93362e;
+  --seq-4: #c9524a;
+  --seq-5: #f08a80;
+  --div-1: #4f86d6;
+  --div-2: #2f4c7a;
+  --div-3: #2b2620;
+  --div-4: #2f6b45;
+  --div-5: #3a9a66;
+  --shadow-rule: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px -6px rgba(0, 0, 0, 0.6);
+  --shadow-pop: 0 10px 30px -12px rgba(0, 0, 0, 0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -205,7 +277,7 @@
     color: var(--color-paper);
   }
   .btn-ink:hover:not(:disabled) {
-    background: #000;
+    background: var(--color-ink-2);
   }
   .btn-line {
     background: transparent;
@@ -296,8 +368,8 @@
     color: var(--color-danger);
   }
   .tag-info {
-    background: var(--color-slate-tint);
-    color: var(--color-slate-deep);
+    background: var(--color-sky-tint);
+    color: var(--color-sky-deep);
   }
   .tag-sample {
     background: var(--color-ochre-tint);

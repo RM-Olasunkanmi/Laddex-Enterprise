@@ -64,7 +64,7 @@ export function ProductPurchase({
     <>
       <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
         <div className="lg:sticky lg:top-32 self-start">
-          <ProductGallery product={product} variant={variant} />
+          <ProductGallery product={product} />
         </div>
 
         <div>

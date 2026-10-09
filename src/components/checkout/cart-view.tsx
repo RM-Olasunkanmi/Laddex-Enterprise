@@ -8,8 +8,7 @@ import { Price, UnitPrice } from "@/components/commerce/money";
 import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCart } from "@/components/commerce/use-customer-pricing";
 import { Notice, Tag } from "@/components/lx/primitives";
-import { packScale } from "@/components/product/pack-ladder";
-import { PackVisual } from "@/components/product/pack-visual";
+import { ProductPhoto } from "@/components/product/product-photo";
 import { clearCart, removeFromCart, setQty } from "@/features/cart/store";
 import { pricePerBaseUnit, activeTier } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
@@ -82,16 +81,7 @@ export function CartView() {
                 key={l.variant.id}
                 className="p-4 grid grid-cols-[5.5rem_1fr] sm:grid-cols-[6.5rem_1fr_auto] gap-4"
               >
-                <div className="bg-paper-2 rounded-sm h-28 sm:h-32">
-                  <PackVisual
-                    packaging={l.variant.packaging}
-                    category={l.product.category}
-                    sizeLabel={packLabel(l.variant)}
-                    scale={packScale(l.variant, l.product)}
-                    caption={false}
-                    className="w-full h-full p-1"
-                  />
-                </div>
+                <ProductPhoto product={l.product} sizes="104px" className="rounded-sm h-24 w-full sm:h-26" />
                 <div className="min-w-0">
                   <Link
                     href={`/products/${l.product.slug}?pack=${l.variant.id}`}

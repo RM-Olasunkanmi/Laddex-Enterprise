@@ -7,7 +7,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Price } from "@/components/commerce/money";
 import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCart } from "@/components/commerce/use-customer-pricing";
-import { PackVisual } from "@/components/product/pack-visual";
+import { ProductPhoto } from "@/components/product/product-photo";
 import { removeFromCart, setQty } from "@/features/cart/store";
 import { packLabel } from "@/features/catalogue/selectors";
 import { cartDrawer, navDrawer } from "@/lib/data/ui-store";
@@ -91,15 +91,7 @@ export function CartDrawer() {
           <ul className="divide-y divide-line">
             {cart.lines.map((l) => (
               <li key={l.variant.id} className="py-4 flex gap-4">
-                <div className="w-20 h-24 shrink-0 bg-paper-2 rounded-sm grid place-items-end">
-                  <PackVisual
-                    packaging={l.variant.packaging}
-                    category={l.product.category}
-                    sizeLabel={packLabel(l.variant)}
-                    caption={false}
-                    className="w-full h-full p-1"
-                  />
-                </div>
+                <ProductPhoto product={l.product} sizes="80px" className="w-20 h-20 shrink-0 rounded-sm" />
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between gap-2">
                     <p className="font-medium">

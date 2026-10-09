@@ -34,7 +34,7 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
   );
   const first =
     all.find((x) => x.v.id === initialPack) ??
-    all.find((x) => x.v.id === "po-25l")!;
+    all.find((x) => x.v.id === "gi-25kg")!;
   const [lines, setLines] = useState<QuoteLine[]>([
     { variantId: first.v.id, qty: first.v.wholesaleMinQty },
   ]);
@@ -68,7 +68,7 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
   const area =
     f.area ||
     (loc.resolution?.lgaName
-      ? `${loc.resolution.lgaName}, ${loc.resolution.stateName ?? "Lagos"}`
+      ? `${loc.resolution.lgaName}, ${loc.resolution.stateName ?? "Nigeria"}`
       : "");
 
   if (submitted) {
@@ -279,7 +279,7 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
                 id="q-area"
                 className="field"
                 value={f.area}
-                placeholder={area || "e.g. Apapa, Lagos"}
+                placeholder={area || "e.g. Onitsha, Anambra"}
                 onChange={(e) => setF({ ...f, area: e.target.value })}
               />
               <p className="hint mt-1">

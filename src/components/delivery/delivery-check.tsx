@@ -31,13 +31,12 @@ export function DeliveryCheck({
         <h2 id="dcheck" className="!text-xl">
           Delivery to your address
         </h2>
-        <Tag tone="sample">Sample zones</Tag>
+        <Tag tone="sample">Sample rates</Tag>
       </div>
       {!hydrated || !location || !resolution || !estimate ? (
         <div className="mt-2">
           <p className="text-sm text-ink-2">
-            See whether a delivery zone includes your address and what delivery
-            would cost for this order.
+            Choose your state to see the delivery estimate for this order.
           </p>
           <Link href="/delivery" className="btn btn-ink btn-sm min-h-11 mt-3">
             Check my address
@@ -49,7 +48,7 @@ export function DeliveryCheck({
             <span className="text-ink-3">To </span>
             <strong>{location.label}</strong>
             <span className="text-ink-3">
-              {resolution.lgaName ? `, ${resolution.lgaName} LGA` : ""}
+              {resolution.lgaName ? `, ${resolution.lgaName}` : resolution.stateName ? `, ${resolution.stateName}` : ""}
             </span>
           </p>
           <CoverageBadge resolution={resolution} />
@@ -73,7 +72,7 @@ export function DeliveryCheck({
               ))}
           </ul>
           <p className="hint">
-            Estimate for about {Math.round(weightKg)} kg. Sample rule, not a
+            Estimate for about {Math.round(weightKg)} kg. Sample rate, not a
             promise.
           </p>
           <Link

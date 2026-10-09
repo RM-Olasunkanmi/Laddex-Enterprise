@@ -2,40 +2,23 @@ import type { LocationResolution } from "@/features/delivery/types";
 
 import { Tag } from "@/components/lx/primitives";
 
-/** States the sample coverage result in words, with a marker, and never implies verified coverage. */
-export function CoverageBadge({
-  resolution,
-}: {
-  resolution: LocationResolution;
-}) {
-  if (resolution.coverage === "sample-zone") {
+/** States the coverage result in words, with a marker. The rates behind it are still sample rates. */
+export function CoverageBadge({ resolution }: { resolution: LocationResolution }) {
+  if (resolution.coverage === "in-nigeria") {
     return (
       <p className="flex flex-wrap items-center gap-2 text-sm">
-        <Tag tone="info">Inside sample zone</Tag>
-        <span>{resolution.zoneName}</span>
-      </p>
-    );
-  }
-  if (resolution.coverage === "outside-sample-zones") {
-    return (
-      <p className="flex flex-wrap items-center gap-2 text-sm">
-        <Tag tone="warning">Outside sample zones</Tag>
+        <Tag tone="success">We deliver here</Tag>
         <span>
-          {resolution.lgaName} is not in a configured sample zone. A written
-          quote is needed.
+          {resolution.stateName}
+          {resolution.regionName ? `, ${resolution.regionName} region` : ""}
         </span>
       </p>
     );
   }
   return (
     <p className="flex flex-wrap items-center gap-2 text-sm">
-      <Tag tone="warning">Outside loaded area</Tag>
-      <span>
-        {resolution.stateName
-          ? `${resolution.stateName} State is`
-          : "This point is"}{" "}
-        outside the Lagos boundaries used in this prototype.
-      </span>
+      <Tag tone="warning">Outside Nigeria</Tag>
+      <span>This point is not inside a Nigerian state. Move the pin or choose a state.</span>
     </p>
   );
 }

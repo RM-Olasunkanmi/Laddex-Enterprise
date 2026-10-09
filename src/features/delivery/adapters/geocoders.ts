@@ -17,12 +17,12 @@ export const gazetteerGeocoder: GeocodingService = {
     const q = norm(query);
     if (q.length < 2) return [];
     const hits = GAZETTEER.filter(
-      (g) => norm(g.name).includes(q) || norm(g.area).includes(q),
+      (g) => norm(g.name).includes(q) || norm(g.stateId.replace(/-/g, " ")).includes(q),
     );
     return hits.slice(0, opts?.limit ?? 6).map<GeocodeResult>((g) => ({
       id: `gaz-${norm(g.name).replace(/ /g, "-")}`,
       label: g.name,
-      secondary: `${g.area}, Lagos. Locality centre, not a street address.`,
+      secondary: `${g.stateId.replace(/-/g, " ")} state. Locality centre, not a street address.`,
       position: { lng: g.lng, lat: g.lat },
       precision: "locality-centroid",
       source: "gazetteer",
@@ -52,7 +52,7 @@ export const nominatimGeocoder: GeocodingService = {
     url.searchParams.set("q", q);
     url.searchParams.set("countrycodes", "ng");
     url.searchParams.set("limit", String(opts?.limit ?? 5));
-    url.searchParams.set("viewbox", "2.69,6.71,4.38,6.37");
+    url.searchParams.set("viewbox", "2.6,13.95,14.8,4.2");
     const res = await fetch(url, {
       signal: opts?.signal,
       headers: { Accept: "application/json" },

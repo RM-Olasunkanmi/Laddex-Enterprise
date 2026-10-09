@@ -129,11 +129,9 @@ export default async function ProductPage({
             Also from Laddex
           </h2>
           <div className="mt-6 grid gap-3 sm:gap-5 grid-cols-2 lg:grid-cols-4">
-            {related.flatMap((p) =>
-              p.variants
-                .slice(0, 4)
-                .map((v) => <ProductCard key={v.id} product={p} variant={v} />),
-            )}
+            {related.slice(0, 4).map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
         </section>
       )}

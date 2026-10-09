@@ -8,11 +8,10 @@
     "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
     "sourceUrl": "https://data.grid3.org/datasets/grid3-nigeria-state-boundaries/explore?location=8.992006%2C8.685290%2C6.82",
     "sourceDataUpdateDate": "Sun Feb 26 12:26:14 2023",
-    "geometry": "simplified release (national context only)",
     "crs": "WGS84 / EPSG:4326 (longitude, latitude in degrees)",
+    "geometry": "simplified release, 1e-3 degrees (about 110 m)",
     "file": "ng-states.json",
-    "features": 37,
-    "precisionDecimals": 3
+    "features": 37
   },
   "lgas": {
     "provider": "geoBoundaries (William & Mary geoLab)",
@@ -23,12 +22,11 @@
     "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
     "sourceUrl": "https://data.grid3.org/datasets/grid3-nigeria-local-government-area-boundaries-1/explore?location=8.959048%2C8.685290%2C6.61",
     "sourceDataUpdateDate": "Sun Feb 26 12:26:14 2023",
-    "geometry": "full-resolution release, quantised to 1e-4 degrees (about 11 m)",
     "crs": "WGS84 / EPSG:4326 (longitude, latitude in degrees)",
-    "file": "lagos-lgas.json",
-    "features": 20,
-    "precisionDecimals": 4,
-    "filter": "LGA representative point inside the Lagos ADM1 polygon"
+    "geometry": "full-resolution release, quantised to 1e-4 degrees (about 11 m), one file per state, loaded on demand",
+    "file": "lga/<state-id>.json",
+    "features": 774,
+    "assignment": "LGA representative point inside the full-resolution state polygon (nearest centroid for coastal exceptions)"
   },
   "attribution": "Boundaries: geoBoundaries gbOpen (GRID3 source), CC BY 4.0. Basemap: OpenFreeMap, OpenMapTiles, © OpenStreetMap contributors."
 }

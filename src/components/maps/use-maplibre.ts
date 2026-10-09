@@ -6,26 +6,19 @@ import { useEffect, useRef, useState } from "react";
 
 import type { Map as MlMap, StyleSpecification } from "maplibre-gl";
 
-import { map as mapTokens } from "@/lib/design/tokens";
-import { LAGOS_BOUNDS } from "@/lib/geo/geography";
+import { useTheme } from "@/lib/design/theme";
+import { mapByTheme } from "@/lib/design/tokens";
+import { NIGERIA_BOUNDS } from "@/lib/geo/geography";
 
 export type MaplibreModule = typeof import("maplibre-gl");
 export type BasemapState = "loading" | "online" | "offline";
 
-const ONLINE_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
 /** Plain background with no remote dependencies. Boundaries are drawn on top of it as layers. */
-const OFFLINE_STYLE: StyleSpecification = {
+const offlineStyle = (background: string): StyleSpecification => ({
   version: 8,
   sources: {},
-  layers: [
-    {
-      id: "background",
-      type: "background",
-      paint: { "background-color": mapTokens.background },
-    },
-  ],
-};
+  layers: [{ id: "background", type: "background", paint: { "background-color": background } }],
+});
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
@@ -60,7 +53,7 @@ interface Options {
  * The instance and all listeners are removed on unmount.
  */
 export function useMapLibre({
-  bounds = LAGOS_BOUNDS,
+  bounds = NIGERIA_BOUNDS,
   interactive = true,
   ariaLabel,
 }: Options) {
@@ -69,6 +62,7 @@ export function useMapLibre({
     null,
   );
   const [basemap, setBasemap] = useState<BasemapState>("loading");
+  const theme = useTheme();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -83,7 +77,7 @@ export function useMapLibre({
         (async () => {
           const timer = window.setTimeout(() => ctl.abort(), 3500);
           try {
-            const res = await fetch(ONLINE_STYLE, { signal: ctl.signal });
+            const res = await fetch(mapByTheme[theme].basemapStyle, { signal: ctl.signal });
             return res.ok;
           } catch {
             return false;
@@ -95,7 +89,7 @@ export function useMapLibre({
       if (cancelled) return;
       instance = new ml.Map({
         container: el,
-        style: online ? ONLINE_STYLE : OFFLINE_STYLE,
+        style: online ? mapByTheme[theme].basemapStyle : offlineStyle(mapByTheme[theme].background),
         bounds,
         fitBoundsOptions: { padding: 24 },
         interactive,
@@ -132,8 +126,8 @@ export function useMapLibre({
       instance?.remove();
       setReady(null);
     };
-    // The map is created once per mount; bounds and label are initial values.
-  }, []);
+    // The map is rebuilt when the theme changes so the basemap and layers match it; bounds and label are initial values.
+  }, [theme]);
 
   return {
     containerRef,

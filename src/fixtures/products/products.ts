@@ -4,16 +4,18 @@ import type {
   PackagingType,
   PriceTier,
   Product,
+  ProductImage,
   SalesFormat,
   StockStatus,
 } from "@/features/catalogue/types";
 import type { Unit } from "@/lib/formatters";
 
 /**
- * DEVELOPMENT FIXTURES. Every size, price, tier, stock level and weight below is
- * illustrative until Laddex supplies the real catalogue. Nothing here is a confirmed offer.
- * Prices are integer kobo. Tiers are generated from a base price and a discount ratio so
- * the stored numbers stay reproducible.
+ * DEVELOPMENT FIXTURES. Product names, the products' look and the photographs come from material
+ * Laddex supplied. Every pack size, price, tier, stock level and weight below is illustrative until
+ * Laddex confirms the real catalogue. Nothing here is a confirmed offer.
+ * Prices are integer kobo. Tiers are generated from a base price and a discount ratio so the stored
+ * numbers stay reproducible.
  */
 
 export const CATEGORIES: CategoryInfo[] = [
@@ -23,25 +25,29 @@ export const CATEGORIES: CategoryInfo[] = [
     unitKind: "volume",
     tagline: "Sold by the litre",
     blurb:
-      "Packs from a bottle to a drum. Unit price is shown per litre so sizes compare directly.",
+      "Bottled palm oil in five sizes. Each size shows its price per litre so you can compare them.",
   },
   {
     id: "tapioca",
-    name: "Tapioca",
+    name: "Tapioca flakes",
     unitKind: "mass",
     tagline: "Sold by the kilo",
+    blurb: "Tapioca flakes in pouches and bags, priced per kilogram.",
+  },
+  {
+    id: "garri",
+    name: "Garri",
+    unitKind: "mass",
+    tagline: "Igbo and Ijebu, sold by the kilo",
     blurb:
-      "Pouches, bags and sacks. Unit price is shown per kilogram so sizes compare directly.",
+      "Garri Igbo and Ijebu Garri, from a 1 kg pouch to a sack for resale.",
   },
 ];
 
 /** Round to the nearest 10 naira so tier prices read like real price lists. */
 const roundTen = (kobo: number) => Math.round(kobo / 1000) * 1000;
 
-function tiers(
-  base: number,
-  breaks: [qty: number, discount: number][],
-): PriceTier[] {
+function tiers(base: number, breaks: [qty: number, discount: number][]): PriceTier[] {
   return breaks.map(([minQty, d]) => ({
     minQty,
     unitPriceKobo: roundTen(base * (1 - d)),
@@ -62,11 +68,7 @@ interface VariantSeed {
   weightKg: number;
 }
 
-function variants(
-  productId: string,
-  skuPrefix: string,
-  seeds: VariantSeed[],
-): PackVariant[] {
+function variants(productId: string, skuPrefix: string, seeds: VariantSeed[]): PackVariant[] {
   return seeds.map((s) => ({
     id: s.id,
     sku: `${skuPrefix}-${s.size}${s.unit.toUpperCase()}`,
@@ -84,6 +86,17 @@ function variants(
   }));
 }
 
+const SAMPLE = "Sample photo supplied by Laddex";
+const photo = (id: string, file: string, alt: string, width: number, height: number, position?: string): ProductImage => ({
+  id,
+  src: `/products/${file}`,
+  alt,
+  width,
+  height,
+  position,
+  note: SAMPLE,
+});
+
 export const PRODUCTS: Product[] = [
   {
     id: "palm-oil",
@@ -92,226 +105,137 @@ export const PRODUCTS: Product[] = [
     name: "Palm Oil",
     unitKind: "volume",
     baseUnit: "l",
-    summary: "Palm oil in household bottles, jerrycans and drums.",
+    summary: "Laddex palm oil in bottles from 1 litre up to 5 litres.",
     description: [
       "Palm oil is a vegetable cooking oil pressed from the fruit of the oil palm. It is used in stews, soups and frying across Nigerian kitchens and in food production.",
-      "Laddex offers it in five pack sizes. Choose a bottle or small jerrycan for the household, or a larger jerrycan or drum to stock a shop, restaurant or processing line.",
+      "Laddex palm oil comes in clear bottles with red caps; the larger sizes have a carry handle on the cap. Choose a small bottle for the household or a larger one to stock a shop, a kitchen or an event.",
     ],
     specs: [
       { label: "Sold by", value: "Litre (volume)" },
-      { label: "Pack sizes", value: "500 ml, 1 L, 5 L, 25 L, 200 L" },
-      {
-        label: "Grade and processing",
-        value: "To be confirmed by Laddex",
-        note: "No grade, colour class or processing claim is made until supplied.",
-      },
+      { label: "Bottle sizes", value: "1 L, 2 L, 3 L, 4 L, 5 L", note: "Sizes are illustrative until confirmed by Laddex." },
+      { label: "Grade and processing", value: "To be confirmed by Laddex", note: "No grade or processing claim is made until supplied." },
       { label: "Shelf life", value: "To be confirmed by Laddex" },
-      {
-        label: "Shipping weight basis",
-        value: "About 0.91 kg per litre plus packaging",
-        note: "Generic density used only to estimate delivery weight.",
-      },
+      { label: "Shipping weight basis", value: "About 0.91 kg per litre plus the bottle", note: "Generic density used only to estimate delivery weight." },
     ],
     packagingNotes: [
-      "Bottles and jerrycans are sold as single packs. Drums are sold per drum.",
-      "Packaging materials are placeholders until the final specification is confirmed.",
+      "Sold as single bottles. Wholesale quantities are counted in bottles of the same size.",
+      "Pack sizes and fill volumes are placeholders until the final specification is confirmed.",
     ],
-    usage: [
-      "Household cooking",
-      "Restaurants and caterers",
-      "Food processors and resellers",
-    ],
+    usage: ["Household cooking", "Shops, restaurants and caterers", "Events and gifts"],
     variants: variants("palm-oil", "PO", [
-      {
-        id: "po-500ml",
-        size: 500,
-        unit: "ml",
-        contentBase: 0.5,
-        packaging: "bottle",
-        format: "packaged",
-        naira: 1900,
-        breaks: [
-          [12, 0.05],
-          [48, 0.09],
-        ],
-        moq: 12,
-        stock: ["out-of-stock", 0],
-        weightKg: 0.55,
-      },
-      {
-        id: "po-1l",
-        size: 1,
-        unit: "l",
-        contentBase: 1,
-        packaging: "bottle",
-        format: "packaged",
-        naira: 3400,
-        breaks: [
-          [12, 0.05],
-          [48, 0.09],
-        ],
-        moq: 12,
-        stock: ["in-stock", 640],
-        weightKg: 1.0,
-      },
-      {
-        id: "po-5l",
-        size: 5,
-        unit: "l",
-        contentBase: 5,
-        packaging: "jerrycan",
-        format: "packaged",
-        naira: 15500,
-        breaks: [
-          [6, 0.04],
-          [24, 0.08],
-        ],
-        moq: 6,
-        stock: ["in-stock", 310],
-        weightKg: 4.8,
-      },
-      {
-        id: "po-25l",
-        size: 25,
-        unit: "l",
-        contentBase: 25,
-        packaging: "jerrycan",
-        format: "bulk",
-        naira: 71000,
-        breaks: [
-          [4, 0.04],
-          [12, 0.07],
-          [40, 0.1],
-        ],
-        moq: 4,
-        stock: ["low-stock", 18],
-        weightKg: 24.2,
-      },
-      {
-        id: "po-200l",
-        size: 200,
-        unit: "l",
-        contentBase: 200,
-        packaging: "drum",
-        format: "bulk",
-        naira: 540000,
-        breaks: [
-          [2, 0.05],
-          [10, 0.09],
-        ],
-        moq: 2,
-        stock: ["in-stock", 22],
-        weightKg: 195,
-      },
+      { id: "po-1l", size: 1, unit: "l", contentBase: 1, packaging: "bottle", format: "packaged", naira: 3500, breaks: [[12, 0.05], [48, 0.09]], moq: 12, stock: ["in-stock", 640], weightKg: 1.0 },
+      { id: "po-2l", size: 2, unit: "l", contentBase: 2, packaging: "bottle", format: "packaged", naira: 6800, breaks: [[6, 0.04], [24, 0.08]], moq: 6, stock: ["in-stock", 410], weightKg: 1.95 },
+      { id: "po-3l", size: 3, unit: "l", contentBase: 3, packaging: "bottle", format: "packaged", naira: 10000, breaks: [[6, 0.04], [24, 0.08]], moq: 6, stock: ["in-stock", 280], weightKg: 2.9 },
+      { id: "po-4l", size: 4, unit: "l", contentBase: 4, packaging: "bottle", format: "packaged", naira: 13000, breaks: [[4, 0.04], [12, 0.07], [40, 0.1]], moq: 4, stock: ["low-stock", 18], weightKg: 3.85 },
+      { id: "po-5l", size: 5, unit: "l", contentBase: 5, packaging: "bottle", format: "packaged", naira: 16000, breaks: [[4, 0.04], [12, 0.07], [40, 0.1]], moq: 4, stock: ["in-stock", 220], weightKg: 4.8 },
     ]),
-    photographs: [],
+    photographs: [
+      photo("palm-lineup", "palm-oil-lineup.webp", "Five Laddex palm oil bottles of different sizes with red caps, standing together", 500, 330, "50% 40%"),
+      photo("palm-full", "palm-oil-full.webp", "Laddex palm oil bottles on a woven mat beside a glass bowl of palm oil", 540, 717, "50% 50%"),
+    ],
   },
   {
-    id: "tapioca",
-    slug: "tapioca",
+    id: "tapioca-flakes",
+    slug: "tapioca-flakes",
     category: "tapioca",
-    name: "Tapioca",
+    name: "Tapioca Flakes",
     unitKind: "mass",
     baseUnit: "kg",
-    summary: "Tapioca in pouches, bags and sacks.",
+    summary: "Laddex tapioca flakes in pouches and bags.",
     description: [
-      "Tapioca is a starch made from cassava root. Cooks use it for puddings, thickening and drinks, and food makers use it as an ingredient.",
-      "Laddex offers it in four pack sizes, from a kitchen pouch to a sack for trade buyers.",
+      "Tapioca is a starch made from cassava root. The flakes are used for puddings, drinks and desserts, and as an ingredient by food makers.",
+      "Laddex tapioca flakes are packed in printed pouches. Smaller pouches suit the kitchen; larger bags suit shops and caterers.",
     ],
     specs: [
       { label: "Sold by", value: "Kilogram (mass)" },
-      { label: "Pack sizes", value: "1 kg, 5 kg, 25 kg, 50 kg" },
-      {
-        label: "Form (starch, flakes or pearls)",
-        value: "To be confirmed by Laddex",
-        note: "The product form is not assumed until supplied.",
-      },
+      { label: "Pack sizes", value: "500 g, 1 kg, 5 kg", note: "Sizes are illustrative until confirmed by Laddex." },
+      { label: "Ingredients and allergens", value: "To be confirmed by Laddex" },
       { label: "Shelf life", value: "To be confirmed by Laddex" },
-      {
-        label: "Storage",
-        value: "Keep sealed, cool and dry",
-        note: "General guidance. Confirm against the Laddex label.",
-      },
+      { label: "Storage", value: "Keep sealed, cool and dry", note: "General guidance. Confirm against the Laddex label." },
     ],
     packagingNotes: [
-      "Pouches and bags are sold singly. Sacks are sold per sack.",
-      "Packaging materials are placeholders until the final specification is confirmed.",
+      "Pouches and bags are sold singly. Wholesale quantities are counted in packs of the same size.",
+      "Pack sizes are placeholders until the final specification is confirmed.",
     ],
-    usage: [
-      "Household cooking",
-      "Bakeries and caterers",
-      "Food manufacturers and resellers",
-    ],
-    variants: variants("tapioca", "TP", [
-      {
-        id: "tp-1kg",
-        size: 1,
-        unit: "kg",
-        contentBase: 1,
-        packaging: "pouch",
-        format: "packaged",
-        naira: 2400,
-        breaks: [
-          [12, 0.05],
-          [60, 0.09],
-        ],
-        moq: 12,
-        stock: ["in-stock", 1200],
-        weightKg: 1.05,
-      },
-      {
-        id: "tp-5kg",
-        size: 5,
-        unit: "kg",
-        contentBase: 5,
-        packaging: "bag",
-        format: "packaged",
-        naira: 10800,
-        breaks: [
-          [6, 0.05],
-          [24, 0.09],
-        ],
-        moq: 6,
-        stock: ["in-stock", 420],
-        weightKg: 5.2,
-      },
-      {
-        id: "tp-25kg",
-        size: 25,
-        unit: "kg",
-        contentBase: 25,
-        packaging: "sack",
-        format: "bulk",
-        naira: 48000,
-        breaks: [
-          [4, 0.04],
-          [20, 0.08],
-          [60, 0.11],
-        ],
-        moq: 4,
-        stock: ["in-stock", 96],
-        weightKg: 25.4,
-      },
-      {
-        id: "tp-50kg",
-        size: 50,
-        unit: "kg",
-        contentBase: 50,
-        packaging: "sack",
-        format: "bulk",
-        naira: 91000,
-        breaks: [
-          [2, 0.04],
-          [10, 0.08],
-          [40, 0.12],
-        ],
-        moq: 2,
-        stock: ["low-stock", 12],
-        weightKg: 50.6,
-      },
+    usage: ["Household cooking", "Bakeries, caterers and dessert makers", "Shops and resellers"],
+    variants: variants("tapioca-flakes", "TF", [
+      { id: "tf-500g", size: 500, unit: "g", contentBase: 0.5, packaging: "pouch", format: "packaged", naira: 1600, breaks: [[24, 0.05], [96, 0.09]], moq: 24, stock: ["out-of-stock", 0], weightKg: 0.55 },
+      { id: "tf-1kg", size: 1, unit: "kg", contentBase: 1, packaging: "pouch", format: "packaged", naira: 3000, breaks: [[12, 0.05], [48, 0.09]], moq: 12, stock: ["in-stock", 900], weightKg: 1.05 },
+      { id: "tf-5kg", size: 5, unit: "kg", contentBase: 5, packaging: "bag", format: "packaged", naira: 14000, breaks: [[6, 0.05], [24, 0.09]], moq: 6, stock: ["in-stock", 260], weightKg: 5.2 },
     ]),
-    photographs: [],
+    photographs: [photo("tapioca-flakes", "tapioca-flakes.webp", "Shelves of Laddex Tapioca Flakes pouches with yellow and red labels", 250, 330, "50% 30%")],
+  },
+  {
+    id: "garri-igbo",
+    slug: "garri-igbo",
+    category: "garri",
+    name: "Garri Igbo",
+    unitKind: "mass",
+    baseUnit: "kg",
+    summary: "Laddex Garri Igbo, from a 1 kg pouch to a 50 kg sack.",
+    description: [
+      "Garri is a staple made from fermented, grated and roasted cassava. It is eaten soaked with water, sugar and groundnuts, or made into a firm dough (eba) to go with soups and stews.",
+      "Laddex Garri Igbo is packed in a printed 1 kg pouch for the kitchen, with larger bags and sacks for shops, resellers and events.",
+    ],
+    specs: [
+      { label: "Sold by", value: "Kilogram (mass)" },
+      { label: "Pack sizes", value: "1 kg, 5 kg, 25 kg, 50 kg", note: "The 1 kg pouch is shown on the packaging. Larger sizes are illustrative until confirmed." },
+      { label: "Ingredients", value: "To be confirmed by Laddex" },
+      { label: "Shelf life", value: "To be confirmed by Laddex" },
+      { label: "Storage", value: "Keep sealed, cool and dry", note: "General guidance. Confirm against the Laddex label." },
+    ],
+    packagingNotes: [
+      "Pouches and bags are sold singly; sacks are sold per sack.",
+      "Larger pack sizes are placeholders until the final specification is confirmed.",
+    ],
+    usage: ["Household meals", "Shops and resellers", "Events and souvenirs"],
+    variants: variants("garri-igbo", "GI", [
+      { id: "gi-1kg", size: 1, unit: "kg", contentBase: 1, packaging: "pouch", format: "packaged", naira: 1800, breaks: [[12, 0.05], [48, 0.09]], moq: 12, stock: ["in-stock", 1500], weightKg: 1.05 },
+      { id: "gi-5kg", size: 5, unit: "kg", contentBase: 5, packaging: "bag", format: "packaged", naira: 8500, breaks: [[6, 0.05], [24, 0.09]], moq: 6, stock: ["in-stock", 420], weightKg: 5.2 },
+      { id: "gi-25kg", size: 25, unit: "kg", contentBase: 25, packaging: "sack", format: "bulk", naira: 40000, breaks: [[4, 0.04], [20, 0.08], [60, 0.11]], moq: 4, stock: ["in-stock", 96], weightKg: 25.4 },
+      { id: "gi-50kg", size: 50, unit: "kg", contentBase: 50, packaging: "sack", format: "bulk", naira: 77000, breaks: [[2, 0.04], [10, 0.08], [40, 0.12]], moq: 2, stock: ["low-stock", 12], weightKg: 50.6 },
+    ]),
+    photographs: [
+      photo("garri-igbo", "garri-igbo.webp", "Laddex Garri Igbo 1 kg pouch with a red, green and yellow label", 166, 235, "50% 30%"),
+      photo("garri-shelf", "garri-shelf.webp", "Laddex Garri Igbo and Ijebu Garri pouches on a shelf", 268, 250, "50% 40%"),
+    ],
+  },
+  {
+    id: "garri-ijebu",
+    slug: "garri-ijebu",
+    category: "garri",
+    name: "Ijebu Garri",
+    unitKind: "mass",
+    baseUnit: "kg",
+    summary: "Laddex Ijebu Garri, from a 1 kg pouch to a 50 kg sack.",
+    description: [
+      "Ijebu garri is garri made in the Ijebu style. Like Garri Igbo it is eaten soaked or made into eba.",
+      "Laddex Ijebu Garri is packed in a printed 1 kg pouch for the kitchen, with larger bags and sacks for shops, resellers and events.",
+    ],
+    specs: [
+      { label: "Sold by", value: "Kilogram (mass)" },
+      { label: "Pack sizes", value: "1 kg, 5 kg, 25 kg, 50 kg", note: "The 1 kg pouch is shown on the packaging. Larger sizes are illustrative until confirmed." },
+      { label: "Ingredients", value: "To be confirmed by Laddex" },
+      { label: "Shelf life", value: "To be confirmed by Laddex" },
+      { label: "Storage", value: "Keep sealed, cool and dry", note: "General guidance. Confirm against the Laddex label." },
+    ],
+    packagingNotes: [
+      "Pouches and bags are sold singly; sacks are sold per sack.",
+      "Larger pack sizes are placeholders until the final specification is confirmed.",
+    ],
+    usage: ["Household meals", "Shops and resellers", "Events and souvenirs"],
+    variants: variants("garri-ijebu", "GJ", [
+      { id: "gj-1kg", size: 1, unit: "kg", contentBase: 1, packaging: "pouch", format: "packaged", naira: 1900, breaks: [[12, 0.05], [48, 0.09]], moq: 12, stock: ["in-stock", 1300], weightKg: 1.05 },
+      { id: "gj-5kg", size: 5, unit: "kg", contentBase: 5, packaging: "bag", format: "packaged", naira: 9000, breaks: [[6, 0.05], [24, 0.09]], moq: 6, stock: ["in-stock", 380], weightKg: 5.2 },
+      { id: "gj-25kg", size: 25, unit: "kg", contentBase: 25, packaging: "sack", format: "bulk", naira: 42500, breaks: [[4, 0.04], [20, 0.08], [60, 0.11]], moq: 4, stock: ["in-stock", 84], weightKg: 25.4 },
+      { id: "gj-50kg", size: 50, unit: "kg", contentBase: 50, packaging: "sack", format: "bulk", naira: 82000, breaks: [[2, 0.04], [10, 0.08], [40, 0.12]], moq: 2, stock: ["out-of-stock", 0], weightKg: 50.6 },
+    ]),
+    photographs: [
+      photo("garri-ijebu", "garri-ijebu.webp", "Laddex Ijebu Garri 1 kg pouches on a shelf", 160, 240, "50% 40%"),
+      photo("garri-shelf", "garri-shelf.webp", "Laddex Garri Igbo and Ijebu Garri pouches on a shelf", 268, 250, "50% 40%"),
+    ],
   },
 ];
 
 export const ALL_VARIANTS: PackVariant[] = PRODUCTS.flatMap((p) => p.variants);
+export const categoryOf = (variantId: string) => PRODUCTS.find((p) => p.variants.some((v) => v.id === variantId))!.category;

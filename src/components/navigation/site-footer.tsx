@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { BUSINESS } from "@/content/business";
+
 import { Wordmark } from "./site-header";
 
 const col = (title: string, items: { href: string; label: string }[]) => (
@@ -29,13 +31,22 @@ export function SiteFooter() {
         <div className="max-w-xs">
           <Wordmark />
           <p className="mt-4 text-ink-2 text-sm">
-            Palm oil by the litre and tapioca by the kilo, for households and
-            for the trade. Prices in Nigerian Naira.
+            Palm oil, tapioca flakes and garri, for households, shops and
+            events. Delivery across Nigeria. Prices in Nigerian Naira.
           </p>
+          {(BUSINESS.phone || BUSINESS.whatsapp || BUSINESS.email || BUSINESS.address) && (
+            <ul className="mt-4 space-y-1 text-sm text-ink-2 list-none p-0">
+              {BUSINESS.phone && <li>Phone: {BUSINESS.phone}</li>}
+              {BUSINESS.whatsapp && <li>WhatsApp: {BUSINESS.whatsapp}</li>}
+              {BUSINESS.email && <li>{BUSINESS.email}</li>}
+              {BUSINESS.address && <li>{BUSINESS.address}</li>}
+            </ul>
+          )}
         </div>
         {col("Shop", [
           { href: "/shop/palm-oil", label: "Palm oil" },
-          { href: "/shop/tapioca", label: "Tapioca" },
+          { href: "/shop/tapioca", label: "Tapioca flakes" },
+          { href: "/shop/garri", label: "Garri Igbo and Ijebu" },
           { href: "/shop", label: "All pack sizes" },
           { href: "/cart", label: "Cart" },
         ])}
@@ -43,19 +54,20 @@ export function SiteFooter() {
           { href: "/wholesale", label: "Volume pricing" },
           { href: "/wholesale/quote", label: "Request a quote" },
           { href: "/wholesale/register", label: "Register a business" },
-          { href: "/account", label: "Orders and repeat buying" },
+          { href: "/events", label: "Souvenirs and events" },
+          { href: "/contact", label: "Contact us" },
         ])}
         {col("Delivery", [
-          { href: "/delivery", label: "Check your address" },
+          { href: "/delivery", label: "Delivery across Nigeria" },
           { href: "/order", label: "Checkout preview" },
-          { href: "/dashboard", label: "Spatial dashboard (staff)" },
+          { href: "/dashboard", label: "Business intelligence (staff)" },
         ])}
       </div>
       <div className="border-t border-line">
         <div className="wrap py-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-xs text-ink-3">
           <p>
             &copy; Laddex Enterprise. Prototype build: product sizes, prices,
-            stock, service zones and orders are illustrative until real data is
+            stock, delivery rates and orders are illustrative until real data is
             connected.
           </p>
           <p className="mono">

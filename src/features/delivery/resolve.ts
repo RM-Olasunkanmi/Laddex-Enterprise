@@ -1,42 +1,33 @@
-import type { LngLat, LocationResolution } from "./types";
-
-import { SAMPLE_ZONES, zoneForLga } from "@/fixtures/geography/zones";
+import { REGIONS, regionOfState } from "@/fixtures/geography/regions";
 import { unitAt, type AdminUnit } from "@/lib/geo/geography";
 
+import type { LngLat, LocationResolution } from "./types";
+
 /**
- * Resolve a point to LGA, (optionally) state, sample zone and coverage status using a spatial
- * join. `states` is only needed to name a state for points outside Lagos.
+ * Resolve a point to state, geopolitical region and (when that state's LGA file is supplied) LGA,
+ * by spatial join against real boundaries. A point inside no state is outside Nigeria.
  */
 export function resolveLocation(
   position: LngLat,
-  lgas: AdminUnit[],
-  states?: AdminUnit[] | null,
+  states: AdminUnit[],
+  lgas?: AdminUnit[] | null,
 ): LocationResolution {
-  const lga = unitAt(lgas, position.lng, position.lat);
-  if (lga) {
-    const zone = zoneForLga(lga.id);
-    return {
-      position,
-      lgaId: lga.id,
-      lgaName: lga.name,
-      stateId: "lagos",
-      stateName: "Lagos",
-      zoneId: zone?.id ?? null,
-      zoneName: zone?.name ?? null,
-      coverage: zone ? "sample-zone" : "outside-sample-zones",
-    };
+  const state = unitAt(states, position.lng, position.lat);
+  if (!state) {
+    return { position, stateId: null, stateName: null, regionId: null, regionName: null, lgaId: null, lgaName: null, coverage: "outside-nigeria" };
   }
-  const state = states ? unitAt(states, position.lng, position.lat) : null;
+  const region = regionOfState(state.id);
+  const lga = lgas ? unitAt(lgas, position.lng, position.lat) : null;
   return {
     position,
-    lgaId: null,
-    lgaName: null,
-    stateId: state?.id ?? null,
-    stateName: state?.name ?? null,
-    zoneId: null,
-    zoneName: null,
-    coverage: "outside-lagos",
+    stateId: state.id,
+    stateName: state.name,
+    regionId: region?.id ?? null,
+    regionName: region?.name ?? null,
+    lgaId: lga?.id ?? null,
+    lgaName: lga?.name ?? null,
+    coverage: "in-nigeria",
   };
 }
 
-export { SAMPLE_ZONES };
+export { REGIONS };

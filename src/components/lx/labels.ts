@@ -8,8 +8,6 @@ export const STOCK_LABEL: Record<StockStatus, string> = {
 
 export const PACKAGING_LABEL: Record<PackagingType, string> = {
   bottle: "Bottle",
-  jerrycan: "Jerrycan",
-  drum: "Drum",
   pouch: "Pouch",
   bag: "Bag",
   sack: "Sack",

@@ -1,133 +1,64 @@
-import { pricePerBaseUnit } from "./pricing";
-
-import type { CategoryId, PackVariant, Product, SalesFormat } from "./types";
-
 import { formatSize } from "@/lib/formatters";
 
-export interface PackListing {
-  product: Product;
-  variant: PackVariant;
-}
+import { cheapestPerUnit, fromPrice } from "./pricing";
+import type { CategoryId, PackVariant, Product } from "./types";
 
-export type SortKey =
-  | "featured"
-  | "price-asc"
-  | "price-desc"
-  | "unit-asc"
-  | "size-asc"
-  | "size-desc";
+export type SortKey = "featured" | "price-asc" | "price-desc" | "unit-asc";
 
 export interface CatalogueQuery {
   category: CategoryId | "all";
-  format: SalesFormat | "all";
   inStockOnly: boolean;
-  /** Pack size labels such as "5 L". Only meaningful inside a single category. */
-  sizes: string[];
   sort: SortKey;
 }
 
-export const DEFAULT_QUERY: CatalogueQuery = {
-  category: "all",
-  format: "all",
-  inStockOnly: false,
-  sizes: [],
-  sort: "featured",
-};
+export const DEFAULT_QUERY: CatalogueQuery = { category: "all", inStockOnly: false, sort: "featured" };
 
-export const packLabel = (v: PackVariant) =>
-  formatSize(v.size.amount, v.size.unit);
+export const packLabel = (v: PackVariant) => formatSize(v.size.amount, v.size.unit);
 
-export function toListings(products: Product[]): PackListing[] {
-  return products.flatMap((product) =>
-    product.variants.map((variant) => ({ product, variant })),
-  );
-}
-
-/** Sort options that make sense for a category. Per-unit and size sorts need a single unit kind. */
-export function sortOptions(
-  category: CatalogueQuery["category"],
-): { key: SortKey; label: string }[] {
+/** Sort options that make sense for a category. Per-unit price needs one unit kind (litres or kilograms). */
+export function sortOptions(category: CatalogueQuery["category"]): { key: SortKey; label: string }[] {
   const base: { key: SortKey; label: string }[] = [
     { key: "featured", label: "Featured" },
-    { key: "price-asc", label: "Pack price, low to high" },
-    { key: "price-desc", label: "Pack price, high to low" },
+    { key: "price-asc", label: "Lowest pack price first" },
+    { key: "price-desc", label: "Highest pack price first" },
   ];
   if (category === "all") return base;
   const unit = category === "palm-oil" ? "litre" : "kilo";
-  return [
-    ...base,
-    { key: "unit-asc", label: `Price per ${unit}, low to high` },
-    { key: "size-asc", label: "Pack size, small to large" },
-    { key: "size-desc", label: "Pack size, large to small" },
-  ];
+  return [...base, { key: "unit-asc", label: `Lowest price per ${unit} first` }];
 }
 
-export function availableSizes(
-  products: Product[],
-  category: CatalogueQuery["category"],
-): string[] {
-  if (category === "all") return [];
-  const p = products.find((x) => x.category === category);
-  return p
-    ? [...p.variants]
-        .sort((a, b) => a.contentBase - b.contentBase)
-        .map(packLabel)
-    : [];
+/** A query is normalised so an invalid sort cannot survive a category change. */
+export function normaliseQuery(q: CatalogueQuery): CatalogueQuery {
+  return { ...q, sort: sortOptions(q.category).some((o) => o.key === q.sort) ? q.sort : "featured" };
 }
 
-/** A query is normalised so stale sizes or invalid sorts cannot survive a category change. */
-export function normaliseQuery(
-  q: CatalogueQuery,
-  products: Product[],
-): CatalogueQuery {
-  const sizes = availableSizes(products, q.category);
-  const sort = sortOptions(q.category).some((o) => o.key === q.sort)
-    ? q.sort
-    : "featured";
-  return { ...q, sizes: q.sizes.filter((s) => sizes.includes(s)), sort };
-}
+const inStock = (p: Product) => p.variants.some((v) => v.stock.status !== "out-of-stock");
 
-export function applyQuery(
-  listings: PackListing[],
-  rawQuery: CatalogueQuery,
-  products: Product[],
-): PackListing[] {
-  const q = normaliseQuery(rawQuery, products);
-  const out = listings.filter(({ product, variant }) => {
-    if (q.category !== "all" && product.category !== q.category) return false;
-    if (q.format !== "all" && variant.format !== q.format) return false;
-    if (q.inStockOnly && variant.stock.status === "out-of-stock") return false;
-    if (q.sizes.length && !q.sizes.includes(packLabel(variant))) return false;
-    return true;
-  });
-  const idx = new Map(listings.map((l, i) => [l.variant.id, i]));
-  const cmp: Record<SortKey, (a: PackListing, b: PackListing) => number> = {
-    featured: (a, b) =>
-      (idx.get(a.variant.id) ?? 0) - (idx.get(b.variant.id) ?? 0),
-    "price-asc": (a, b) =>
-      a.variant.retailPriceKobo - b.variant.retailPriceKobo,
-    "price-desc": (a, b) =>
-      b.variant.retailPriceKobo - a.variant.retailPriceKobo,
-    "unit-asc": (a, b) =>
-      (pricePerBaseUnit(a.variant) ?? Infinity) -
-      (pricePerBaseUnit(b.variant) ?? Infinity),
-    "size-asc": (a, b) => a.variant.contentBase - b.variant.contentBase,
-    "size-desc": (a, b) => b.variant.contentBase - a.variant.contentBase,
+export function applyQuery(products: Product[], rawQuery: CatalogueQuery): Product[] {
+  const q = normaliseQuery(rawQuery);
+  const order = new Map(products.map((p, i) => [p.id, i]));
+  const out = products.filter((p) => (q.category === "all" || p.category === q.category) && (!q.inStockOnly || inStock(p)));
+  const cmp: Record<SortKey, (a: Product, b: Product) => number> = {
+    featured: (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
+    "price-asc": (a, b) => fromPrice(a) - fromPrice(b),
+    "price-desc": (a, b) => fromPrice(b) - fromPrice(a),
+    "unit-asc": (a, b) => (cheapestPerUnit(a)?.perUnitKobo ?? Infinity) - (cheapestPerUnit(b)?.perUnitKobo ?? Infinity),
   };
   return [...out].sort(cmp[q.sort]);
 }
 
 export function relatedProducts(product: Product, all: Product[]): Product[] {
-  return all.filter((p) => p.id !== product.id);
+  const same = all.filter((p) => p.id !== product.id && p.category === product.category);
+  const other = all.filter((p) => p.id !== product.id && p.category !== product.category);
+  return [...same, ...other];
 }
 
-export function findVariant(
-  products: Product[],
-  variantId: string,
-): { product: Product; variant: PackVariant } | null {
+export function findVariant(products: Product[], variantId: string): { product: Product; variant: PackVariant } | null {
   for (const product of products) {
     const variant = product.variants.find((v) => v.id === variantId);
     if (variant) return { product, variant };
   }
   return null;
 }
+
+export const sortedVariants = (p: Product) => [...p.variants].sort((a, b) => a.contentBase - b.contentBase);

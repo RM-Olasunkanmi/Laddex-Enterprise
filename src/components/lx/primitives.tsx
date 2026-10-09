@@ -111,13 +111,13 @@ export function Notice({
     default: "border-line-strong",
     sample: "border-ochre",
     warning: "border-warning",
-    info: "border-slate",
+    info: "border-sky",
   }[tone];
   const bg = {
     default: "bg-paper-2",
     sample: "bg-ochre-tint/60",
     warning: "bg-warning-tint/60",
-    info: "bg-slate-tint/50",
+    info: "bg-sky-tint/50",
   }[tone];
   return (
     <div

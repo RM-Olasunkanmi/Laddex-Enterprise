@@ -6,7 +6,14 @@ import type {
   MapLayerMouseEvent,
 } from "maplibre-gl";
 
-import { map as mapTokens } from "@/lib/design/tokens";
+import { mapByTheme } from "@/lib/design/tokens";
+
+/** Map colours for the active theme, read when layers are added (the map is rebuilt on theme change). */
+const mapTokens = {
+  get v() {
+    return mapByTheme[document.documentElement.dataset.theme === "dark" ? "dark" : "light"];
+  },
+};
 
 export const LGA_SOURCE = "lgas";
 export const STATE_SOURCE = "states";
@@ -29,7 +36,7 @@ export function addBoundaryLayers(
   const fillColor = [
     "coalesce",
     ["feature-state", "fill"],
-    mapTokens.outsideFill,
+    mapTokens.v.outsideFill,
   ] as unknown as string;
   map.addLayer(
     {
@@ -54,7 +61,7 @@ export function addBoundaryLayers(
       type: "line",
       source,
       paint: {
-        "line-color": mapTokens.boundary,
+        "line-color": mapTokens.v.boundary,
         "line-width": [
           "interpolate",
           ["linear"],
@@ -74,7 +81,7 @@ export function addBoundaryLayers(
     type: "line",
     source,
     paint: {
-      "line-color": mapTokens.selectLine,
+      "line-color": mapTokens.v.selectLine,
       "line-width": 3,
       "line-opacity": [
         "case",

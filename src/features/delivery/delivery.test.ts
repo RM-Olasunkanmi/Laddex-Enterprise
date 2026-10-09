@@ -1,108 +1,109 @@
 import { describe, expect, it } from "vitest";
 
-import { estimateDelivery, feeForWeight, nearestPickup } from "./pricing";
-import { resolveLocation } from "./resolve";
-
 import { GAZETTEER } from "@/fixtures/geography/gazetteer";
-import { SAMPLE_PICKUP_POINTS, SAMPLE_ZONES } from "@/fixtures/geography/zones";
-import { straightLineKm } from "@/lib/geo/distance";
+import { REGIONS, STATE_REGION, regionOfState } from "@/fixtures/geography/regions";
 import { testLgas, testStates } from "@/test/geo";
 
-const lgas = testLgas();
+import { estimateDelivery, feeForWeight } from "./pricing";
+import { resolveLocation } from "./resolve";
+
+const states = testStates();
 
 describe("boundary data", () => {
-  it("contains exactly the 20 Lagos LGAs", () => {
-    expect(lgas).toHaveLength(20);
-    expect(new Set(lgas.map((l) => l.id)).size).toBe(20);
+  it("has the 36 states and the FCT with unique ids", () => {
+    expect(states).toHaveLength(37);
+    expect(new Set(states.map((s) => s.id)).size).toBe(37);
   });
-  it("every sample zone references real LGA ids and no LGA is in two zones", () => {
-    const ids = new Set(lgas.map((l) => l.id));
-    const seen = new Set<string>();
-    for (const z of SAMPLE_ZONES)
-      for (const id of z.lgaIds) {
-        expect(ids.has(id), id).toBe(true);
-        expect(seen.has(id), `${id} duplicated`).toBe(false);
-        seen.add(id);
-      }
+  it("assigns every state to exactly one geopolitical region", () => {
+    const seen = new Map<string, string>();
+    for (const r of REGIONS) for (const id of r.stateIds) {
+      expect(seen.has(id), `${id} duplicated`).toBe(false);
+      seen.set(id, r.id);
+    }
+    for (const s of states) expect(seen.has(s.id), `${s.id} has no region`).toBe(true);
+    expect(Object.keys(STATE_REGION)).toHaveLength(37);
+    expect(REGIONS.map((r) => r.stateIds.length).sort()).toEqual([5, 6, 6, 6, 7, 7]);
   });
-  it("leaves some Lagos LGAs outside every sample zone", () => {
-    const inZone = new Set(SAMPLE_ZONES.flatMap((z) => z.lgaIds));
-    expect(lgas.filter((l) => !inZone.has(l.id)).length).toBeGreaterThan(0);
+  it("has 774 LGAs spread over per-state files, none of them empty", () => {
+    let n = 0;
+    for (const s of states) {
+      const lgas = testLgas(s.id);
+      expect(lgas.length, s.id).toBeGreaterThan(0);
+      for (const l of lgas) expect(l.stateId).toBe(s.id);
+      n += lgas.length;
+    }
+    expect(n).toBe(774);
   });
+  it("Lagos has its 20 LGAs", () => expect(testLgas("lagos")).toHaveLength(20));
 });
 
 describe("resolveLocation (spatial join)", () => {
-  it("resolves gazetteer localities into Lagos LGAs", () => {
+  it("places every gazetteer locality in the state it names", () => {
     for (const g of GAZETTEER) {
-      const r = resolveLocation({ lng: g.lng, lat: g.lat }, lgas);
-      expect(r.lgaId, g.name).not.toBeNull();
+      const r = resolveLocation({ lng: g.lng, lat: g.lat }, states);
+      expect(r.stateId, g.name).toBe(g.stateId);
+      expect(r.regionId, g.name).toBe(regionOfState(g.stateId)?.id);
     }
   });
-  it("places sample pickup points inside the LGA of their zone", () => {
-    for (const p of SAMPLE_PICKUP_POINTS) {
-      const r = resolveLocation(p.position, lgas);
-      expect(r.zoneId, p.name).toBe(p.zoneId);
-    }
+  it("adds the LGA when the state's LGA file is supplied", () => {
+    const r = resolveLocation({ lng: 3.3515, lat: 6.6018 }, states, testLgas("lagos"));
+    expect(r.lgaName).toBe("Ikeja");
+    expect(r.stateName).toBe("Lagos");
+    expect(r.regionName).toBe("South West");
   });
-  it("labels Ikeja as inside a sample zone and Epe as outside the sample zones", () => {
-    expect(resolveLocation({ lng: 3.3515, lat: 6.6018 }, lgas).coverage).toBe(
-      "sample-zone",
-    );
-    expect(resolveLocation({ lng: 3.9783, lat: 6.5841 }, lgas).coverage).toBe(
-      "outside-sample-zones",
-    );
+  it("leaves the LGA empty without it, but still resolves the state and region", () => {
+    const r = resolveLocation({ lng: 8.592, lat: 12.0022 }, states);
+    expect(r.stateId).toBe("kano");
+    expect(r.regionName).toBe("North West");
+    expect(r.lgaId).toBeNull();
   });
-  it("flags points outside Lagos and names the state when states are supplied", () => {
-    const abeokuta = { lng: 3.35, lat: 7.15 };
-    expect(resolveLocation(abeokuta, lgas).coverage).toBe("outside-lagos");
-    expect(resolveLocation(abeokuta, lgas, testStates()).stateName).toBe(
-      "Ogun",
-    );
+  it("flags points outside Nigeria", () => {
+    expect(resolveLocation({ lng: 2.35, lat: 6.37 }, states).coverage).toBe("outside-nigeria"); // Cotonou, Benin
+    expect(resolveLocation({ lng: 3.0, lat: 3.0 }, states).coverage).toBe("outside-nigeria"); // Gulf of Guinea
   });
-  it("does not confuse latitude and longitude (swapped coordinates fall outside Lagos)", () => {
-    expect(resolveLocation({ lng: 6.6018, lat: 3.3515 }, lgas).coverage).toBe(
-      "outside-lagos",
-    );
+  it("does not confuse latitude and longitude (swapped coordinates fall outside Nigeria)", () => {
+    expect(resolveLocation({ lng: 6.6018, lat: 3.3515 }, states).coverage).toBe("outside-nigeria");
   });
 });
 
 describe("delivery estimate", () => {
-  const ikeja = resolveLocation({ lng: 3.3515, lat: 6.6018 }, lgas);
-  const west = resolveLocation({ lng: 3.2816, lat: 6.5886 }, lgas);
-  it("uses weight bands and rejects weights beyond the top band", () => {
-    const pricing = SAMPLE_ZONES[0].pricing;
-    expect(feeForWeight(pricing, 5)).toBe(pricing!.bands[0].feeKobo);
-    expect(feeForWeight(pricing, 10)).toBe(pricing!.bands[0].feeKobo);
-    expect(feeForWeight(pricing, 10.01)).toBe(pricing!.bands[1].feeKobo);
+  const lagos = resolveLocation({ lng: 3.3515, lat: 6.6018 }, states);
+  const kano = resolveLocation({ lng: 8.592, lat: 12.0022 }, states);
+  it("uses weight bands and returns a quote when no band covers the weight", () => {
+    const pricing = REGIONS[0].pricing;
+    expect(feeForWeight(pricing, 3)).toBe(pricing.bands[0].feeKobo);
+    expect(feeForWeight(pricing, 5)).toBe(pricing.bands[0].feeKobo);
+    expect(feeForWeight(pricing, 5.01)).toBe(pricing.bands[1].feeKobo);
     expect(feeForWeight(pricing, 301)).toBeNull();
     expect(feeForWeight(pricing, 0)).toBeNull();
     expect(feeForWeight(null, 5)).toBeNull();
   });
-  it("offers a priced home delivery only where a rule exists", () => {
-    const home = estimateDelivery({
-      resolution: ikeja,
-      weightKg: 24,
-    }).options.find((o) => o.id === "home")!;
-    expect(home.available).toBe(true);
-    expect(home.feeKobo).toBeGreaterThan(0);
-    expect(home.feeBasis).toBe("sample-rule");
-    const noRule = estimateDelivery({
-      resolution: west,
-      weightKg: 24,
-    }).options.find((o) => o.id === "home")!;
-    expect(noRule.available).toBe(false);
-    expect(noRule.feeKobo).toBeNull();
+  it("prices every region and charges more for the farther regions", () => {
+    const fee = (id: string) => REGIONS.find((r) => r.id === id)!.pricing.bands[1].feeKobo;
+    expect(fee("south-west")).toBeLessThan(fee("north-central"));
+    expect(fee("north-central")).toBeLessThan(fee("north-west"));
+    expect(fee("north-west")).toBeLessThan(fee("north-east"));
   });
-  it("always labels the estimate as sample and describes pickup distance as straight-line", () => {
-    const est = estimateDelivery({ resolution: ikeja, weightKg: 24 });
-    expect(est.isSample).toBe(true);
-    expect(est.options.find((o) => o.id === "pickup")!.note).toMatch(
-      /straight line/i,
-    );
+  it("offers home delivery with a sample fee anywhere in Nigeria", () => {
+    for (const res of [lagos, kano]) {
+      const home = estimateDelivery({ resolution: res, weightKg: 24 }).options.find((o) => o.id === "home")!;
+      expect(home.available).toBe(true);
+      expect(home.feeKobo).toBeGreaterThan(0);
+      expect(home.feeBasis).toBe("sample-rule");
+    }
+    const kanoFee = estimateDelivery({ resolution: kano, weightKg: 24 }).options[0].feeKobo!;
+    const lagosFee = estimateDelivery({ resolution: lagos, weightKg: 24 }).options[0].feeKobo!;
+    expect(kanoFee).toBeGreaterThan(lagosFee);
   });
-  it("nearest pickup is the geometrically nearest sample point", () => {
-    const n = nearestPickup({ lng: 3.47, lat: 6.45 })!;
-    expect(n.point.id).toBe("pp-lekki");
-    expect(n.km).toBeCloseTo(straightLineKm([3.47, 6.45], [3.4723, 6.4474]), 5);
+  it("requires a quote above the heaviest band, and refuses points outside Nigeria", () => {
+    const heavy = estimateDelivery({ resolution: lagos, weightKg: 900 }).options;
+    expect(heavy.find((o) => o.id === "home")!.available).toBe(false);
+    expect(heavy.find((o) => o.id === "freight")!.available).toBe(true);
+    const out = resolveLocation({ lng: 2.35, lat: 6.37 }, states);
+    const est = estimateDelivery({ resolution: out, weightKg: 10 });
+    expect(est.options.every((o) => !o.available)).toBe(true);
+  });
+  it("always labels the estimate as sample", () => {
+    expect(estimateDelivery({ resolution: lagos, weightKg: 24 }).isSample).toBe(true);
   });
 });

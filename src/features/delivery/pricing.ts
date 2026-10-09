@@ -1,126 +1,63 @@
-import type {
-  DeliveryEstimate,
-  DeliveryEstimateRequest,
-  DeliveryOption,
-  LngLat,
-  PickupPoint,
-  ZonePricing,
-} from "./types";
+import { REGIONS } from "@/fixtures/geography/regions";
 import type { Kobo } from "@/lib/formatters";
 
-import { SAMPLE_PICKUP_POINTS, SAMPLE_ZONES } from "@/fixtures/geography/zones";
-import { formatDistanceKm } from "@/lib/formatters";
-import { straightLineKm } from "@/lib/geo/distance";
+import type { DeliveryEstimate, DeliveryEstimateRequest, DeliveryOption, ZonePricing } from "./types";
 
 /** Fee for a weight under a band table. Null means no band covers it: a quote is required. */
-export function feeForWeight(
-  pricing: ZonePricing | null,
-  weightKg: number,
-): Kobo | null {
+export function feeForWeight(pricing: ZonePricing | null, weightKg: number): Kobo | null {
   if (!pricing || !(weightKg > 0)) return null;
-  const band = [...pricing.bands]
-    .sort((a, b) => a.upToKg - b.upToKg)
-    .find((b) => weightKg <= b.upToKg);
+  const band = [...pricing.bands].sort((a, b) => a.upToKg - b.upToKg).find((b) => weightKg <= b.upToKg);
   return band ? band.feeKobo : null;
 }
 
-export function nearestPickup(
-  position: LngLat,
-  points: PickupPoint[] = SAMPLE_PICKUP_POINTS,
-): { point: PickupPoint; km: number } | null {
-  let best: { point: PickupPoint; km: number } | null = null;
-  for (const p of points) {
-    const km = straightLineKm(
-      [position.lng, position.lat],
-      [p.position.lng, p.position.lat],
-    );
-    if (!best || km < best.km) best = { point: p, km };
-  }
-  return best;
-}
-
-/** Sample adapter for DeliveryPricingService. Rules live in fixtures/geography/zones.ts. */
-export function estimateDelivery({
-  resolution,
-  weightKg,
-}: DeliveryEstimateRequest): DeliveryEstimate {
-  const zone = SAMPLE_ZONES.find((z) => z.id === resolution.zoneId) ?? null;
+/** Sample adapter for DeliveryPricingService. Rates live in fixtures/geography/regions.ts. */
+export function estimateDelivery({ resolution, weightKg }: DeliveryEstimateRequest): DeliveryEstimate {
+  const region = REGIONS.find((r) => r.id === resolution.regionId) ?? null;
   const options: DeliveryOption[] = [];
+  const fee = feeForWeight(region?.pricing ?? null, weightKg);
 
-  const fee = feeForWeight(zone?.pricing ?? null, weightKg);
-  if (zone && zone.pricing && fee !== null) {
+  if (resolution.coverage === "outside-nigeria") {
     options.push({
       id: "home",
       kind: "home-delivery",
-      label: "Home or business delivery",
-      detail: `Sample rule for ${zone.short}, order weight about ${Math.round(weightKg)} kg.`,
-      feeKobo: fee,
-      feeBasis: "sample-rule",
-      available: true,
-    });
-  } else if (zone && zone.pricing) {
-    options.push({
-      id: "home",
-      kind: "home-delivery",
-      label: "Home or business delivery",
-      detail: `This order is heavier than the largest sample weight band (${Math.round(weightKg)} kg). Ask for a freight quote.`,
+      label: "Delivery to your address",
+      detail: "This point is outside Nigeria's state boundaries, so it cannot be delivered to. Check the pin.",
       feeKobo: null,
       feeBasis: "quote-required",
       available: false,
+    });
+  } else if (region && fee !== null) {
+    options.push({
+      id: "home",
+      kind: "home-delivery",
+      label: "Delivery to your address",
+      detail: `Sample rate for the ${region.name} region, order weight about ${Math.round(weightKg)} kg. No delivery time is promised.`,
+      feeKobo: fee,
+      feeBasis: "sample-rule",
+      available: true,
     });
   } else {
     options.push({
       id: "home",
       kind: "home-delivery",
-      label: "Home or business delivery",
-      detail: zone
-        ? `No delivery pricing rule is configured for ${zone.short} yet.`
-        : "No sample service zone covers this address.",
+      label: "Delivery to your address",
+      detail: `This order (about ${Math.round(weightKg)} kg) is heavier than the largest sample rate band. Ask for a freight quote.`,
       feeKobo: null,
       feeBasis: "quote-required",
       available: false,
     });
   }
 
-  const near =
-    resolution.coverage !== "outside-lagos"
-      ? nearestPickup(resolution.position)
-      : null;
-  options.push(
-    near
-      ? {
-          id: "pickup",
-          kind: "pickup",
-          label: `Collect from ${near.point.name.replace("Sample point: ", "")}`,
-          detail:
-            "Sample distribution point. Opening hours and stock held are not yet configured.",
-          feeKobo: 0,
-          feeBasis: "none",
-          available: true,
-          note: `${formatDistanceKm(near.km)} in a straight line from your pin. Road distance is not calculated.`,
-        }
-      : {
-          id: "pickup",
-          kind: "pickup",
-          label: "Collect from a distribution point",
-          detail:
-            "No sample distribution point is configured near this address.",
-          feeKobo: null,
-          feeBasis: "none",
-          available: false,
-        },
-  );
-
-  options.push({
-    id: "freight",
-    kind: "freight-quote",
-    label: "Freight quote",
-    detail:
-      "For drums, pallets and addresses without a pricing rule. A person confirms cost and timing in writing.",
-    feeKobo: null,
-    feeBasis: "quote-required",
-    available: true,
-  });
-
+  if (resolution.coverage === "in-nigeria") {
+    options.push({
+      id: "freight",
+      kind: "freight-quote",
+      label: "Freight quote",
+      detail: "For large or heavy orders and event supply. A person confirms cost and timing in writing.",
+      feeKobo: null,
+      feeBasis: "quote-required",
+      available: true,
+    });
+  }
   return { options, isSample: true };
 }
