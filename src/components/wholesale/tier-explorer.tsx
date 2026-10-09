@@ -13,7 +13,7 @@ import { formatNaira, formatPercent } from "@/lib/formatters";
 
 export function TierExplorer() {
   const { products } = useCatalogue();
-  const [id, setId] = useState("po-25l");
+  const [id, setId] = useState("gi-25kg");
   const profile = customerStore.use();
   const hydrated = customerStore.useHydrated();
   const access = hydrated ? profile.access : "guest";

@@ -194,7 +194,11 @@ export const space = [0, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128] as const;
 
 export const radius = { none: 0, sm: 2, md: 4, lg: 8 } as const;
 
-export const container = { page: 1280, reading: 704, dashboard: "fluid" } as const;
+export const container = {
+  page: 1280,
+  reading: 704,
+  dashboard: "fluid",
+} as const;
 
 export const motion = {
   fast: 120,
@@ -207,7 +211,8 @@ export const motion = {
 
 export const shadow = {
   rule: "0 1px 0 rgba(23, 20, 15, 0.08)",
-  raised: "0 1px 2px rgba(23, 20, 15, 0.10), 0 4px 12px -6px rgba(23, 20, 15, 0.18)",
+  raised:
+    "0 1px 2px rgba(23, 20, 15, 0.10), 0 4px 12px -6px rgba(23, 20, 15, 0.18)",
   pop: "0 10px 30px -12px rgba(23, 20, 15, 0.35)",
 } as const;
 

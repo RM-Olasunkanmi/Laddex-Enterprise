@@ -48,7 +48,11 @@ export function DeliveryCheck({
             <span className="text-ink-3">To </span>
             <strong>{location.label}</strong>
             <span className="text-ink-3">
-              {resolution.lgaName ? `, ${resolution.lgaName}` : resolution.stateName ? `, ${resolution.stateName}` : ""}
+              {resolution.lgaName
+                ? `, ${resolution.lgaName}`
+                : resolution.stateName
+                  ? `, ${resolution.stateName}`
+                  : ""}
             </span>
           </p>
           <CoverageBadge resolution={resolution} />

@@ -9,7 +9,8 @@ const light = css.slice(0, css.indexOf(':root[data-theme="dark"]'));
 const dark = css.slice(css.indexOf(':root[data-theme="dark"]'));
 const cssVar = (block: string, name: string) =>
   new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`).exec(block)?.[1]?.toLowerCase();
-const kebab = (s: string) => s.replace(/[A-Z0-9]/g, (m) => `-${m.toLowerCase()}`);
+const kebab = (s: string) =>
+  s.replace(/[A-Z0-9]/g, (m) => `-${m.toLowerCase()}`);
 
 describe("design tokens stay in sync with the stylesheet", () => {
   it.each([
@@ -17,18 +18,35 @@ describe("design tokens stay in sync with the stylesheet", () => {
     ["dark", colorDark, dark],
   ] as const)("%s colour variables match tokens.ts", (_n, tokens, block) => {
     for (const [key, hex] of Object.entries(tokens)) {
-      expect(cssVar(block, `color-${kebab(key)}`), `--color-${kebab(key)}`).toBe(hex.toLowerCase());
+      expect(
+        cssVar(block, `color-${kebab(key)}`),
+        `--color-${kebab(key)}`,
+      ).toBe(hex.toLowerCase());
     }
   });
   it.each([
     ["light", chartByTheme.light, light],
     ["dark", chartByTheme.dark, dark],
   ] as const)("%s chart variables match tokens.ts", (_n, c, block) => {
-    for (const k of ["palm", "tapioca", "garri", "retail", "wholesale", "events", "neutral", "prior", "grid"] as const) {
+    for (const k of [
+      "palm",
+      "tapioca",
+      "garri",
+      "retail",
+      "wholesale",
+      "events",
+      "neutral",
+      "prior",
+      "grid",
+    ] as const) {
       expect(cssVar(block, `chart-${k}`), k).toBe(c[k].toLowerCase());
     }
-    c.sequential.forEach((hex, i) => expect(cssVar(block, `seq-${i + 1}`)).toBe(hex.toLowerCase()));
-    c.diverging.forEach((hex, i) => expect(cssVar(block, `div-${i + 1}`)).toBe(hex.toLowerCase()));
+    c.sequential.forEach((hex, i) =>
+      expect(cssVar(block, `seq-${i + 1}`)).toBe(hex.toLowerCase()),
+    );
+    c.diverging.forEach((hex, i) =>
+      expect(cssVar(block, `div-${i + 1}`)).toBe(hex.toLowerCase()),
+    );
   });
 });
 
@@ -65,9 +83,18 @@ describe("chart series colours stand clear of their surface", () => {
   it.each([
     ["light", chartByTheme.light, color.card],
     ["dark", chartByTheme.dark, colorDark.card],
-  ] as const)("%s: every series reaches 3:1 against the card", (_t, c, surface) => {
-    for (const k of ["palm", "tapioca", "garri", "retail", "wholesale"] as const) {
-      expect(contrast(c[k], surface), k).toBeGreaterThanOrEqual(3);
-    }
-  });
+  ] as const)(
+    "%s: every series reaches 3:1 against the card",
+    (_t, c, surface) => {
+      for (const k of [
+        "palm",
+        "tapioca",
+        "garri",
+        "retail",
+        "wholesale",
+      ] as const) {
+        expect(contrast(c[k], surface), k).toBeGreaterThanOrEqual(3);
+      }
+    },
+  );
 });

@@ -4,16 +4,16 @@ File: https://www.figma.com/design/PisRWtaat5DSUBod7witDT (Laddex Enterprise, De
 
 ## What the MCP server could and could not do here
 
-| Capability | Result |
-|---|---|
-| Create a design file | Worked (`create_new_file`) |
-| Create variables, text styles, effect styles | Worked |
-| Create components with variants, bound to variables | Worked |
-| Read nodes and take screenshots of them | Worked (`use_figma` with `node.screenshot()`) |
-| Upload app screenshots into the file | **Blocked.** `upload_assets` issued an upload URL, but the build sandbox's network policy returned 403 for `mcp.figma.com`. The Screens page therefore indexes the screens instead of showing them |
-| Fetch screenshot URLs from `get_screenshot` | Blocked for the same reason; inline `node.screenshot()` was used instead |
-| More than 3 pages | **Blocked by the Starter plan** (file limit of 3 pages), so the structure is Foundations, Components, Screens |
-| Code Connect mappings | Not done |
+| Capability                                          | Result                                                                                                                                                                                             |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create a design file                                | Worked (`create_new_file`)                                                                                                                                                                         |
+| Create variables, text styles, effect styles        | Worked                                                                                                                                                                                             |
+| Create components with variants, bound to variables | Worked                                                                                                                                                                                             |
+| Read nodes and take screenshots of them             | Worked (`use_figma` with `node.screenshot()`)                                                                                                                                                      |
+| Upload app screenshots into the file                | **Blocked.** `upload_assets` issued an upload URL, but the build sandbox's network policy returned 403 for `mcp.figma.com`. The Screens page therefore indexes the screens instead of showing them |
+| Fetch screenshot URLs from `get_screenshot`         | Blocked for the same reason; inline `node.screenshot()` was used instead                                                                                                                           |
+| More than 3 pages                                   | **Blocked by the Starter plan** (file limit of 3 pages), so the structure is Foundations, Components, Screens                                                                                      |
+| Code Connect mappings                               | Not done                                                                                                                                                                                           |
 
 ## Contents
 

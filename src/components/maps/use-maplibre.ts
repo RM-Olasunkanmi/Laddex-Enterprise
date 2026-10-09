@@ -17,7 +17,13 @@ export type BasemapState = "loading" | "online" | "offline";
 const offlineStyle = (background: string): StyleSpecification => ({
   version: 8,
   sources: {},
-  layers: [{ id: "background", type: "background", paint: { "background-color": background } }],
+  layers: [
+    {
+      id: "background",
+      type: "background",
+      paint: { "background-color": background },
+    },
+  ],
 });
 
 export const prefersReducedMotion = () =>
@@ -77,7 +83,9 @@ export function useMapLibre({
         (async () => {
           const timer = window.setTimeout(() => ctl.abort(), 3500);
           try {
-            const res = await fetch(mapByTheme[theme].basemapStyle, { signal: ctl.signal });
+            const res = await fetch(mapByTheme[theme].basemapStyle, {
+              signal: ctl.signal,
+            });
             return res.ok;
           } catch {
             return false;
@@ -89,7 +97,9 @@ export function useMapLibre({
       if (cancelled) return;
       instance = new ml.Map({
         container: el,
-        style: online ? mapByTheme[theme].basemapStyle : offlineStyle(mapByTheme[theme].background),
+        style: online
+          ? mapByTheme[theme].basemapStyle
+          : offlineStyle(mapByTheme[theme].background),
         bounds,
         fitBoundsOptions: { padding: 24 },
         interactive,

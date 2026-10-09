@@ -2,12 +2,17 @@
 
 import { useSyncExternalStore } from "react";
 
+import { KEY } from "./theme-script";
+
 import type { Theme } from "./tokens";
 
-import { KEY } from "./theme-script";
 const listeners = new Set<() => void>();
 
-const read = (): Theme => (typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
+const read = (): Theme =>
+  typeof document !== "undefined" &&
+  document.documentElement.getAttribute("data-theme") === "dark"
+    ? "dark"
+    : "light";
 
 export function setTheme(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme);

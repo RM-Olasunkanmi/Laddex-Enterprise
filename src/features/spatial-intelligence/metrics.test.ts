@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { buildDataset, type DashboardDataset } from "./dataset";
+import { assignLgas } from "./enrich";
 import {
   addDays,
   applyGeoSelection,
@@ -14,22 +15,17 @@ import {
   change,
   computeKpis,
   concentration,
-  coverageSplit,
   deliveryFeeHistogram,
   median,
   ratio,
+  reach,
   timeSeries,
   variantStats,
 } from "./metrics";
-import {
-  OUTSIDE_ZONES,
-  UNASSIGNED,
-  type EnrichedOrder,
-  type GeoScale,
-} from "./types";
+import { UNASSIGNED, type GeoScale } from "./types";
 
 import { priceFor } from "@/features/catalogue/pricing";
-import { SAMPLE_ZONES } from "@/fixtures/geography/zones";
+import { REGIONS } from "@/fixtures/geography/regions";
 import {
   DATASET_DAYS,
   DATASET_END,
@@ -40,18 +36,18 @@ import { testLgas, testStates } from "@/test/geo";
 
 let ds: DashboardDataset;
 beforeAll(() => {
-  ds = buildDataset(testLgas(), testStates());
+  ds = buildDataset(testStates());
 });
 
 const WHOLE = { ...DEFAULT_FILTERS, from: DATASET_START, to: DATASET_END };
 
 describe("synthetic dataset", () => {
   it("is deterministic and substantial", () => {
-    const again = buildDataset(testLgas(), testStates());
+    const again = buildDataset(testStates());
     expect(again.orders.length).toBe(ds.orders.length);
     expect(again.orders[100].id).toBe(ds.orders[100].id);
     expect(again.orders[100].goodsKobo).toBe(ds.orders[100].goodsKobo);
-    expect(ds.orders.length).toBeGreaterThan(900);
+    expect(ds.orders.length).toBeGreaterThan(2000);
     expect(DATASET_DAYS).toBe(182);
   });
   it("marks every order synthetic", () =>
@@ -64,39 +60,52 @@ describe("synthetic dataset", () => {
       for (const l of o.lines) {
         expect(l.lineTotalKobo).toBe(l.unitPriceKobo * l.qty);
         const v = ALL_VARIANTS.find((x) => x.id === l.variantId)!;
-        const expected = priceFor(
-          v,
-          l.qty,
-          o.segment === "wholesale" ? "wholesale-approved" : "retail",
-        ).unitPriceKobo;
-        expect(l.unitPriceKobo).toBe(expected);
+        expect(l.unitPriceKobo).toBe(
+          priceFor(
+            v,
+            l.qty,
+            o.segment === "retail" ? "retail" : "wholesale-approved",
+          ).unitPriceKobo,
+        );
       }
     }
   });
-  it("contains located, unlocated and out-of-Lagos orders so edge cases are exercised", () => {
+  it("covers all three segments, all three categories and edge cases", () => {
+    for (const seg of ["retail", "wholesale", "events"] as const)
+      expect(
+        ds.orders.some((o) => o.segment === seg),
+        seg,
+      ).toBe(true);
+    for (const cat of ["palm-oil", "tapioca", "garri"] as const)
+      expect(
+        ds.orders.some((o) => o.lines.some((l) => l.category === cat)),
+        cat,
+      ).toBe(true);
     expect(ds.orders.some((o) => o.geoStatus === "unlocated")).toBe(true);
-    expect(
-      ds.orders.some((o) => o.geoStatus === "located" && o.lgaId === null),
-    ).toBe(true);
     expect(ds.orders.some((o) => o.status === "cancelled")).toBe(true);
     expect(ds.orders.some((o) => o.returnedKobo > 0)).toBe(true);
   });
-  it("derives LGA by spatial join: located orders in Lagos always have an LGA and state", () => {
+  it("reaches most states and every region, derived by spatial join", () => {
+    const states = new Set(ds.orders.map((o) => o.stateId).filter(Boolean));
+    expect(states.size).toBeGreaterThanOrEqual(30);
+    for (const r of REGIONS)
+      expect(
+        ds.orders.some((o) => o.regionId === r.id),
+        r.id,
+      ).toBe(true);
     for (const o of ds.orders) {
-      if (o.lgaId) expect(o.stateId).toBe("lagos");
-      if (o.zoneId)
-        expect(
-          SAMPLE_ZONES.some(
-            (z) => z.id === o.zoneId && o.lgaId && z.lgaIds.includes(o.lgaId),
-          ),
-        ).toBe(true);
+      if (o.stateId)
+        expect(REGIONS.find((r) => r.id === o.regionId)!.stateIds).toContain(
+          o.stateId,
+        );
+      else expect(o.regionId).toBeNull();
     }
   });
-  it("does not keep a pickup point on delivery orders and always sets a fee basis", () => {
-    for (const o of ds.orders) {
-      if (o.fulfilment === "delivery") expect(o.pickupPointId).toBeNull();
-      else expect(o.deliveryFeeKobo).toBe(0);
-    }
+  it("is not just Lagos: Lagos holds the largest share but well under half", () => {
+    const lagos =
+      ds.orders.filter((o) => o.stateId === "lagos").length / ds.orders.length;
+    expect(lagos).toBeGreaterThan(0.1);
+    expect(lagos).toBeLessThan(0.45);
   });
 });
 
@@ -105,10 +114,11 @@ describe("KPI definitions", () => {
   it("gross excludes cancelled orders and net subtracts returns", () => {
     const orders = all();
     const k = computeKpis(orders);
-    const expectedGross = orders
-      .filter((o) => o.status !== "cancelled")
-      .reduce((s, o) => s + o.goodsKobo, 0);
-    expect(k.grossKobo).toBe(expectedGross);
+    expect(k.grossKobo).toBe(
+      orders
+        .filter((o) => o.status !== "cancelled")
+        .reduce((s, o) => s + o.goodsKobo, 0),
+    );
     expect(k.netKobo).toBe(k.grossKobo - k.returnedKobo);
     expect(k.ordersPlaced).toBe(orders.length);
     expect(k.ordersActive).toBe(orders.length - k.cancelled);
@@ -120,16 +130,18 @@ describe("KPI definitions", () => {
   it("category and segment shares each sum to one", () => {
     const k = computeKpis(all());
     expect(
-      k.shareByCategory["palm-oil"]! + k.shareByCategory.tapioca!,
+      Object.values(k.shareByCategory).reduce<number>(
+        (s, v) => s + (v ?? 0),
+        0,
+      ),
     ).toBeCloseTo(1, 10);
-    expect(k.shareBySegment.retail! + k.shareBySegment.wholesale!).toBeCloseTo(
-      1,
-      10,
-    );
-    expect(k.grossByCategory["palm-oil"] + k.grossByCategory.tapioca).toBe(
+    expect(
+      Object.values(k.shareBySegment).reduce<number>((s, v) => s + (v ?? 0), 0),
+    ).toBeCloseTo(1, 10);
+    expect(Object.values(k.grossByCategory).reduce((s, v) => s + v, 0)).toBe(
       k.grossKobo,
     );
-    expect(k.grossBySegment.retail + k.grossBySegment.wholesale).toBe(
+    expect(Object.values(k.grossBySegment).reduce((s, v) => s + v, 0)).toBe(
       k.grossKobo,
     );
   });
@@ -164,7 +176,7 @@ describe("KPI definitions", () => {
 });
 
 describe("aggregation reconciles with totals", () => {
-  const scales: GeoScale[] = ["state", "lga", "zone", "pickup"];
+  const scales: GeoScale[] = ["region", "state"];
   it.each(scales)(
     "units at %s scale sum to the overall totals (including the unassigned bucket)",
     (scale) => {
@@ -179,6 +191,17 @@ describe("aggregation reconciles with totals", () => {
       expect(units.reduce((s, u) => s + u.packs, 0)).toBe(total.packs);
     },
   );
+  it("LGA aggregation within one state reconciles with that state", () => {
+    const lagosOrders = filterOrders(
+      assignLgas(ds.orders, "lagos", testLgas("lagos")),
+      WHOLE,
+    ).filter((o) => o.stateId === "lagos");
+    const byLga = [...aggregateByUnit(lagosOrders, "lga").values()];
+    expect(byLga.reduce((s, u) => s + u.grossKobo, 0)).toBe(
+      computeKpis(lagosOrders).grossKobo,
+    );
+    expect(byLga.filter((u) => u.id !== UNASSIGNED).length).toBeGreaterThan(10);
+  });
   it("product sales reconcile with the orders that include them", () => {
     const orders = filterOrders(ds.orders, WHOLE);
     const vs = variantStats(orders, DATASET_DAYS);
@@ -187,34 +210,28 @@ describe("aggregation reconciles with totals", () => {
     );
     expect(vs.reduce((s, v) => s + v.packs, 0)).toBe(computeKpis(orders).packs);
   });
-  it("wholesale revenue derives only from wholesale orders", () => {
+  it("events revenue derives only from events orders", () => {
     const orders = filterOrders(ds.orders, WHOLE);
-    const k = computeKpis(orders);
     const direct = orders
-      .filter((o) => o.segment === "wholesale" && o.status !== "cancelled")
+      .filter((o) => o.segment === "events" && o.status !== "cancelled")
       .reduce((s, o) => s + o.goodsKobo, 0);
-    expect(k.grossBySegment.wholesale).toBe(direct);
+    expect(computeKpis(orders).grossBySegment.events).toBe(direct);
   });
   it("the time series sums to the period's gross sales", () => {
-    const f = { ...DEFAULT_FILTERS };
-    const orders = filterOrders(ds.orders, f);
-    const series = timeSeries(orders, f, "day");
+    const orders = filterOrders(ds.orders, DEFAULT_FILTERS);
+    const series = timeSeries(orders, DEFAULT_FILTERS, "day");
     expect(series).toHaveLength(30);
     expect(series.reduce((s, p) => s + p.grossKobo, 0)).toBe(
       computeKpis(orders).grossKobo,
     );
-    const weekly = timeSeries(filterOrders(ds.orders, WHOLE), WHOLE, "week");
-    expect(weekly.reduce((s, p) => s + p.grossKobo, 0)).toBe(
-      computeKpis(filterOrders(ds.orders, WHOLE)).grossKobo,
-    );
   });
-  it("coverage split covers every non-cancelled order exactly once", () => {
-    const orders = filterOrders(ds.orders, WHOLE);
-    const c = coverageSplit(orders);
-    expect(
-      c.inSampleZones + c.outsideSampleZones + c.outsideLagos + c.unlocated,
-    ).toBe(c.total);
-    expect(c.total).toBe(computeKpis(orders).ordersActive);
+  it("reach counts distinct states and regions with orders", () => {
+    const r = reach(filterOrders(ds.orders, WHOLE));
+    expect(r.statesReached).toBeLessThanOrEqual(37);
+    expect(r.regionsReached).toBe(6);
+    expect(r.total).toBe(
+      computeKpis(filterOrders(ds.orders, WHOLE)).ordersActive,
+    );
   });
 });
 
@@ -238,67 +255,71 @@ describe("filters and linked selection", () => {
     );
   });
   it("a product filter scopes sales to the matching lines only", () => {
-    const palm = filterOrders(ds.orders, {
-      ...WHOLE,
-      categories: ["palm-oil"],
-    });
-    const k = computeKpis(palm);
-    expect(k.grossByCategory.tapioca).toBe(0);
-    expect(k.kilograms).toBe(0);
-    const everything = computeKpis(filterOrders(ds.orders, WHOLE));
-    expect(k.grossKobo).toBe(everything.grossByCategory["palm-oil"]);
-  });
-  it("selecting a zone restricts every figure to orders in that zone and keeps other filters", () => {
-    const base = filterOrders(ds.orders, { ...WHOLE, segments: ["wholesale"] });
-    const inZone = applyGeoSelection(base, {
-      scale: "zone",
-      unitId: "sz-ikeja",
-    });
-    expect(inZone.length).toBeGreaterThan(0);
-    expect(
-      inZone.every((o) => o.zoneId === "sz-ikeja" && o.segment === "wholesale"),
-    ).toBe(true);
-    const k = computeKpis(inZone);
-    const fromUnit = aggregateByUnit(base, "zone").get("sz-ikeja")!;
-    expect(k.grossKobo).toBe(fromUnit.grossKobo);
-    expect(k.ordersPlaced).toBe(fromUnit.ordersPlaced);
-  });
-  it("the outside-zones bucket holds Lagos orders without a sample zone, distinct from unlocated", () => {
-    const orders = filterOrders(ds.orders, WHOLE);
-    const outside = applyGeoSelection(orders, {
-      scale: "zone",
-      unitId: OUTSIDE_ZONES,
-    });
-    expect(outside.every((o) => o.lgaId !== null && o.zoneId === null)).toBe(
-      true,
+    const garri = computeKpis(
+      filterOrders(ds.orders, { ...WHOLE, categories: ["garri"] }),
     );
+    expect(garri.grossByCategory["palm-oil"]).toBe(0);
+    expect(garri.litres).toBe(0);
+    expect(garri.grossKobo).toBe(
+      computeKpis(filterOrders(ds.orders, WHOLE)).grossByCategory.garri,
+    );
+  });
+  it("selecting a state restricts every figure to it and keeps other filters", () => {
+    const base = filterOrders(ds.orders, { ...WHOLE, segments: ["wholesale"] });
+    const inKano = applyGeoSelection(base, {
+      scale: "state",
+      unitId: "kano",
+      stateId: null,
+    });
+    expect(inKano.length).toBeGreaterThan(0);
     expect(
-      applyGeoSelection(orders, { scale: "zone", unitId: UNASSIGNED }).every(
-        (o) => o.lgaId === null,
+      inKano.every((o) => o.stateId === "kano" && o.segment === "wholesale"),
+    ).toBe(true);
+    const fromUnit = aggregateByUnit(base, "state").get("kano")!;
+    expect(computeKpis(inKano).grossKobo).toBe(fromUnit.grossKobo);
+  });
+  it("selecting a region selects every state in it", () => {
+    const orders = filterOrders(ds.orders, WHOLE);
+    const sw = applyGeoSelection(orders, {
+      scale: "region",
+      unitId: "south-west",
+      stateId: null,
+    });
+    expect(sw.length).toBeGreaterThan(0);
+    expect(
+      sw.every((o) =>
+        REGIONS.find((r) => r.id === "south-west")!.stateIds.includes(
+          o.stateId!,
+        ),
       ),
     ).toBe(true);
   });
-  it("an individual order resolves only to itself and its own figures", () => {
-    const order = ds.orders.find((o) => o.status === "delivered" && o.lgaId)!;
-    const k = computeKpis([order]);
-    expect(k.ordersPlaced).toBe(1);
-    expect(k.grossKobo).toBe(order.goodsKobo);
-    expect(unitKeyFor(order, "lga")).toBe(order.lgaId);
+  it("the unassigned bucket holds only orders without a usable state", () => {
+    const orders = filterOrders(ds.orders, WHOLE);
+    const u = applyGeoSelection(orders, {
+      scale: "state",
+      unitId: UNASSIGNED,
+      stateId: null,
+    });
+    expect(u.length).toBeGreaterThan(0);
+    expect(u.every((o) => o.stateId === null)).toBe(true);
   });
-  it("delivery cost histogram counts every non-cancelled delivery order", () => {
+  it("an individual order resolves only to itself and its own figures", () => {
+    const order = ds.orders.find((o) => o.status === "delivered" && o.stateId)!;
+    expect(computeKpis([order]).ordersPlaced).toBe(1);
+    expect(computeKpis([order]).grossKobo).toBe(order.goodsKobo);
+    expect(unitKeyFor(order, "state")).toBe(order.stateId);
+  });
+  it("delivery cost histogram counts every non-cancelled order", () => {
     const orders = filterOrders(ds.orders, WHOLE);
     const h = deliveryFeeHistogram(orders);
     expect(h.bins.reduce((s, b) => s + b.count, 0)).toBe(h.n);
-    expect(h.n).toBe(
-      orders.filter(
-        (o) => o.fulfilment === "delivery" && o.status !== "cancelled",
-      ).length,
-    );
+    expect(h.n).toBe(orders.filter((o) => o.status !== "cancelled").length);
     expect(h.median).not.toBeNull();
   });
   it("concentration is bounded and HHI is at least 1/n", () => {
     const stats = [
-      ...aggregateByUnit(filterOrders(ds.orders, WHOLE), "lga").values(),
+      ...aggregateByUnit(filterOrders(ds.orders, WHOLE), "state").values(),
     ].filter((s) => s.id !== UNASSIGNED);
     const c = concentration(stats);
     expect(c.top3Share!).toBeGreaterThan(0);
@@ -308,13 +329,10 @@ describe("filters and linked selection", () => {
 });
 
 describe("geography areas", () => {
-  it("computes plausible LGA areas for density", () => {
-    expect(ds.lgaAreaKm2["epe"]).toBeGreaterThan(ds.lgaAreaKm2["lagos-island"]);
-    for (const a of Object.values(ds.lgaAreaKm2)) expect(a).toBeGreaterThan(1);
-    const total = Object.values(ds.lgaAreaKm2).reduce((s, a) => s + a, 0);
-    expect(total).toBeGreaterThan(2500);
-    expect(total).toBeLessThan(4500);
+  it("computes plausible state areas for density", () => {
+    expect(ds.stateAreaKm2["niger"]).toBeGreaterThan(ds.stateAreaKm2["lagos"]);
+    const total = Object.values(ds.stateAreaKm2).reduce((s, a) => s + a, 0);
+    expect(total).toBeGreaterThan(850_000);
+    expect(total).toBeLessThan(1_000_000);
   });
 });
-
-export type _Keep = EnrichedOrder;

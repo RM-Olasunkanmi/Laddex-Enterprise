@@ -1,6 +1,6 @@
 import { niceMax } from "./scales";
 
-import { chart, color } from "@/lib/design/tokens";
+import { chart, v as color } from "@/lib/design/tokens";
 import { formatNairaCompact, formatNaira } from "@/lib/formatters";
 
 export function Histogram({

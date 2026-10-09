@@ -1,4 +1,10 @@
-import { bboxContains, geometryBBox, geometryContains, type BBox, type PolygonalGeometry } from "./pip";
+import {
+  bboxContains,
+  geometryBBox,
+  geometryContains,
+  type BBox,
+  type PolygonalGeometry,
+} from "./pip";
 
 export type AdminLevel = "state" | "lga";
 
@@ -15,7 +21,13 @@ export interface AdminUnit {
 
 interface RawFeature {
   id?: string | number;
-  properties: { id: string; name: string; level: AdminLevel; stateId?: string; areaKm2?: number };
+  properties: {
+    id: string;
+    name: string;
+    level: AdminLevel;
+    stateId?: string;
+    areaKm2?: number;
+  };
   geometry: PolygonalGeometry;
 }
 export interface RawCollection {
@@ -36,26 +48,45 @@ export function toAdminUnits(fc: RawCollection): AdminUnit[] {
 }
 
 /** Spatial join of a point to the administrative unit that contains it (bbox pre-filter, then PIP). */
-export function unitAt(units: AdminUnit[], lng: number, lat: number): AdminUnit | null {
+export function unitAt(
+  units: AdminUnit[],
+  lng: number,
+  lat: number,
+): AdminUnit | null {
   for (const u of units) {
-    if (bboxContains(u.bbox, lng, lat) && geometryContains(u.geometry, lng, lat)) return u;
+    if (
+      bboxContains(u.bbox, lng, lat) &&
+      geometryContains(u.geometry, lng, lat)
+    )
+      return u;
   }
   return null;
 }
 
-export function toFeatureCollection(units: AdminUnit[], extra?: (u: AdminUnit) => Record<string, unknown>) {
+export function toFeatureCollection(
+  units: AdminUnit[],
+  extra?: (u: AdminUnit) => Record<string, unknown>,
+) {
   return {
     type: "FeatureCollection" as const,
     features: units.map((u) => ({
       type: "Feature" as const,
       id: u.id,
-      properties: { id: u.id, name: u.name, level: u.level, ...(extra ? extra(u) : {}) },
+      properties: {
+        id: u.id,
+        name: u.name,
+        level: u.level,
+        ...(extra ? extra(u) : {}),
+      },
       geometry: u.geometry,
     })),
   };
 }
 
-export const NIGERIA_BOUNDS: [[number, number], [number, number]] = [[2.6, 4.2], [14.8, 13.95]];
+export const NIGERIA_BOUNDS: [[number, number], [number, number]] = [
+  [2.6, 4.2],
+  [14.8, 13.95],
+];
 
 async function loadJson<T>(path: string): Promise<T> {
   const res = await fetch(path, { cache: "force-cache" });
@@ -100,4 +131,5 @@ export interface GeoSourcesMeta {
   lgas: Record<string, string | number>;
   attribution: string;
 }
-export const loadSourcesMeta = () => loadJson<GeoSourcesMeta>("/geo/sources.json");
+export const loadSourcesMeta = () =>
+  loadJson<GeoSourcesMeta>("/geo/sources.json");

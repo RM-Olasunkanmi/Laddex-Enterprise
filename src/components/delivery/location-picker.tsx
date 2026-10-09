@@ -4,26 +4,52 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CoverageBadge } from "./coverage-badge";
 
-import type { DeliveryLocation, GeocodeResult, LngLat, LocationResolution } from "@/features/delivery/types";
+import type {
+  DeliveryLocation,
+  GeocodeResult,
+  LngLat,
+  LocationResolution,
+} from "@/features/delivery/types";
 import type { Marker } from "maplibre-gl";
 
 import { useCart } from "@/components/commerce/use-customer-pricing";
 import { Notice, Tag } from "@/components/lx/primitives";
-import { addBoundaryLayers, bindHover, setFeatureStates, updateSource } from "@/components/maps/layers";
+import {
+  addBoundaryLayers,
+  bindHover,
+  setFeatureStates,
+  updateSource,
+} from "@/components/maps/layers";
 import { flyTo, useMapLibre } from "@/components/maps/use-maplibre";
 import { searchWithFallback } from "@/features/delivery/adapters/geocoders";
 import { estimateDelivery } from "@/features/delivery/pricing";
 import { resolveLocation } from "@/features/delivery/resolve";
-import { deliveryStore, setDeliveryLocation, setDeliveryOption } from "@/features/delivery/store";
+import {
+  deliveryStore,
+  setDeliveryLocation,
+  setDeliveryOption,
+} from "@/features/delivery/store";
 import { REGIONS, regionOfState } from "@/fixtures/geography/regions";
 import { useTheme } from "@/lib/design/theme";
 import { chartByTheme } from "@/lib/design/tokens";
 import { formatNaira } from "@/lib/formatters";
-import { loadStateLgas, loadStates, toFeatureCollection, type AdminUnit } from "@/lib/geo/geography";
+import {
+  loadStateLgas,
+  loadStates,
+  toFeatureCollection,
+  type AdminUnit,
+} from "@/lib/geo/geography";
 import { geometryBBox, geometryCentroid, isValidLngLat } from "@/lib/geo/pip";
 
 const EXAMPLE_WEIGHT_KG = 24;
-const REGION_KEYS = ["palm", "tapioca", "garri", "retail", "wholesale", "events"] as const;
+const REGION_KEYS = [
+  "palm",
+  "tapioca",
+  "garri",
+  "retail",
+  "wholesale",
+  "events",
+] as const;
 
 function pinElement(label: string) {
   const el = document.createElement("div");
@@ -34,9 +60,20 @@ function pinElement(label: string) {
   return el;
 }
 
-type Pin = { position: LngLat; label: string; precision: DeliveryLocation["precision"]; source: DeliveryLocation["source"] };
+type Pin = {
+  position: LngLat;
+  label: string;
+  precision: DeliveryLocation["precision"];
+  source: DeliveryLocation["source"];
+};
 
-export function LocationPicker({ compact = false, initialQuery = "" }: { compact?: boolean; initialQuery?: string }) {
+export function LocationPicker({
+  compact = false,
+  initialQuery = "",
+}: {
+  compact?: boolean;
+  initialQuery?: string;
+}) {
   const saved = deliveryStore.use();
   const savedHydrated = deliveryStore.useHydrated();
   const cart = useCart();
@@ -57,7 +94,9 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
   const markerRef = useRef<Marker | null>(null);
   const statesRef = useRef<AdminUnit[] | null>(null);
 
-  const { containerRef, map, ml, basemap } = useMapLibre({ ariaLabel: "Delivery map of Nigeria. Click to place your delivery pin." });
+  const { containerRef, map, ml, basemap } = useMapLibre({
+    ariaLabel: "Delivery map of Nigeria. Click to place your delivery pin.",
+  });
 
   useEffect(() => {
     loadStates()
@@ -73,12 +112,18 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
     if (restored.current || !savedHydrated || !saved.location) return;
     restored.current = true;
     const l = saved.location;
-    setPin({ position: l.position, label: l.label, precision: l.precision, source: l.source });
+    setPin({
+      position: l.position,
+      label: l.label,
+      precision: l.precision,
+      source: l.source,
+    });
   }, [saved.location, savedHydrated]);
 
   // The state under the pin (cheap: 37 outlines), then that state's LGAs on demand.
   const stateOfPin = useMemo(
-    () => (pin && states ? resolveLocation(pin.position, states).stateId : null),
+    () =>
+      pin && states ? resolveLocation(pin.position, states).stateId : null,
     [pin, states],
   );
   const activeState = stateOfPin ?? lgaState;
@@ -99,7 +144,14 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
   }, [stateOfPin]);
 
   const resolution: LocationResolution | null = useMemo(
-    () => (pin && states ? resolveLocation(pin.position, states, lgaState === stateOfPin ? lgas : null) : null),
+    () =>
+      pin && states
+        ? resolveLocation(
+            pin.position,
+            states,
+            lgaState === stateOfPin ? lgas : null,
+          )
+        : null,
     [pin, states, lgas, lgaState, stateOfPin],
   );
 
@@ -107,11 +159,18 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
   useEffect(() => {
     if (!map || !ml || !states) return;
     const c = chartByTheme[theme];
-    addBoundaryLayers(map, "states", toFeatureCollection(states), { fillOpacity: 0.34 });
-    setFeatureStates(map, "states", states.map((s) => s.id), (id) => {
-      const i = REGIONS.findIndex((r) => r.stateIds.includes(id));
-      return { fill: i >= 0 ? c[REGION_KEYS[i]] : c.neutral };
+    addBoundaryLayers(map, "states", toFeatureCollection(states), {
+      fillOpacity: 0.34,
     });
+    setFeatureStates(
+      map,
+      "states",
+      states.map((s) => s.id),
+      (id) => {
+        const i = REGIONS.findIndex((r) => r.stateIds.includes(id));
+        return { fill: i >= 0 ? c[REGION_KEYS[i]] : c.neutral };
+      },
+    );
     return bindHover(map, "states", (id) => setHover(id));
   }, [map, ml, states, theme]);
 
@@ -125,12 +184,25 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
   }, [map, lgas, lgaState]);
 
   const place = useCallback(
-    (position: LngLat, label: string, precision: DeliveryLocation["precision"], source: DeliveryLocation["source"], fly = true) => {
+    (
+      position: LngLat,
+      label: string,
+      precision: DeliveryLocation["precision"],
+      source: DeliveryLocation["source"],
+      fly = true,
+    ) => {
       if (!isValidLngLat(position.lng, position.lat)) return;
       setPin({ position, label, precision, source });
       if (map && fly) {
         const d = precision === "address" ? 0.01 : 0.12;
-        flyTo(map, { bounds: [[position.lng - d, position.lat - d], [position.lng + d, position.lat + d]], padding: 60, maxZoom: precision === "address" ? 14 : 9.5 });
+        flyTo(map, {
+          bounds: [
+            [position.lng - d, position.lat - d],
+            [position.lng + d, position.lat + d],
+          ],
+          padding: 60,
+          maxZoom: precision === "address" ? 14 : 9.5,
+        });
       }
     },
     [map],
@@ -139,9 +211,20 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
   useEffect(() => {
     if (!map) return;
     const onClick = (e: { lngLat: { lng: number; lat: number } }) => {
-      const position = { lng: Number(e.lngLat.lng.toFixed(5)), lat: Number(e.lngLat.lat.toFixed(5)) };
-      const r = statesRef.current ? resolveLocation(position, statesRef.current) : null;
-      place(position, r?.stateName ? `Pin in ${r.stateName}` : "Pinned location", "map-pin", "map-pin", false);
+      const position = {
+        lng: Number(e.lngLat.lng.toFixed(5)),
+        lat: Number(e.lngLat.lat.toFixed(5)),
+      };
+      const r = statesRef.current
+        ? resolveLocation(position, statesRef.current)
+        : null;
+      place(
+        position,
+        r?.stateName ? `Pin in ${r.stateName}` : "Pinned location",
+        "map-pin",
+        "map-pin",
+        false,
+      );
     };
     map.on("click", onClick);
     return () => void map.off("click", onClick);
@@ -155,12 +238,28 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
       return;
     }
     if (!markerRef.current) {
-      const m = new ml.Marker({ element: pinElement("Delivery pin"), draggable: true, anchor: "bottom" }).setLngLat([pin.position.lng, pin.position.lat]).addTo(map);
+      const m = new ml.Marker({
+        element: pinElement("Delivery pin"),
+        draggable: true,
+        anchor: "bottom",
+      })
+        .setLngLat([pin.position.lng, pin.position.lat])
+        .addTo(map);
       m.on("dragend", () => {
         const ll = m.getLngLat();
-        const position = { lng: Number(ll.lng.toFixed(5)), lat: Number(ll.lat.toFixed(5)) };
-        const r = statesRef.current ? resolveLocation(position, statesRef.current) : null;
-        setPin({ position, label: r?.stateName ? `Pin in ${r.stateName}` : "Pinned location", precision: "map-pin", source: "map-pin" });
+        const position = {
+          lng: Number(ll.lng.toFixed(5)),
+          lat: Number(ll.lat.toFixed(5)),
+        };
+        const r = statesRef.current
+          ? resolveLocation(position, statesRef.current)
+          : null;
+        setPin({
+          position,
+          label: r?.stateName ? `Pin in ${r.stateName}` : "Pinned location",
+          precision: "map-pin",
+          source: "map-pin",
+        });
       });
       markerRef.current = m;
     } else markerRef.current.setLngLat([pin.position.lng, pin.position.lat]);
@@ -171,7 +270,13 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
     markerRef.current?.remove();
     markerRef.current = null;
   }, [map]);
-  useEffect(() => () => { markerRef.current?.remove(); markerRef.current = null; }, []);
+  useEffect(
+    () => () => {
+      markerRef.current?.remove();
+      markerRef.current = null;
+    },
+    [],
+  );
 
   const runSearch = useCallback(
     async (q: string) => {
@@ -184,7 +289,13 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
         const out = await searchWithFallback(q, ctl.signal);
         setResults(out.results);
         setDegraded(out.degraded);
-        if (out.results.length === 1) place(out.results[0].position, out.results[0].label, out.results[0].precision, "search");
+        if (out.results.length === 1)
+          place(
+            out.results[0].position,
+            out.results[0].label,
+            out.results[0].precision,
+            "search",
+          );
       } catch (e) {
         if ((e as Error).name !== "AbortError") setResults([]);
       } finally {
@@ -206,25 +317,58 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
     const u = states?.find((s) => s.id === stateId);
     if (!u) return;
     const [lng, lat] = geometryCentroid(u.geometry);
-    place({ lng: Number(lng.toFixed(5)), lat: Number(lat.toFixed(5)) }, `${u.name} State (centre)`, "locality-centroid", "search", false);
+    place(
+      { lng: Number(lng.toFixed(5)), lat: Number(lat.toFixed(5)) },
+      `${u.name} State (centre)`,
+      "locality-centroid",
+      "search",
+      false,
+    );
     if (map) {
       const b = geometryBBox(u.geometry);
-      flyTo(map, { bounds: [[b[0], b[1]], [b[2], b[3]]], padding: 40, maxZoom: 9 });
+      flyTo(map, {
+        bounds: [
+          [b[0], b[1]],
+          [b[2], b[3]],
+        ],
+        padding: 40,
+        maxZoom: 9,
+      });
     }
   };
   const pickLga = (lgaId: string) => {
     const u = lgas?.find((l) => l.id === lgaId);
     if (!u) return;
     const [lng, lat] = geometryCentroid(u.geometry);
-    place({ lng: Number(lng.toFixed(5)), lat: Number(lat.toFixed(5)) }, `${u.name} (area centre)`, "locality-centroid", "search", false);
+    place(
+      { lng: Number(lng.toFixed(5)), lat: Number(lat.toFixed(5)) },
+      `${u.name} (area centre)`,
+      "locality-centroid",
+      "search",
+      false,
+    );
     if (map) {
       const b = geometryBBox(u.geometry);
-      flyTo(map, { bounds: [[b[0], b[1]], [b[2], b[3]]], padding: 40, maxZoom: 11 });
+      flyTo(map, {
+        bounds: [
+          [b[0], b[1]],
+          [b[2], b[3]],
+        ],
+        padding: 40,
+        maxZoom: 11,
+      });
     }
   };
 
-  const estimate = resolution ? estimateDelivery({ resolution, weightKg }) : null;
-  const confirmed = !!(pin && saved.location && saved.location.position.lng === pin.position.lng && saved.location.position.lat === pin.position.lat);
+  const estimate = resolution
+    ? estimateDelivery({ resolution, weightKg })
+    : null;
+  const confirmed = !!(
+    pin &&
+    saved.location &&
+    saved.location.position.lng === pin.position.lng &&
+    saved.location.position.lat === pin.position.lat
+  );
   const chosen = saved.optionId;
   const confirm = () => {
     if (!pin || !resolution) return;
@@ -233,9 +377,15 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
 
   const hoveredState = hover ? states?.find((s) => s.id === hover) : null;
   const hoveredRegion = hover ? regionOfState(hover) : null;
-  const sortedStates = useMemo(() => states?.slice().sort((a, b) => a.name.localeCompare(b.name)), [states]);
+  const sortedStates = useMemo(
+    () => states?.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [states],
+  );
   const sortedLgas = useMemo(
-    () => (lgaState === activeState ? lgas?.slice().sort((a, b) => a.name.localeCompare(b.name)) : undefined),
+    () =>
+      lgaState === activeState
+        ? lgas?.slice().sort((a, b) => a.name.localeCompare(b.name))
+        : undefined,
     [lgas, lgaState, activeState],
   );
 
@@ -243,7 +393,9 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
     <div className={`grid gap-6 ${compact ? "" : "lg:grid-cols-[24rem_1fr]"}`}>
       <div className="space-y-5 order-2 lg:order-1">
         <div role="search">
-          <label htmlFor="addr" className="label">Delivery address, town or city</label>
+          <label htmlFor="addr" className="label">
+            Delivery address, town or city
+          </label>
           <div className="flex gap-2">
             <input
               id="addr"
@@ -259,27 +411,48 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
               placeholder="e.g. Ibadan, Enugu, Kano"
               autoComplete="off"
             />
-            <button type="button" className="btn btn-ink" onClick={() => void runSearch(query)} disabled={searching || query.trim().length < 2}>
+            <button
+              type="button"
+              className="btn btn-ink"
+              onClick={() => void runSearch(query)}
+              disabled={searching || query.trim().length < 2}
+            >
               {searching ? "Searching" : "Search"}
             </button>
           </div>
-          <p className="hint mt-1.5">Or click the map to drop a pin, then drag it to adjust.</p>
+          <p className="hint mt-1.5">
+            Or click the map to drop a pin, then drag it to adjust.
+          </p>
         </div>
 
         {results && (
           <div aria-live="polite">
             {degraded && (
-              <Notice tone="warning" className="mb-2">Live address search is unavailable. Showing state capitals and major towns instead.</Notice>
+              <Notice tone="warning" className="mb-2">
+                Live address search is unavailable. Showing state capitals and
+                major towns instead.
+              </Notice>
             )}
             {results.length === 0 ? (
-              <p className="text-sm text-ink-2">No matches. Try a nearby town, choose a state below, or place a pin on the map.</p>
+              <p className="text-sm text-ink-2">
+                No matches. Try a nearby town, choose a state below, or place a
+                pin on the map.
+              </p>
             ) : (
               <ul className="panel divide-y divide-line list-none p-0">
                 {results.map((r) => (
                   <li key={r.id}>
-                    <button type="button" className="w-full text-left px-3 py-3 min-h-11 hover:bg-paper-2" onClick={() => place(r.position, r.label, r.precision, "search")}>
+                    <button
+                      type="button"
+                      className="w-full text-left px-3 py-3 min-h-11 hover:bg-paper-2"
+                      onClick={() =>
+                        place(r.position, r.label, r.precision, "search")
+                      }
+                    >
                       <span className="block font-medium">{r.label}</span>
-                      <span className="block text-xs text-ink-3">{r.secondary}</span>
+                      <span className="block text-xs text-ink-3">
+                        {r.secondary}
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -291,42 +464,87 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
         <fieldset className="grid gap-3">
           <legend className="label">No map? Choose your state and area</legend>
           <div>
-            <label htmlFor="state-pick" className="sr-only">State</label>
-            <select id="state-pick" className="field" value={stateOfPin ?? ""} disabled={!states} onChange={(e) => e.target.value && pickState(e.target.value)}>
+            <label htmlFor="state-pick" className="sr-only">
+              State
+            </label>
+            <select
+              id="state-pick"
+              className="field"
+              value={stateOfPin ?? ""}
+              disabled={!states}
+              onChange={(e) => e.target.value && pickState(e.target.value)}
+            >
               <option value="">Select a state</option>
               {sortedStates?.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label htmlFor="lga-pick" className="sr-only">Local government area</label>
-            <select id="lga-pick" className="field" value={resolution?.lgaId ?? ""} disabled={!sortedLgas} onChange={(e) => e.target.value && pickLga(e.target.value)}>
-              <option value="">{sortedLgas ? "Select a local government area" : "Choose a state first"}</option>
+            <label htmlFor="lga-pick" className="sr-only">
+              Local government area
+            </label>
+            <select
+              id="lga-pick"
+              className="field"
+              value={resolution?.lgaId ?? ""}
+              disabled={!sortedLgas}
+              onChange={(e) => e.target.value && pickLga(e.target.value)}
+            >
+              <option value="">
+                {sortedLgas
+                  ? "Select a local government area"
+                  : "Choose a state first"}
+              </option>
               {sortedLgas?.map((l) => (
-                <option key={l.id} value={l.id}>{l.name}</option>
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
               ))}
             </select>
           </div>
         </fieldset>
 
-        {geoError && <Notice tone="warning">Boundary data could not be loaded, so the state cannot be checked right now. Try reloading the page.</Notice>}
+        {geoError && (
+          <Notice tone="warning">
+            Boundary data could not be loaded, so the state cannot be checked
+            right now. Try reloading the page.
+          </Notice>
+        )}
 
         {pin && resolution ? (
           <section aria-labelledby="pinres" className="panel p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <h2 id="pinres" className="!text-xl">{pin.label}</h2>
-              {confirmed ? <Tag tone="success">Confirmed</Tag> : <Tag>Not confirmed</Tag>}
+              <h2 id="pinres" className="!text-xl">
+                {pin.label}
+              </h2>
+              {confirmed ? (
+                <Tag tone="success">Confirmed</Tag>
+              ) : (
+                <Tag>Not confirmed</Tag>
+              )}
             </div>
             <dl className="grid grid-cols-[7rem_1fr] gap-y-1.5 text-sm">
               <dt className="text-ink-3">Position</dt>
-              <dd className="mono">{pin.position.lat.toFixed(5)}, {pin.position.lng.toFixed(5)}</dd>
+              <dd className="mono">
+                {pin.position.lat.toFixed(5)}, {pin.position.lng.toFixed(5)}
+              </dd>
               <dt className="text-ink-3">Precision</dt>
-              <dd>{pin.precision === "address" ? "Address-level" : pin.precision === "locality-centroid" ? "Area centre (several km)" : "Where you placed the pin"}</dd>
+              <dd>
+                {pin.precision === "address"
+                  ? "Address-level"
+                  : pin.precision === "locality-centroid"
+                    ? "Area centre (several km)"
+                    : "Where you placed the pin"}
+              </dd>
               <dt className="text-ink-3">State</dt>
               <dd>{resolution.stateName ?? "Outside Nigeria"}</dd>
               <dt className="text-ink-3">Area (LGA)</dt>
-              <dd>{resolution.lgaName ?? (resolution.stateName ? "Loading" : "—")}</dd>
+              <dd>
+                {resolution.lgaName ?? (resolution.stateName ? "Loading" : "—")}
+              </dd>
               {resolution.regionName && (
                 <>
                   <dt className="text-ink-3">Region</dt>
@@ -336,23 +554,41 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
             </dl>
             <CoverageBadge resolution={resolution} />
             {!confirmed && resolution.coverage === "in-nigeria" && (
-              <button type="button" className="btn btn-primary w-full" onClick={confirm}>Confirm this location</button>
+              <button
+                type="button"
+                className="btn btn-primary w-full"
+                onClick={confirm}
+              >
+                Confirm this location
+              </button>
             )}
           </section>
         ) : (
-          <Notice className="text-sm">Search, choose a state or place a pin to see delivery options.</Notice>
+          <Notice className="text-sm">
+            Search, choose a state or place a pin to see delivery options.
+          </Notice>
         )}
 
         {confirmed && estimate && (
           <section aria-labelledby="opts" className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 id="opts" className="!text-xl">Delivery options</h2>
+              <h2 id="opts" className="!text-xl">
+                Delivery options
+              </h2>
               <Tag tone="sample">Sample rates</Tag>
             </div>
             <p className="hint">
-              For {cart.weightKg > 0 ? `your cart, about ${Math.round(weightKg)} kg` : `an example order of about ${EXAMPLE_WEIGHT_KG} kg (add items for a real estimate)`}.
+              For{" "}
+              {cart.weightKg > 0
+                ? `your cart, about ${Math.round(weightKg)} kg`
+                : `an example order of about ${EXAMPLE_WEIGHT_KG} kg (add items for a real estimate)`}
+              .
             </p>
-            <div role="radiogroup" aria-label="Delivery option" className="space-y-2">
+            <div
+              role="radiogroup"
+              aria-label="Delivery option"
+              className="space-y-2"
+            >
               {estimate.options.map((o) => (
                 <button
                   key={o.id}
@@ -365,20 +601,39 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
                 >
                   <span className="flex items-baseline justify-between gap-3">
                     <span className="font-medium">{o.label}</span>
-                    <span className="mono text-sm">{o.feeKobo === null ? (o.available ? "Quote" : "Unavailable") : o.feeKobo === 0 ? "No charge" : formatNaira(o.feeKobo)}</span>
+                    <span className="mono text-sm">
+                      {o.feeKobo === null
+                        ? o.available
+                          ? "Quote"
+                          : "Unavailable"
+                        : o.feeKobo === 0
+                          ? "No charge"
+                          : formatNaira(o.feeKobo)}
+                    </span>
                   </span>
-                  <span className="block text-xs text-ink-3 mt-1">{o.detail}</span>
-                  {o.note && <span className="block text-xs text-ink-2 mt-1">{o.note}</span>}
+                  <span className="block text-xs text-ink-3 mt-1">
+                    {o.detail}
+                  </span>
+                  {o.note && (
+                    <span className="block text-xs text-ink-2 mt-1">
+                      {o.note}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
           </section>
         )}
-        <p className="hint">Delivery rates are sample values per region and order weight. They are not Laddex&rsquo;s confirmed prices, and no delivery time is promised.</p>
+        <p className="hint">
+          Delivery rates are sample values per region and order weight. They are
+          not Laddex&rsquo;s confirmed prices, and no delivery time is promised.
+        </p>
       </div>
 
       <div className="order-1 lg:order-2">
-        <div className={`relative border border-line-strong rounded-md overflow-hidden bg-paper-2 ${compact ? "h-[22rem]" : "h-[26rem] lg:h-[calc(100dvh-14rem)] lg:min-h-[32rem]"}`}>
+        <div
+          className={`relative border border-line-strong rounded-md overflow-hidden bg-paper-2 ${compact ? "h-[22rem]" : "h-[26rem] lg:h-[calc(100dvh-14rem)] lg:min-h-[32rem]"}`}
+        >
           <div className="absolute inset-0">
             <div ref={containerRef} className="h-full w-full" />
           </div>
@@ -392,7 +647,11 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
             <ul className="space-y-1 list-none p-0">
               {REGIONS.map((r, i) => (
                 <li key={r.id} className="flex items-center gap-2">
-                  <span aria-hidden="true" className="w-3 h-3 border border-ink/40" style={{ background: chartByTheme[theme][REGION_KEYS[i]] }} />
+                  <span
+                    aria-hidden="true"
+                    className="w-3 h-3 border border-ink/40"
+                    style={{ background: chartByTheme[theme][REGION_KEYS[i]] }}
+                  />
                   {r.name}
                 </li>
               ))}
@@ -404,7 +663,9 @@ export function LocationPicker({ compact = false, initialQuery = "" }: { compact
             </div>
           )}
           {basemap === "offline" && (
-            <p className="absolute right-3 bottom-8 bg-card/90 text-[0.6875rem] px-2 py-1 border border-line rounded-sm">Street basemap unavailable: showing boundaries only</p>
+            <p className="absolute right-3 bottom-8 bg-card/90 text-[0.6875rem] px-2 py-1 border border-line rounded-sm">
+              Street basemap unavailable: showing boundaries only
+            </p>
           )}
         </div>
       </div>

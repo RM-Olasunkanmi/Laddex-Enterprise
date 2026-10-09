@@ -2,20 +2,29 @@
 
 ## Current state
 
-No Laddex photography was supplied. The storefront therefore shows **development renders**: schematic line-and-flat-colour drawings of a bottle, jerrycan, drum, pouch, bag and sack (`src/components/product/pack-visual.tsx`). Every render is labelled "Development render" in the gallery and "not product photo" inside the drawing. They are not inaccurate stock photos and cannot be mistaken for the company's packaging.
+Real photographs and the real logo supplied by the owner are used:
 
-## Replacing them with real photographs
+| File                                                                                             | Source                                                     | Used for                            |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------- |
+| `public/brand/laddex-logo.png`, `laddex-logo-64.png`                                             | Circular LADDEX logo, black surround masked to transparent | Header, footer, staff rail, favicon |
+| `public/products/palm-oil-lineup.webp`, `palm-oil-full.webp`                                     | Palm oil bottle photo                                      | Palm oil card and gallery           |
+| `public/products/garri-igbo.webp`, `garri-ijebu.webp`, `tapioca-flakes.webp`, `garri-shelf.webp` | Frames cropped from the shelf video                        | Garri, tapioca and category tiles   |
 
-1. Put optimised images in `public/products/<product-slug>/` (for example `public/products/palm-oil/25l-front.jpg`). Prefer 1600 px wide JPEG or AVIF.
-2. Add entries to the product's `photographs` array in `src/fixtures/products/products.ts` (or return them from the CMS adapter):
-   ```ts
-   photographs: [{ id: "po-25l-front", kind: "photograph", src: "/products/palm-oil/25l-front.jpg", alt: "25 litre jerrycan of Laddex palm oil, front" }]
-   ```
-3. `ProductGallery` renders photographs first, through `next/image` with responsive `sizes`, and hides the "Development render" badge for them. Cards and the ladder can switch the same way by reading `photographs` (a one-component change in `ProductCard` and `PackLadder`).
-4. Add per-variant photos by extending `ProductImage` with `variantId`; the gallery already receives the selected variant.
+These are **low-resolution frames** (the largest is about 540 px wide), so they look soft on large screens. Each is labelled "Sample photo supplied by Laddex". Source files are in `assets-src/`; `node scripts/assets/build-photos.mjs` regenerates the web files (crops avoid the person in the frame, the black video bar and the social-media overlay text).
+
+## Replacing them
+
+1. Put original photographs (1600 px wide or more) in `public/products/`.
+2. Point the `photo(...)` entries in `src/fixtures/products/products.ts` at them, and drop the sample note.
+3. `ProductPhoto` and `ProductGallery` render through `next/image`.
+
+## Needed from the owner
+
+- Original photos of each product, ideally one per size (the 1 kg, 5 kg, 25 kg and 50 kg bags look different).
+- The real pack sizes and prices. The sizes and prices in the fixtures are illustrative.
+- Phone, WhatsApp, email and address for `src/content/business.ts`.
 
 ## Other assets
 
-- Fonts: self-hosted through `@fontsource-variable/*` (no third-party font requests).
-- Icons: inline SVG only.
-- Map data: `public/geo/*.json` (see `docs/GEOSPATIAL.md`).
+- Fonts self-hosted via `@fontsource-variable/*`. Icons are inline SVG.
+- Map data: `public/geo` (see `docs/GEOSPATIAL.md`).

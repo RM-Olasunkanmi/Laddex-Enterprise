@@ -17,7 +17,9 @@ export const gazetteerGeocoder: GeocodingService = {
     const q = norm(query);
     if (q.length < 2) return [];
     const hits = GAZETTEER.filter(
-      (g) => norm(g.name).includes(q) || norm(g.stateId.replace(/-/g, " ")).includes(q),
+      (g) =>
+        norm(g.name).includes(q) ||
+        norm(g.stateId.replace(/-/g, " ")).includes(q),
     );
     return hits.slice(0, opts?.limit ?? 6).map<GeocodeResult>((g) => ({
       id: `gaz-${norm(g.name).replace(/ /g, "-")}`,

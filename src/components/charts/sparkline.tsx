@@ -1,4 +1,4 @@
-import { color } from "@/lib/design/tokens";
+import { v as color } from "@/lib/design/tokens";
 
 /** Compact trend for a KPI tile. Decorative: the figure beside it carries the information. */
 export function Sparkline({

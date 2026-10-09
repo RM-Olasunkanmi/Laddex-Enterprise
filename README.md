@@ -1,8 +1,8 @@
 # Laddex Enterprise
 
-Palm oil by the litre and tapioca by the kilo: a retail and wholesale storefront with delivery-location checking and a spatial business-intelligence dashboard, for Nigeria.
+Laddex Enterprise: palm oil, tapioca flakes, Garri Igbo and Ijebu Garri. A storefront that serves households, resellers and event buyers, with nationwide delivery checking and a spatial business-intelligence dashboard, for Nigeria.
 
-This is the **frontend phase**. It runs on typed fixtures behind replaceable adapters. Prices, sizes, stock, delivery zones, fees, orders and customers are **illustrative** until real data is connected; the interface says so wherever it matters. Built on the [giladfuchs/next-ecommerce](https://github.com/giladfuchs/next-ecommerce) starter (Next.js 16, Payload CMS 3, Tailwind 4), whose commerce architecture is preserved.
+This is the **frontend phase**. It runs on typed fixtures behind replaceable adapters. Prices, sizes, stock, delivery rates, fees, orders and customers are **illustrative** until real data is connected; the interface says so wherever it matters. Built on the [giladfuchs/next-ecommerce](https://github.com/giladfuchs/next-ecommerce) starter (Next.js 16, Payload CMS 3, Tailwind 4), whose commerce architecture is preserved.
 
 ## Run it
 
@@ -14,15 +14,19 @@ pnpm build && pnpm start -p 3355
 
 The storefront and dashboard need no database. The starter's Payload admin and legacy routes still need `DATABASE_URL` (see `.env.example`).
 
-| Route | What it is |
-|---|---|
-| `/` | Homepage |
-| `/shop`, `/shop/palm-oil`, `/shop/tapioca` | Catalogue |
-| `/products/palm-oil?pack=po-25l` | Product page |
-| `/cart`, `/order`, `/order/confirmation` | Cart and checkout preview |
-| `/delivery` | Address search, map pin, coverage and options |
-| `/wholesale`, `/wholesale/quote`, `/wholesale/register`, `/account` | Wholesale and account |
-| `/dashboard` | Spatial intelligence (staff). Also `/dashboard/orders`, `customers`, `inventory`, `wholesale`, `reports` |
+| Route                                                               | What it is                                                                                                                             |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                                                 | Homepage with About, products, three ways to buy, nationwide delivery                                                                  |
+| `/shop`, `/shop/palm-oil`, `/shop/tapioca`, `/shop/garri`           | Catalogue                                                                                                                              |
+| `/products/garri-igbo?pack=gi-25kg`                                 | Product page (also `palm-oil`, `tapioca-flakes`, `garri-ijebu`)                                                                        |
+| `/cart`, `/order`, `/order/confirmation`                            | Cart and checkout preview                                                                                                              |
+| `/delivery`                                                         | Nationwide: search, state and LGA selects, map pin, delivery options                                                                   |
+| `/wholesale`, `/wholesale/quote`, `/wholesale/register`, `/account` | Wholesale and account                                                                                                                  |
+| `/events`                                                           | Souvenirs and bulk gifts, with enquiry form                                                                                            |
+| `/contact`                                                          | Enquiry form (preview only, sends nothing)                                                                                             |
+| `/dashboard`                                                        | Staff: Overview. Also `/geography` (map), `/insights` (spatial statistics), `orders`, `customers`, `inventory`, `wholesale`, `reports` |
+
+The light/dark switch is in the storefront header and the staff rail; the choice is remembered. Business contact details are configured in `src/content/business.ts` and appear only when filled in.
 
 Review helpers: the black strip at the top of the storefront switches between guest, retail and wholesale (pending or approved) customers. In the dashboard, the Role control reveals order-level views. Append `?latency=3000` or `?fail=data` to dashboard URLs, and `?fail=catalogue` to `/shop`, to see loading and error states. Dashboard state lives in the URL, so views can be shared.
 
@@ -30,10 +34,10 @@ Review helpers: the black strip at the top of the storefront switches between gu
 
 ```bash
 pnpm typecheck && pnpm lint
-pnpm test                                  # 80 unit tests
+pnpm test                                  # 125 unit tests
 pnpm build && pnpm start -p 3355 &
-BASE=http://localhost:3355 pnpm test:e2e   # 39 browser checks (Chromium via playwright-core)
-BASE=http://localhost:3355 node scripts/qa/a11y.mjs        # axe, add MOBILE=1 for phone width
+BASE=http://localhost:3355 pnpm test:e2e   # 22 browser checks (Chromium via playwright-core)
+BASE=http://localhost:3355 node scripts/qa/a11y.mjs        # axe, add MOBILE=1 for phone width or DARK=1 for dark theme
 BASE=http://localhost:3355 node scripts/qa/perf.mjs
 BASE=http://localhost:3355 node scripts/qa/gallery.mjs     # refresh /screenshots
 ```

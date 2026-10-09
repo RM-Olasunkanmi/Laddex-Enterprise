@@ -20,15 +20,27 @@ import {
 import { unitName } from "@/features/spatial-intelligence/geo-units";
 import {
   bucketFor,
+  aggregateByUnit,
   concentration,
-  coverageSplit,
   deliveryFeeHistogram,
+  reach,
   timeSeries,
   variantStats,
 } from "@/features/spatial-intelligence/metrics";
 import { useDashboard, useKpis } from "@/features/spatial-intelligence/state";
-import { SCALE_LABEL, UNASSIGNED } from "@/features/spatial-intelligence/types";
-import { ALL_VARIANTS } from "@/fixtures/products/products";
+import {
+  SCALE_LABEL,
+  SEGMENT_LABEL,
+  SEGMENTS,
+  UNASSIGNED,
+  type Segment,
+} from "@/features/spatial-intelligence/types";
+import { REGIONS } from "@/fixtures/geography/regions";
+import {
+  ALL_VARIANTS,
+  PRODUCTS,
+  categoryOf,
+} from "@/fixtures/products/products";
 import { chart } from "@/lib/design/tokens";
 import {
   formatInt,
@@ -37,18 +49,36 @@ import {
   formatPercent,
 } from "@/lib/formatters";
 
-export function unassignedLabel(scale: string) {
-  return scale === "pickup"
-    ? "Home delivery orders"
-    : scale === "state"
-      ? "No usable location"
-      : scale === "zone"
-        ? "No usable location"
-        : "Outside Lagos or no location";
+export function unassignedLabel() {
+  return "No usable location";
 }
 
+const SEG_FILL: Record<Segment, string> = {
+  retail: chart.retail,
+  wholesale: chart.wholesale,
+  events: chart.events,
+};
+const CAT_FILL = {
+  "palm-oil": chart.palm,
+  tapioca: chart.tapioca,
+  garri: chart.garri,
+} as const;
+const CAT_LABEL = {
+  "palm-oil": "Palm oil",
+  tapioca: "Tapioca flakes",
+  garri: "Garri",
+} as const;
+const REGION_FILL = [
+  chart.palm,
+  chart.tapioca,
+  chart.garri,
+  chart.retail,
+  chart.wholesale,
+  chart.events,
+];
+
 export function Inspector() {
-  const { state, dispatch, derived } = useDashboard();
+  const { state, dispatch, derived, dataset } = useDashboard();
   const kpis = useKpis();
   const { selection, filters } = state;
 
@@ -75,7 +105,8 @@ export function Inspector() {
       stats,
       conc,
       hist: deliveryFeeHistogram(derived.inSelection),
-      cover: coverageSplit(derived.inSelection),
+      reach: reach(derived.inSelection),
+      regions: aggregateByUnit(derived.inSelection, "region"),
       days,
     };
   }, [derived, kpis, filters]);
@@ -95,7 +126,12 @@ export function Inspector() {
     );
 
   const { current: k, previous: p } = kpis;
-  const title = derived.selectedUnit?.name ?? "All of the active extent";
+  const title =
+    derived.selectedUnit?.name ??
+    (selection.scale === "lga" && selection.stateId
+      ? (dataset?.states.find((x) => x.id === selection.stateId)?.name ??
+        "Whole state")
+      : "All of Nigeria");
   const empty = k.ordersPlaced === 0;
   const maxStat = Math.max(1, ...data.stats.map((s) => s.grossKobo));
 
@@ -118,6 +154,16 @@ export function Inspector() {
             </button>
           )}
         </div>
+        {selection.scale === "state" && selection.unitId && (
+          <button
+            className="btn btn-line btn-sm mt-2 min-h-9"
+            onClick={() =>
+              dispatch({ type: "drill", stateId: selection.unitId! })
+            }
+          >
+            View its local government areas
+          </button>
+        )}
         <p className="text-xs text-ink-3 mt-1">
           {formatInt(k.ordersPlaced)} orders from {filters.from} to {filters.to}
           . Filters kept.
@@ -188,7 +234,7 @@ export function Inspector() {
           </section>
           <p className="mono text-[0.6875rem] text-ink-3 -mt-3">
             {formatInt(k.packs)} packs · {formatInt(Math.round(k.litres))} L
-            palm oil · {formatInt(Math.round(k.kilograms))} kg tapioca
+            palm oil · {formatInt(Math.round(k.kilograms))} kg tapioca and garri
           </p>
 
           <ChartFrame
@@ -210,79 +256,62 @@ export function Inspector() {
             />
             <Legend
               items={[
-                { label: "Selected period", color: chart.palmOil },
+                { label: "Selected period", color: chart.palm },
                 { label: "Previous period", color: chart.prior, dashed: true },
               ]}
             />
           </ChartFrame>
 
           <ChartFrame
-            title="Retail and wholesale"
+            title="Retail, wholesale and events"
             metric="gross"
             unit="Share of gross sales"
             table={
               <MiniTable
-                rows={[
-                  ["Retail", formatNaira(k.grossBySegment.retail)],
-                  ["Wholesale", formatNaira(k.grossBySegment.wholesale)],
-                ]}
+                rows={SEGMENTS.map((g) => [
+                  SEGMENT_LABEL[g],
+                  formatNaira(k.grossBySegment[g]),
+                ])}
               />
             }
           >
             <StackedBar
-              ariaLabel="Gross sales by segment"
-              segments={[
-                {
-                  key: "r",
-                  label: "Retail",
-                  value: k.grossBySegment.retail,
-                  display: formatPercent(k.shareBySegment.retail, 0),
-                  fill: chart.retail,
-                },
-                {
-                  key: "w",
-                  label: "Wholesale",
-                  value: k.grossBySegment.wholesale,
-                  display: formatPercent(k.shareBySegment.wholesale, 0),
-                  fill: chart.wholesale,
-                  hatch: true,
-                },
-              ]}
+              ariaLabel="Gross sales by buyer segment"
+              segments={SEGMENTS.map((g, i) => ({
+                key: g,
+                label: SEGMENT_LABEL[g],
+                value: k.grossBySegment[g],
+                display: formatPercent(k.shareBySegment[g], 0),
+                fill: SEG_FILL[g],
+                hatch: i === 1,
+              }))}
             />
           </ChartFrame>
 
           <ChartFrame
-            title="Palm oil and tapioca"
+            title="Palm oil, tapioca flakes and garri"
             metric="gross"
             unit="Share of gross sales"
             table={
               <MiniTable
-                rows={[
-                  ["Palm oil", formatNaira(k.grossByCategory["palm-oil"])],
-                  ["Tapioca", formatNaira(k.grossByCategory.tapioca)],
-                ]}
+                rows={(
+                  Object.keys(CAT_LABEL) as (keyof typeof CAT_LABEL)[]
+                ).map((c) => [CAT_LABEL[c], formatNaira(k.grossByCategory[c])])}
               />
             }
           >
             <StackedBar
               ariaLabel="Gross sales by product"
-              segments={[
-                {
-                  key: "p",
-                  label: "Palm oil",
-                  value: k.grossByCategory["palm-oil"],
-                  display: formatPercent(k.shareByCategory["palm-oil"], 0),
-                  fill: chart.palmOil,
-                },
-                {
-                  key: "t",
-                  label: "Tapioca",
-                  value: k.grossByCategory.tapioca,
-                  display: formatPercent(k.shareByCategory.tapioca, 0),
-                  fill: chart.tapioca,
-                  hatch: true,
-                },
-              ]}
+              segments={(
+                Object.keys(CAT_LABEL) as (keyof typeof CAT_LABEL)[]
+              ).map((c, i) => ({
+                key: c,
+                label: CAT_LABEL[c],
+                value: k.grossByCategory[c],
+                display: formatPercent(k.shareByCategory[c], 0),
+                fill: CAT_FILL[c],
+                hatch: i === 1,
+              }))}
             />
           </ChartFrame>
 
@@ -306,10 +335,8 @@ export function Inspector() {
                 label: packName(v.variantId),
                 value: v.packs,
                 display: `${formatInt(v.packs)}`,
-                fill: v.variantId.startsWith("po")
-                  ? chart.palmOil
-                  : chart.tapioca,
-                hatch: v.variantId.startsWith("tp"),
+                fill: CAT_FILL[categoryOf(v.variantId)],
+                hatch: categoryOf(v.variantId) === "tapioca",
               }))}
             />
           </ChartFrame>
@@ -322,7 +349,7 @@ export function Inspector() {
               <MiniTable
                 rows={data.stats.map((s) => [
                   s.id === UNASSIGNED
-                    ? unassignedLabel(selection.scale)
+                    ? unassignedLabel()
                     : unitName(derived.units, s.id),
                   formatNaira(s.grossKobo),
                 ])}
@@ -343,12 +370,12 @@ export function Inspector() {
                 id: s.id,
                 label:
                   s.id === UNASSIGNED
-                    ? unassignedLabel(selection.scale)
+                    ? unassignedLabel()
                     : unitName(derived.units, s.id),
                 value: s.grossKobo,
                 display: formatNairaCompact(s.grossKobo),
                 selected: s.id === selection.unitId,
-                fill: s.id === UNASSIGNED ? chart.neutral : chart.palmOil,
+                fill: s.id === UNASSIGNED ? chart.neutral : chart.palm,
               }))}
             />
             {data.conc.top3Share !== null && (
@@ -395,60 +422,40 @@ export function Inspector() {
           </ChartFrame>
 
           <ChartFrame
-            title="Orders against sample coverage"
+            title="Where the sales are, by region"
             metric="coverage"
-            unit="Share of non-cancelled orders"
+            unit={`Share of gross sales · ${data.reach.statesReached} of ${data.reach.totalStates} states reached`}
             table={
               <MiniTable
-                rows={[
-                  ["Inside sample zones", `${data.cover.inSampleZones}`],
-                  ["Lagos, outside zones", `${data.cover.outsideSampleZones}`],
-                  ["Outside Lagos", `${data.cover.outsideLagos}`],
-                  ["No usable location", `${data.cover.unlocated}`],
-                ]}
+                rows={REGIONS.map((r) => [
+                  r.name,
+                  formatNaira(data.regions.get(r.id)?.grossKobo ?? 0),
+                ])}
               />
             }
           >
             <StackedBar
-              ariaLabel="Orders by sample coverage"
+              ariaLabel="Gross sales by region"
               segments={[
-                {
-                  key: "in",
-                  label: "In sample zones",
-                  value: data.cover.inSampleZones,
+                ...REGIONS.map((r, i) => ({
+                  key: r.id,
+                  label: r.name,
+                  value: data.regions.get(r.id)?.grossKobo ?? 0,
                   display: formatPercent(
-                    data.cover.inSampleZones / (data.cover.total || 1),
+                    (data.regions.get(r.id)?.grossKobo ?? 0) /
+                      (k.grossKobo || 1),
                     0,
                   ),
-                  fill: chart.tapioca,
-                },
+                  fill: REGION_FILL[i],
+                  hatch: i % 2 === 1,
+                })),
                 {
-                  key: "out",
-                  label: "Lagos, no zone",
-                  value: data.cover.outsideSampleZones,
-                  display: formatPercent(
-                    data.cover.outsideSampleZones / (data.cover.total || 1),
-                    0,
-                  ),
-                  fill: chart.wholesale,
-                  hatch: true,
-                },
-                {
-                  key: "ol",
-                  label: "Outside Lagos",
-                  value: data.cover.outsideLagos,
-                  display: formatPercent(
-                    data.cover.outsideLagos / (data.cover.total || 1),
-                    0,
-                  ),
-                  fill: chart.palmOil,
-                },
-                {
-                  key: "nl",
+                  key: "none",
                   label: "No location",
-                  value: data.cover.unlocated,
+                  value: data.regions.get(UNASSIGNED)?.grossKobo ?? 0,
                   display: formatPercent(
-                    data.cover.unlocated / (data.cover.total || 1),
+                    (data.regions.get(UNASSIGNED)?.grossKobo ?? 0) /
+                      (k.grossKobo || 1),
                     0,
                   ),
                   fill: chart.neutral,
@@ -468,7 +475,7 @@ export function Inspector() {
 
 const packName = (variantId: string) => {
   const v = ALL_VARIANTS.find((x) => x.id === variantId)!;
-  return `${v.productId === "palm-oil" ? "Palm oil" : "Tapioca"} ${packLabel(v)}`;
+  return `${PRODUCTS.find((p) => p.id === v.productId)!.name} ${packLabel(v)}`;
 };
 
 function MiniTable({ rows }: { rows: string[][] }) {

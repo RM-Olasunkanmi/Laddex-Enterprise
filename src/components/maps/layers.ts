@@ -11,7 +11,9 @@ import { mapByTheme } from "@/lib/design/tokens";
 /** Map colours for the active theme, read when layers are added (the map is rebuilt on theme change). */
 const mapTokens = {
   get v() {
-    return mapByTheme[document.documentElement.dataset.theme === "dark" ? "dark" : "light"];
+    return mapByTheme[
+      document.documentElement.dataset.theme === "dark" ? "dark" : "light"
+    ];
   },
 };
 

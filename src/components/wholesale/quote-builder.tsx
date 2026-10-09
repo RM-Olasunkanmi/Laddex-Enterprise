@@ -229,7 +229,7 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
             type="button"
             className="btn btn-line btn-sm min-h-11 mt-3"
             onClick={() =>
-              setLines([...lines, { variantId: "tp-25kg", qty: 4 }])
+              setLines([...lines, { variantId: "gj-25kg", qty: 4 }])
             }
           >
             Add another pack

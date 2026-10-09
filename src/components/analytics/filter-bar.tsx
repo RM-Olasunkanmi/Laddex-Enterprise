@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import type {
@@ -17,9 +18,13 @@ import {
   useDashboard,
 } from "@/features/spatial-intelligence/state";
 import { DATASET_END, DATASET_START } from "@/fixtures/orders/generate";
-import { ALL_VARIANTS } from "@/fixtures/products/products";
+import {
+  ALL_VARIANTS,
+  PRODUCTS,
+  categoryOf,
+} from "@/fixtures/products/products";
 
-const SCALES: GeoScale[] = ["state", "lga", "zone", "pickup"];
+const SCALES: GeoScale[] = ["region", "state", "lga"];
 const STATUS_GROUPS: { id: string; label: string; statuses: OrderStatus[] }[] =
   [
     { id: "all", label: "Any status", statuses: [] },
@@ -79,8 +84,11 @@ const Field = ({
 );
 
 export function FilterBar() {
-  const { state, dispatch, derived } = useDashboard();
+  const { state, dispatch, derived, dataset } = useDashboard();
+  const stateName = (id: string) =>
+    dataset?.states.find((x) => x.id === id)?.name ?? id;
   const [open, setOpen] = useState(false);
+  const onMap = usePathname() === "/dashboard/geography";
   const { filters: f, selection, role } = state;
   const cat = f.categories.length === 1 ? f.categories[0] : "all";
   const seg = f.segments.length === 1 ? f.segments[0] : "all";
@@ -91,14 +99,12 @@ export function FilterBar() {
     STATUS_GROUPS.find((g) => g.statuses.join() === f.statuses.join())?.id ??
     "all";
   const packs = ALL_VARIANTS.filter(
-    (v) =>
-      cat === "all" ||
-      (cat === "palm-oil"
-        ? v.productId === "palm-oil"
-        : v.productId === "tapioca"),
+    (v) => cat === "all" || categoryOf(v.id) === cat,
   );
   const filtersActive =
-    JSON.stringify(f) !== JSON.stringify(DEFAULT_FILTERS) || !!selection.unitId;
+    JSON.stringify(f) !== JSON.stringify(DEFAULT_FILTERS) ||
+    !!selection.unitId ||
+    !!selection.stateId;
 
   const body = (
     <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
@@ -162,6 +168,7 @@ export function FilterBar() {
               { value: "all", label: "All" },
               { value: "palm-oil", label: "Palm oil" },
               { value: "tapioca", label: "Tapioca" },
+              { value: "garri", label: "Garri" },
             ]}
             onChange={(v) =>
               dispatch({
@@ -184,7 +191,7 @@ export function FilterBar() {
             <option value="">All packs</option>
             {packs.map((v) => (
               <option key={v.id} value={v.id}>
-                {v.productId === "palm-oil" ? "Palm oil" : "Tapioca"}{" "}
+                {PRODUCTS.find((p) => p.id === v.productId)!.name}{" "}
                 {packLabel(v)}
               </option>
             ))}
@@ -199,6 +206,7 @@ export function FilterBar() {
             { value: "all", label: "All" },
             { value: "retail", label: "Retail" },
             { value: "wholesale", label: "Wholesale" },
+            { value: "events", label: "Events" },
           ]}
           onChange={(v) =>
             dispatch({
@@ -225,7 +233,7 @@ export function FilterBar() {
           <option value="">All channels</option>
           <option value="online">Online store</option>
           <option value="phone">Phone</option>
-          <option value="wholesale-desk">Wholesale desk</option>
+          <option value="sales-desk">Sales desk</option>
         </select>
       </Field>
       <Field label="Delivery status">
@@ -250,40 +258,37 @@ export function FilterBar() {
           ))}
         </select>
       </Field>
-      <Field label="Map scale">
-        <Segmented
-          label="Aggregation scale"
-          value={selection.scale}
-          options={SCALES.map((s) => ({
-            value: s,
-            label:
-              s === "lga"
-                ? "LGA"
-                : s === "state"
-                  ? "State"
-                  : s === "zone"
-                    ? "Zone"
-                    : "Pickup",
-          }))}
-          onChange={(v) => dispatch({ type: "scale", scale: v })}
-        />
-      </Field>
-      <Field label="Map shows">
-        <select
-          aria-label="Map statistic"
-          className="field !min-h-9 !py-1 text-[0.8125rem]"
-          value={state.fillMetric}
-          onChange={(e) =>
-            dispatch({ type: "fill", metric: e.target.value as never })
-          }
-        >
-          {FILL_METRICS.map((m) => (
-            <option key={m.key} value={m.key}>
-              {m.label}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {onMap && (
+        <>
+          <Field label="Map scale">
+            <Segmented
+              label="Aggregation scale"
+              value={selection.scale}
+              options={SCALES.map((s) => ({
+                value: s,
+                label: s === "lga" ? "LGA" : s === "state" ? "State" : "Region",
+              }))}
+              onChange={(v) => dispatch({ type: "scale", scale: v })}
+            />
+          </Field>
+          <Field label="Map shows">
+            <select
+              aria-label="Map statistic"
+              className="field !min-h-9 !py-1 text-[0.8125rem]"
+              value={state.fillMetric}
+              onChange={(e) =>
+                dispatch({ type: "fill", metric: e.target.value as never })
+              }
+            >
+              {FILL_METRICS.map((m) => (
+                <option key={m.key} value={m.key}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </>
+      )}
       <Field label="Role (dev)">
         <Segmented
           label="Role"
@@ -309,31 +314,56 @@ export function FilterBar() {
   return (
     <div className="border-b border-line bg-card">
       <div className="px-4 py-2 flex items-center gap-3">
-        <nav
-          aria-label="Active extent"
-          className="flex items-center gap-1.5 text-sm min-w-0"
-        >
-          <span className="eyebrow !text-[0.625rem]">Extent</span>
-          <button
-            className="underline underline-offset-4 truncate"
-            onClick={() => dispatch({ type: "selectUnit", unitId: null })}
-            disabled={!selection.unitId}
+        {onMap ? (
+          <nav
+            aria-label="Active extent"
+            className="flex items-center gap-1.5 text-sm min-w-0"
           >
-            {selection.scale === "state" ? "Lagos and Ogun" : "Lagos State"}
-          </button>
-          {derived?.selectedUnit && (
-            <>
-              <span aria-hidden="true">›</span>
-              <strong className="truncate">{derived.selectedUnit.name}</strong>
-            </>
-          )}
-          {derived?.order && (
-            <>
-              <span aria-hidden="true">›</span>
-              <strong className="mono truncate">{derived.order.id}</strong>
-            </>
-          )}
-        </nav>
+            <span className="eyebrow !text-[0.625rem]">Extent</span>
+            <button
+              className="underline underline-offset-4 truncate"
+              onClick={() =>
+                dispatch({
+                  type: "scale",
+                  scale: selection.scale === "lga" ? "state" : selection.scale,
+                })
+              }
+              disabled={!selection.unitId && selection.scale !== "lga"}
+            >
+              Nigeria
+            </button>
+            {selection.scale === "lga" && selection.stateId && (
+              <>
+                <span aria-hidden="true">›</span>
+                <button
+                  className="underline underline-offset-4 truncate"
+                  onClick={() => dispatch({ type: "selectUnit", unitId: null })}
+                  disabled={!selection.unitId}
+                >
+                  {stateName(selection.stateId)}
+                </button>
+              </>
+            )}
+            {derived?.selectedUnit && (
+              <>
+                <span aria-hidden="true">›</span>
+                <strong className="truncate">
+                  {derived.selectedUnit.name}
+                </strong>
+              </>
+            )}
+            {derived?.order && (
+              <>
+                <span aria-hidden="true">›</span>
+                <strong className="mono truncate">{derived.order.id}</strong>
+              </>
+            )}
+          </nav>
+        ) : (
+          <p className="eyebrow !text-[0.625rem]">
+            Filters apply to every page
+          </p>
+        )}
         <button
           className="lg:hidden btn btn-line btn-sm ml-auto min-h-10"
           aria-expanded={open}

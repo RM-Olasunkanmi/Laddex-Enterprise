@@ -1,14 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { ThemeToggle } from "./theme-toggle";
-
 import {
   CartButton,
   DeliveryChip,
   MobileNavButton,
   PersonaSelect,
 } from "./header-client";
+import { ThemeToggle } from "./theme-toggle";
 
 export const NAV = [
   {
@@ -27,10 +26,27 @@ export const NAV = [
   { href: "/contact", label: "Contact" },
 ] as const;
 
-export function Wordmark({ className = "", size = 44 }: { className?: string; size?: number }) {
+export function Wordmark({
+  className = "",
+  size = 44,
+}: {
+  className?: string;
+  size?: number;
+}) {
   return (
-    <Link href="/" className={`inline-flex items-center gap-2.5 text-ink ${className}`} aria-label="Laddex Enterprise, home">
-      <Image src="/brand/laddex-logo.png" alt="" width={size} height={size} priority className="rounded-full" />
+    <Link
+      href="/"
+      className={`inline-flex items-center gap-2.5 text-ink ${className}`}
+      aria-label="Laddex Enterprise, home"
+    >
+      <Image
+        src="/brand/laddex-logo.png"
+        alt=""
+        width={size}
+        height={size}
+        priority
+        className="rounded-full"
+      />
       <span className="font-display text-[1.5rem] leading-none tracking-tight font-semibold">
         Laddex<span className="text-ember">.</span>
       </span>
@@ -41,7 +57,7 @@ export function Wordmark({ className = "", size = 44 }: { className?: string; si
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 bg-paper/95 backdrop-blur-[2px] border-b border-line">
-      <div className="bg-ink text-rail-text">
+      <div className="bg-rail text-rail-text">
         <div className="wrap flex items-center justify-between gap-4 py-1.5 text-xs">
           <p className="truncate">
             <span className="mono tracking-wider uppercase text-ochre">

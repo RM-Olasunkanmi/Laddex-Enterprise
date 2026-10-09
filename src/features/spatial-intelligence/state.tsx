@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { fixtureDashboardData, type DashboardDataset } from "./dataset";
+import { assignLgas } from "./enrich";
 import {
   addDays,
   applyGeoSelection,
@@ -21,17 +22,18 @@ import {
 } from "./filters";
 import { unitsAt, type GeoUnit } from "./geo-units";
 import { aggregateByUnit, computeKpis, type UnitStat } from "./metrics";
-
-import type {
-  DashboardFilters,
-  EnrichedOrder,
-  GeoScale,
-  GeoSelection,
-  Role,
+import {
+  SEGMENTS,
+  type DashboardFilters,
+  type EnrichedOrder,
+  type GeoScale,
+  type GeoSelection,
+  type Role,
 } from "./types";
 
 import { DATASET_END, DATASET_START } from "@/fixtures/orders/generate";
 import { ALL_VARIANTS } from "@/fixtures/products/products";
+import { loadStateLgas, type AdminUnit } from "@/lib/geo/geography";
 
 export interface State {
   filters: DashboardFilters;
@@ -39,13 +41,20 @@ export interface State {
   role: Role;
   /** Normalised statistic shown as the choropleth fill. */
   fillMetric: FillMetric;
-  layers: { symbols: boolean; zones: boolean; orderPoints: boolean };
+  layers: { symbols: boolean; orderPoints: boolean };
   /** Bumped by the reset-extent button so the map refits even if nothing else changed. */
   resetToken: number;
 }
 
 export type FillMetric =
-  "salesPerKm2" | "ordersPerKm2" | "aov" | "fulfilment" | "wholesaleShare";
+  | "sales"
+  | "salesPerKm2"
+  | "ordersPerKm2"
+  | "aov"
+  | "fulfilment"
+  | "wholesaleShare"
+  | "eventsShare"
+  | "growth";
 
 export const FILL_METRICS: {
   key: FillMetric;
@@ -53,11 +62,12 @@ export const FILL_METRICS: {
   unit: string;
   metric: string;
 }[] = [
+  { key: "sales", label: "Gross sales", unit: "NGN", metric: "gross" },
   {
     key: "salesPerKm2",
     label: "Sales per km²",
     unit: "NGN/km²",
-    metric: "gross",
+    metric: "density",
   },
   {
     key: "ordersPerKm2",
@@ -67,10 +77,10 @@ export const FILL_METRICS: {
   },
   { key: "aov", label: "Average order value", unit: "NGN", metric: "aov" },
   {
-    key: "fulfilment",
-    label: "Fulfilment rate",
+    key: "growth",
+    label: "Sales growth vs previous period",
     unit: "%",
-    metric: "fulfilment",
+    metric: "change",
   },
   {
     key: "wholesaleShare",
@@ -78,12 +88,26 @@ export const FILL_METRICS: {
     unit: "%",
     metric: "gross",
   },
+  {
+    key: "eventsShare",
+    label: "Events share of sales",
+    unit: "%",
+    metric: "gross",
+  },
+  {
+    key: "fulfilment",
+    label: "Fulfilment rate",
+    unit: "%",
+    metric: "fulfilment",
+  },
 ];
 
 type Action =
   | { type: "hydrate"; patch: Partial<State> }
   | { type: "filters"; patch: Partial<DashboardFilters> }
   | { type: "scale"; scale: GeoScale }
+  | { type: "drill"; stateId: string }
+  | { type: "stateFocus"; stateId: string | null }
   | { type: "selectUnit"; unitId: string | null }
   | { type: "selectOrder"; orderId: string | null }
   | { type: "role"; role: Role }
@@ -94,10 +118,10 @@ type Action =
 
 export const initial: State = {
   filters: DEFAULT_FILTERS,
-  selection: { scale: "lga", unitId: null, orderId: null },
+  selection: { scale: "state", unitId: null, stateId: null, orderId: null },
   role: "analyst",
-  fillMetric: "salesPerKm2",
-  layers: { symbols: true, zones: false, orderPoints: false },
+  fillMetric: "sales",
+  layers: { symbols: true, orderPoints: false },
   resetToken: 0,
 };
 
@@ -112,7 +136,38 @@ export function reducer(s: State, a: Action): State {
       // A unit id from another scale is meaningless, so selection resets with the scale.
       return {
         ...s,
-        selection: { scale: a.scale, unitId: null, orderId: null },
+        selection: {
+          scale: a.scale,
+          unitId: null,
+          // LGAs exist within one state: carry the selected state across when switching to LGA scale.
+          stateId:
+            a.scale === "lga"
+              ? s.selection.scale === "state" && s.selection.unitId
+                ? s.selection.unitId
+                : s.selection.stateId
+              : s.selection.stateId,
+          orderId: null,
+        },
+      };
+    case "drill":
+      return {
+        ...s,
+        selection: {
+          scale: "lga",
+          unitId: null,
+          stateId: a.stateId,
+          orderId: null,
+        },
+      };
+    case "stateFocus":
+      return {
+        ...s,
+        selection: {
+          ...s.selection,
+          stateId: a.stateId,
+          unitId: null,
+          orderId: null,
+        },
       };
     case "selectUnit":
       return {
@@ -157,6 +212,9 @@ export interface Derived {
   previous: EnrichedOrder[];
   unitStats: Map<string, UnitStat>;
   units: GeoUnit[];
+  /** LGAs of the state chosen at LGA scale, once its boundary file has loaded. */
+  lgas: AdminUnit[] | null;
+  lgaLoading: boolean;
   order: EnrichedOrder | null;
   selectedUnit: GeoUnit | null;
 }
@@ -173,7 +231,7 @@ interface Ctx {
 
 const DashCtx = createContext<Ctx | null>(null);
 
-const SCALES: GeoScale[] = ["state", "lga", "zone", "pickup"];
+const SCALES: GeoScale[] = ["region", "state", "lga"];
 
 function parseUrl(search: string): Partial<State> {
   const p = new URLSearchParams(search);
@@ -188,18 +246,18 @@ function parseUrl(search: string): Partial<State> {
   }
   const list = (k: string) => p.get(k)?.split(",").filter(Boolean) ?? [];
   const cats = list("cat").filter(
-    (c): c is "palm-oil" | "tapioca" => c === "palm-oil" || c === "tapioca",
+    (c): c is "palm-oil" | "tapioca" | "garri" =>
+      c === "palm-oil" || c === "tapioca" || c === "garri",
   );
   if (cats.length) f.categories = cats;
   const vars = list("pack").filter((v) => ALL_VARIANTS.some((x) => x.id === v));
   if (vars.length) f.variantIds = vars;
-  const segs = list("seg").filter(
-    (s): s is "retail" | "wholesale" => s === "retail" || s === "wholesale",
+  const segs = list("seg").filter((s): s is (typeof SEGMENTS)[number] =>
+    (SEGMENTS as string[]).includes(s),
   );
   if (segs.length) f.segments = segs;
-  const chs = list("ch").filter(
-    (c): c is "online" | "phone" | "wholesale-desk" =>
-      ["online", "phone", "wholesale-desk"].includes(c),
+  const chs = list("ch").filter((c): c is "online" | "phone" | "sales-desk" =>
+    ["online", "phone", "sales-desk"].includes(c),
   );
   if (chs.length) f.channels = chs;
   const sts = list("st").filter(
@@ -217,11 +275,12 @@ function parseUrl(search: string): Partial<State> {
   if (Object.keys(f).length) patch.filters = { ...DEFAULT_FILTERS, ...f };
   const scale = p.get("scale") as GeoScale | null;
   const sel: GeoSelection = {
-    scale: scale && SCALES.includes(scale) ? scale : "lga",
+    scale: scale && SCALES.includes(scale) ? scale : "state",
     unitId: p.get("unit"),
+    stateId: p.get("state"),
     orderId: p.get("order"),
   };
-  if (scale || sel.unitId || sel.orderId) patch.selection = sel;
+  if (scale || sel.unitId || sel.stateId || sel.orderId) patch.selection = sel;
   if (p.get("role") === "admin") patch.role = "admin";
   const fill = p.get("fill") as FillMetric | null;
   if (fill && FILL_METRICS.some((m) => m.key === fill)) patch.fillMetric = fill;
@@ -240,11 +299,12 @@ function toUrl(s: State): string {
   if (f.segments.length) p.set("seg", f.segments.join(","));
   if (f.channels.length) p.set("ch", f.channels.join(","));
   if (f.statuses.length) p.set("st", f.statuses.join(","));
-  if (sel.scale !== "lga") p.set("scale", sel.scale);
+  if (sel.scale !== "state") p.set("scale", sel.scale);
   if (sel.unitId) p.set("unit", sel.unitId);
+  if (sel.stateId) p.set("state", sel.stateId);
   if (sel.orderId) p.set("order", sel.orderId);
   if (s.role === "admin") p.set("role", "admin");
-  if (s.fillMetric !== "salesPerKm2") p.set("fill", s.fillMetric);
+  if (s.fillMetric !== "sales") p.set("fill", s.fillMetric);
   const q = p.toString();
   return q ? `?${q}` : window.location.pathname;
 }
@@ -293,17 +353,67 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     );
   }, [state, hydrated]);
 
+  // LGAs are loaded one state at a time, only when LGA scale is used for that state.
+  const lgaState =
+    state.selection.scale === "lga" ? state.selection.stateId : null;
+  const [lgas, setLgas] = useState<{
+    stateId: string;
+    units: AdminUnit[];
+  } | null>(null);
+  const [lgaLoading, setLgaLoading] = useState(false);
+  useEffect(() => {
+    if (!lgaState || !dataset) return;
+    let live = true;
+    setLgaLoading(true);
+    loadStateLgas(lgaState)
+      .then((units) => {
+        if (!live) return;
+        setDataset((d) =>
+          d ? { ...d, orders: assignLgas(d.orders, lgaState, units) } : d,
+        );
+        setLgas({ stateId: lgaState, units });
+      })
+      .catch(
+        () =>
+          live &&
+          setError(
+            "Local government boundaries for this state could not be loaded.",
+          ),
+      )
+      .finally(() => live && setLgaLoading(false));
+    return () => {
+      live = false;
+    };
+    // `dataset` identity changes after assignLgas; only its first availability matters here.
+  }, [lgaState, !!dataset]);
+
   const derived = useMemo<Derived | null>(() => {
     if (!dataset) return null;
     const { filters, selection } = state;
+    const lgaUnits =
+      lgas && lgas.stateId === selection.stateId ? lgas.units : null;
     const scoped = filterOrders(dataset.orders, filters);
-    const inSelection = applyGeoSelection(scoped, selection);
-    const previous = applyGeoSelection(
-      filterOrders(dataset.orders, filters, previousPeriod(filters)),
-      selection,
+    const prevAll = filterOrders(
+      dataset.orders,
+      filters,
+      previousPeriod(filters),
     );
-    const units = unitsAt(selection.scale, dataset);
-    const unitStats = aggregateByUnit(scoped, selection.scale);
+    const inSelection = applyGeoSelection(scoped, selection);
+    const previous = applyGeoSelection(prevAll, selection);
+    const units = unitsAt(selection.scale, dataset, lgaUnits);
+    const statBase =
+      selection.scale === "lga"
+        ? scoped.filter((o) => o.stateId === selection.stateId)
+        : scoped;
+    const prevBase =
+      selection.scale === "lga"
+        ? prevAll.filter((o) => o.stateId === selection.stateId)
+        : prevAll;
+    const unitStats = aggregateByUnit(statBase, selection.scale);
+    for (const [id, ps] of aggregateByUnit(prevBase, selection.scale)) {
+      const cur = unitStats.get(id);
+      if (cur) cur.prevGrossKobo = ps.grossKobo;
+    }
     const order = selection.orderId
       ? (dataset.orders.find((o) => o.id === selection.orderId) ?? null)
       : null;
@@ -313,10 +423,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       previous,
       unitStats,
       units,
+      lgas: lgaUnits,
+      lgaLoading,
       order,
       selectedUnit: units.find((u) => u.id === selection.unitId) ?? null,
     };
-  }, [dataset, state]);
+  }, [dataset, state, lgas, lgaLoading]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
   const value = useMemo<Ctx>(

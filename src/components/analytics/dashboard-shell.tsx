@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -7,6 +8,7 @@ import { FilterBar } from "./filter-bar";
 
 import type { ReactNode } from "react";
 
+import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { SYNTHETIC_NOTICE } from "@/features/spatial-intelligence/definitions";
 import {
   DashboardProvider,
@@ -14,10 +16,16 @@ import {
 } from "@/features/spatial-intelligence/state";
 
 export const DASH_NAV = [
+  { href: "/dashboard", label: "Overview", note: "Sales across Nigeria" },
   {
-    href: "/dashboard",
-    label: "Geographic intelligence",
-    note: "Map and statistics",
+    href: "/dashboard/geography",
+    label: "Geographic explorer",
+    note: "Map by region, state, LGA",
+  },
+  {
+    href: "/dashboard/insights",
+    label: "Spatial insights",
+    note: "Clusters, hot spots, growth",
   },
   { href: "/dashboard/orders", label: "Orders", note: "Records" },
   {
@@ -32,7 +40,7 @@ export const DASH_NAV = [
   },
   {
     href: "/dashboard/wholesale",
-    label: "Wholesale operations",
+    label: "Wholesale and events",
     note: "Accounts and tiers",
   },
   {
@@ -52,14 +60,22 @@ function Rail() {
       <div className="h-14 px-5 flex items-center border-b border-rail-line">
         <Link
           href="/"
-          className="font-display text-2xl font-semibold text-paper"
+          className="inline-flex items-center gap-2 font-display text-2xl font-semibold text-rail-text"
           aria-label="Laddex storefront"
         >
+          <Image
+            src="/brand/laddex-logo.png"
+            alt=""
+            width={30}
+            height={30}
+            className="rounded-full"
+          />
           Laddex<span className="text-ember">.</span>
         </Link>
-        <span className="ml-2 mono text-[0.625rem] uppercase tracking-wider text-rail-text/70">
+        <span className="ml-2 mono text-[0.5625rem] uppercase tracking-wider text-rail-text/70">
           Staff
         </span>
+        <ThemeToggle className="ml-auto !min-h-9 !w-9 !text-rail-text !border-rail-line !bg-transparent" />
       </div>
       <ul className="p-2 space-y-0.5 flex-1">
         {DASH_NAV.map((n) => {
@@ -108,12 +124,20 @@ function MobileHeader() {
     <header className="lg:hidden bg-rail text-rail-text flex items-center gap-3 px-4 h-12">
       <Link
         href="/"
-        className="font-display text-xl font-semibold text-paper"
+        className="inline-flex items-center gap-2 font-display text-xl font-semibold text-rail-text"
         aria-label="Laddex storefront"
       >
+        <Image
+          src="/brand/laddex-logo.png"
+          alt=""
+          width={26}
+          height={26}
+          className="rounded-full"
+        />
         Laddex<span className="text-ember">.</span>
       </Link>
-      <details className="relative ml-auto">
+      <ThemeToggle className="ml-auto !min-h-9 !w-9 !text-rail-text !border-rail-line !bg-transparent" />
+      <details className="relative">
         <summary className="list-none text-sm min-h-10 flex items-center gap-2 cursor-pointer">
           {current.label} <span aria-hidden="true">▾</span>
         </summary>

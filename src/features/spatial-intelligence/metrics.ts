@@ -1,9 +1,26 @@
 import { addDays, dayStartMs, daysBetween, unitKeyFor } from "./filters";
+import {
+  SEGMENTS,
+  type EnrichedOrder,
+  type GeoScale,
+  type Segment,
+} from "./types";
 
-import type { EnrichedOrder, GeoScale, Segment } from "./types";
 import type { CategoryId } from "@/features/catalogue/types";
 
 import { ALL_VARIANTS } from "@/fixtures/products/products";
+
+const CATEGORIES: CategoryId[] = ["palm-oil", "tapioca", "garri"];
+const zeroCat = (): Record<CategoryId, number> => ({
+  "palm-oil": 0,
+  tapioca: 0,
+  garri: 0,
+});
+const zeroSeg = (): Record<Segment, number> => ({
+  retail: 0,
+  wholesale: 0,
+  events: 0,
+});
 
 /** Safe division. Returns null (shown as an em dash) instead of NaN or Infinity. */
 export const ratio = (n: number, d: number): number | null =>
@@ -52,11 +69,8 @@ export function computeKpis(orders: EnrichedOrder[]): Kpis {
   let delivered = 0;
   let closed = 0;
   let unlocated = 0;
-  const grossByCategory: Record<CategoryId, number> = {
-    "palm-oil": 0,
-    tapioca: 0,
-  };
-  const grossBySegment: Record<Segment, number> = { retail: 0, wholesale: 0 };
+  const grossByCategory = zeroCat();
+  const grossBySegment = zeroSeg();
   const perCustomer = new Map<string, number>();
 
   for (const o of orders) {
@@ -102,14 +116,12 @@ export function computeKpis(orders: EnrichedOrder[]): Kpis {
     kilograms: Math.round(kilograms * 100) / 100,
     grossByCategory,
     grossBySegment,
-    shareByCategory: {
-      "palm-oil": ratio(grossByCategory["palm-oil"], grossKobo),
-      tapioca: ratio(grossByCategory.tapioca, grossKobo),
-    },
-    shareBySegment: {
-      retail: ratio(grossBySegment.retail, grossKobo),
-      wholesale: ratio(grossBySegment.wholesale, grossKobo),
-    },
+    shareByCategory: Object.fromEntries(
+      CATEGORIES.map((c) => [c, ratio(grossByCategory[c], grossKobo)]),
+    ) as Record<CategoryId, number | null>,
+    shareBySegment: Object.fromEntries(
+      SEGMENTS.map((g) => [g, ratio(grossBySegment[g], grossKobo)]),
+    ) as Record<Segment, number | null>,
     fulfilmentRate: ratio(delivered, closed),
     closedOrders: closed,
     customers: perCustomer.size,
@@ -134,13 +146,13 @@ export interface UnitStat {
   grossKobo: number;
   netKobo: number;
   packs: number;
-  retailKobo: number;
-  wholesaleKobo: number;
-  palmKobo: number;
-  tapiocaKobo: number;
+  bySegment: Record<Segment, number>;
+  byCategory: Record<CategoryId, number>;
   aovKobo: number | null;
   fulfilmentRate: number | null;
   medianDeliveryFeeKobo: number | null;
+  /** Gross sales of the previous equal-length period, filled by the dashboard for growth maps. */
+  prevGrossKobo?: number;
 }
 
 /** Aggregates the same filtered orders by geographic unit. Unassigned orders get their own row so totals reconcile. */
@@ -165,17 +177,13 @@ export function aggregateByUnit(
       grossKobo: k.grossKobo,
       netKobo: k.netKobo,
       packs: k.packs,
-      retailKobo: k.grossBySegment.retail,
-      wholesaleKobo: k.grossBySegment.wholesale,
-      palmKobo: k.grossByCategory["palm-oil"],
-      tapiocaKobo: k.grossByCategory.tapioca,
+      bySegment: k.grossBySegment,
+      byCategory: k.grossByCategory,
       aovKobo: k.aovKobo,
       fulfilmentRate: k.fulfilmentRate,
       medianDeliveryFeeKobo: median(
         list
-          .filter(
-            (o) => o.fulfilment === "delivery" && o.status !== "cancelled",
-          )
+          .filter((o) => o.status !== "cancelled")
           .map((o) => o.deliveryFeeKobo),
       ),
     });
@@ -288,23 +296,22 @@ export function variantStats(
   });
 }
 
-/** Retail vs wholesale gross by variant, for the mix chart. */
+/** Gross by variant and buyer segment, for the mix chart. */
 export function mixByVariant(
   orders: EnrichedOrder[],
-): { variantId: string; retailKobo: number; wholesaleKobo: number }[] {
-  const m = new Map<string, { retailKobo: number; wholesaleKobo: number }>();
+): { variantId: string; bySegment: Record<Segment, number> }[] {
+  const m = new Map<string, Record<Segment, number>>();
   for (const o of orders) {
     if (o.status === "cancelled") continue;
     for (const l of o.lines) {
-      const e = m.get(l.variantId) ?? { retailKobo: 0, wholesaleKobo: 0 };
-      if (o.segment === "retail") e.retailKobo += l.lineTotalKobo;
-      else e.wholesaleKobo += l.lineTotalKobo;
+      const e = m.get(l.variantId) ?? zeroSeg();
+      e[o.segment] += l.lineTotalKobo;
       m.set(l.variantId, e);
     }
   }
   return ALL_VARIANTS.map((v) => ({
     variantId: v.id,
-    ...(m.get(v.id) ?? { retailKobo: 0, wholesaleKobo: 0 }),
+    bySegment: m.get(v.id) ?? zeroSeg(),
   }));
 }
 
@@ -318,11 +325,11 @@ export interface Histogram {
 /** Delivery fee distribution for non-cancelled delivery orders, in fixed-width bins. */
 export function deliveryFeeHistogram(
   orders: EnrichedOrder[],
-  binKobo = 100_000,
+  binKobo = 500_000,
   maxBins = 14,
 ): Histogram {
   const fees = orders
-    .filter((o) => o.fulfilment === "delivery" && o.status !== "cancelled")
+    .filter((o) => o.status !== "cancelled")
     .map((o) => o.deliveryFeeKobo);
   if (!fees.length) return { bins: [], n: 0, median: null, p90: null };
   const maxFee = Math.max(...fees);
@@ -345,30 +352,63 @@ export function deliveryFeeHistogram(
   };
 }
 
-export interface CoverageSplit {
-  inSampleZones: number;
-  outsideSampleZones: number;
-  outsideLagos: number;
+export interface Reach {
+  statesReached: number;
+  regionsReached: number;
+  totalStates: number;
   unlocated: number;
   total: number;
 }
 
-/** Where non-cancelled demand sits relative to the sample service zones. Counts orders, not coverage. */
-export function coverageSplit(orders: EnrichedOrder[]): CoverageSplit {
-  const s: CoverageSplit = {
-    inSampleZones: 0,
-    outsideSampleZones: 0,
-    outsideLagos: 0,
-    unlocated: 0,
-    total: 0,
-  };
+/** How widely demand is spread: states and regions with at least one non-cancelled order. */
+export function reach(orders: EnrichedOrder[], totalStates = 37): Reach {
+  const states = new Set<string>();
+  const regions = new Set<string>();
+  let unlocated = 0;
+  let total = 0;
   for (const o of orders) {
     if (o.status === "cancelled") continue;
-    s.total++;
-    if (o.geoStatus === "unlocated") s.unlocated++;
-    else if (!o.lgaId) s.outsideLagos++;
-    else if (o.zoneId) s.inSampleZones++;
-    else s.outsideSampleZones++;
+    total++;
+    if (o.geoStatus === "unlocated" || !o.stateId) unlocated++;
+    else {
+      states.add(o.stateId);
+      if (o.regionId) regions.add(o.regionId);
+    }
   }
-  return s;
+  return {
+    statesReached: states.size,
+    regionsReached: regions.size,
+    totalStates,
+    unlocated,
+    total,
+  };
+}
+
+export interface MatrixCell {
+  regionId: string;
+  month: string;
+  grossKobo: number;
+}
+
+/** Gross sales by region and calendar month (Africa/Lagos). Months are returned in order. */
+export function regionMonthMatrix(orders: EnrichedOrder[]): {
+  months: string[];
+  cells: MatrixCell[];
+} {
+  const m = new Map<string, number>();
+  const months = new Set<string>();
+  for (const o of orders) {
+    if (o.status === "cancelled" || !o.regionId) continue;
+    const month = new Date(o.ts + 3_600_000).toISOString().slice(0, 7);
+    months.add(month);
+    const k = `${o.regionId}|${month}`;
+    m.set(k, (m.get(k) ?? 0) + o.goodsKobo);
+  }
+  const sorted = [...months].sort();
+  const cells: MatrixCell[] = [];
+  for (const [k, v] of m) {
+    const [regionId, month] = k.split("|");
+    cells.push({ regionId, month, grossKobo: v });
+  }
+  return { months: sorted, cells };
 }

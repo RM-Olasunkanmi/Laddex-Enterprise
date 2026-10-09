@@ -16,7 +16,8 @@ cp -R "src/app/(laddex)" "$OUT/src/app/"
 for d in navigation commerce product wholesale checkout delivery maps analytics charts lx; do cp -R "src/components/$d" "$OUT/src/components/"; done
 cp -R src/features src/fixtures src/styles "$OUT/src/"
 for d in design geo data formatters; do cp -R "src/lib/$d" "$OUT/src/lib/"; done
-cp -R public/geo "$OUT/public/"
+cp -R public/geo public/brand public/products "$OUT/public/"
+mkdir -p "$OUT/src/content" && cp -R src/content/. "$OUT/src/content/"
 cp postcss.config.mjs "$OUT/"
 # Tests and Node-only helpers are not part of the Worker bundle.
 find "$OUT/src" \( -name "*.test.ts" -o -name "*.test.tsx" \) -delete

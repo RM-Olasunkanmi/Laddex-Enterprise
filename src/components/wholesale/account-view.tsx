@@ -10,6 +10,7 @@ import { packLabel } from "@/features/catalogue/selectors";
 import { PERSONAS, customerStore, setPersona } from "@/features/customer/store";
 import { ACCESS_LABEL, isWholesale } from "@/features/customer/types";
 import { historyFor } from "@/fixtures/customers/history";
+import { PRODUCTS } from "@/fixtures/products/products";
 import { cartDrawer } from "@/lib/data/ui-store";
 import { formatDate, formatNaira } from "@/lib/formatters";
 
@@ -170,9 +171,7 @@ export function AccountView() {
                     <li key={l.variantId} className="py-2 flex justify-between">
                       <span>
                         {l.qty} &times;{" "}
-                        {l.variant.productId === "palm-oil"
-                          ? "Palm oil"
-                          : "Tapioca"}{" "}
+                        {PRODUCTS.find((p) => p.id === l.variant.productId)?.name}{" "}
                         {packLabel(l.variant)}
                       </span>
                       <span className="mono text-ink-3">

@@ -32,8 +32,8 @@ export default async function DeliveryPage({
           </p>
         </div>
         <Notice tone="sample" title="Sample rates">
-          Delivery is nationwide. The fees below are sample rates per region
-          and weight band, not Laddex&rsquo;s confirmed prices.
+          Delivery is nationwide. The fees below are sample rates per region and
+          weight band, not Laddex&rsquo;s confirmed prices.
         </Notice>
       </header>
       <Suspense fallback={null}>

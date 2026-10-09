@@ -2,36 +2,48 @@
 
 ## Boundaries
 
-| Layer | File | Source | Notes |
-|---|---|---|---|
-| Nigerian states (37 incl. FCT) | `public/geo/ng-states.json` (285 KB) | geoBoundaries gbOpen NGA ADM1, upstream GRID3 2022, CC BY 4.0 | Simplified release, national context only. Loaded only for the dashboard State scale and for pins outside Lagos |
-| Lagos LGAs (20) | `public/geo/lagos-lgas.json` (87 KB) | geoBoundaries gbOpen NGA ADM2, upstream GRID3 2022, CC BY 4.0 | Full-resolution release, quantised to 1e-4 degrees (about 11 m). Cut from the national file by a spatial join of each LGA's representative point against the Lagos polygon |
-| Source metadata | `public/geo/sources.json` | generated | Provider, release id, year, licence, URL, CRS, vertex precision. Shown on the Reports page |
+| Layer                   | File                                 | Source                                                   | Notes                                                                                                             |
+| ----------------------- | ------------------------------------ | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| States (36 + FCT)       | `public/geo/ng-states.json`          | geoBoundaries gbOpen NGA ADM1, upstream GRID3, CC BY 4.0 | Simplified, loaded by the delivery picker and dashboard                                                           |
+| LGAs (774)              | `public/geo/lga/<state>.json`        | geoBoundaries gbOpen NGA ADM2, GRID3, CC BY 4.0          | Full resolution, **one file per state**, loaded only when that state is opened. All 774 are never loaded together |
+| Outline for static maps | `src/lib/geo/ng-sketch.generated.ts` | derived from the states file                             | Server-rendered SVG used on the home page and the statistics maps                                                 |
+| Source metadata         | `public/geo/sources.json`            | generated                                                | Shown on the Reports page                                                                                         |
 
-Rebuild with `pnpm geo:build <dir>` (see header of `scripts/geo/build-boundaries.ts` for the four input files). The browser never loads the national LGA file (774 areas); Lagos needs 87 KB.
+Rebuild with `pnpm geo:build <dir>`. CRS is WGS84 (EPSG:4326). Point-in-polygon runs on degrees; areas use a local equirectangular projection; distances are haversine (straight line).
 
-CRS: everything is WGS84 longitude/latitude in degrees (EPSG:4326). Point-in-polygon runs on those degrees (valid for ray casting); areas use a local equirectangular projection; distances use the haversine formula. A unit test confirms that swapped latitude/longitude falls outside Lagos.
+## Delivery regions
 
-## Sample service zones
+Delivery is nationwide. The six geopolitical zones are the regions (`src/fixtures/geography/regions.ts`). The weight-band **rates per region are sample values**, not Laddex prices. Orders heavier than the largest band, and any freight, are "quote required".
 
-`src/fixtures/geography/zones.ts` groups real LGAs into four sample zones, leaves five Lagos LGAs in none, and gives Zone 4 no price rule so the "quote required" path is exercised. Nothing here is claimed to be real coverage; the UI says so wherever a zone, fee or coverage result appears.
+## Spatial statistics (`/dashboard/insights`)
 
-## Distances
+Implemented in `src/features/spatial-intelligence/spatial-stats.ts` and unit-tested (`spatial-stats.test.ts`):
 
-Pickup distances are great-circle (straight line) and are always labelled so. There is no road routing. `RoutingService` in `src/features/delivery/contracts.ts` is the integration point.
+- Queen-contiguity adjacency from the state polygons (boundaries are simplified independently, so "touching" allows a 3 km vertex tolerance). Checked against known borders such as FCT with Niger, Kogi, Nasarawa and Kaduna.
+- Global Moran's I with row-standardised weights and a seeded 999-permutation test.
+- Local Moran (LISA) with conditional permutations, classes HH, LL, HL, LH at p < 0.05.
+- Getis-Ord Gi* hot and cold spots (95% and 90%).
+- Gini coefficient and Lorenz curve of sales across states.
+- Location quotients by product category and buyer segment.
+- Sales by straight-line distance bands from a selectable base location.
+- Growth against the previous equal-length period, with a minimum-orders guard.
+- Expansion candidates: states with low own demand beside high-demand neighbours, growth as a tie-breaker.
+- Region by month matrix.
 
-## Methods in the dashboard
+Measures: log gross sales, orders per 1,000 km², or average order value. Everything recomputes from the active filters.
 
-Point-in-polygon spatial join, aggregation by state / LGA / zone / pickup point, normalised choropleth (quantile classes, per km² or ratio), proportional symbols, nearest-point catchment proxy. Metric definitions with formulas and caveats are in `src/features/spatial-intelligence/definitions.ts` and displayed in the app.
+### Limits
 
-Not built, by design: clustering, density surfaces, interpolation and heatmaps. The data is synthetic, so any such surface would present invented patterns as findings. Grid binning and clustering can be added as pure functions beside `metrics.ts` once real orders exist.
+- 37 units give modest statistical power. With many local tests, some flags occur by chance.
+- No population, income, competitor or road-network data was supplied, so there are no per-capita measures, no market-potential estimates and no travel times.
+- The orders are **synthetic**. The methods are real; the findings are not findings about Laddex.
 
 ## Privacy
 
-- Storefront shows only the visitor's own pin.
-- Dashboard analysts see aggregates by area. Order-level rows, order points and the order inspector require the admin role, and coordinates there are rounded (about 100 m for admin, 1 km otherwise).
-- The role switch is a development control. Enforce roles on the server before real orders are used (see `BACKEND_INTEGRATION.md`).
+- The storefront keeps only the visitor's own pin, in their browser.
+- Dashboard analysts see aggregates. Order rows, order points and the order inspector need the admin role; coordinates there are rounded.
+- The role switch is a development control; enforce roles on the server before real orders are used.
 
 ## Online services
 
-The basemap (OpenFreeMap vector tiles) and live address search (OpenStreetMap Nominatim) are used when reachable and fall back to a plain background and an offline locality list otherwise. They were **not reachable from the build sandbox**, so only the fallback paths were exercised in tests. Nominatim's public instance has a strict usage policy; use a commercial or self-hosted geocoder for production.
+The basemap (OpenFreeMap, light and dark styles) and live search (Nominatim) are used when reachable and fall back to a plain background and an offline list of state capitals and major towns. They were not reachable from the build sandbox, so only the fallbacks were exercised. Use a commercial or self-hosted geocoder in production.

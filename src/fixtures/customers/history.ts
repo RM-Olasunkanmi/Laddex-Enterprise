@@ -21,7 +21,7 @@ const RETAIL: HistoryOrder[] = [
     status: "delivered",
     lines: [
       { variantId: "po-5l", qty: 1 },
-      { variantId: "tp-1kg", qty: 2 },
+      { variantId: "tf-1kg", qty: 2 },
     ],
   },
   {
@@ -35,7 +35,7 @@ const RETAIL: HistoryOrder[] = [
     placedAt: "2026-08-02T09:05:00+01:00",
     status: "delivered",
     lines: [
-      { variantId: "tp-5kg", qty: 1 },
+      { variantId: "gi-5kg", qty: 1 },
       { variantId: "po-5l", qty: 1 },
     ],
   },
@@ -47,30 +47,30 @@ const WHOLESALE: HistoryOrder[] = [
     placedAt: "2026-10-01T11:20:00+01:00",
     status: "out-for-delivery",
     lines: [
-      { variantId: "po-25l", qty: 12 },
-      { variantId: "tp-25kg", qty: 8 },
+      { variantId: "gi-25kg", qty: 12 },
+      { variantId: "gj-25kg", qty: 8 },
     ],
   },
   {
     id: "SAMPLE-W-203",
     placedAt: "2026-09-17T09:45:00+01:00",
     status: "delivered",
-    lines: [{ variantId: "po-200l", qty: 4 }],
+    lines: [{ variantId: "gi-50kg", qty: 4 }],
   },
   {
     id: "SAMPLE-W-190",
     placedAt: "2026-09-03T14:10:00+01:00",
     status: "delivered",
     lines: [
-      { variantId: "po-25l", qty: 12 },
-      { variantId: "tp-50kg", qty: 4 },
+      { variantId: "po-5l", qty: 24 },
+      { variantId: "gi-50kg", qty: 4 },
     ],
   },
   {
     id: "SAMPLE-W-171",
     placedAt: "2026-08-14T10:00:00+01:00",
     status: "delivered",
-    lines: [{ variantId: "po-25l", qty: 10 }],
+    lines: [{ variantId: "po-5l", qty: 12 }],
   },
 ];
 

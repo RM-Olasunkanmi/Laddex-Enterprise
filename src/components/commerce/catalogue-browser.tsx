@@ -17,7 +17,10 @@ import {
   type SortKey,
 } from "@/features/catalogue/selectors";
 
-function parse(params: URLSearchParams, category: CategoryId | "all"): CatalogueQuery {
+function parse(
+  params: URLSearchParams,
+  category: CategoryId | "all",
+): CatalogueQuery {
   return {
     category,
     inStockOnly: params.get("stock") === "1",
@@ -25,14 +28,19 @@ function parse(params: URLSearchParams, category: CategoryId | "all"): Catalogue
   };
 }
 
-export function CatalogueBrowser({ category }: { category: CategoryId | "all" }) {
+export function CatalogueBrowser({
+  category,
+}: {
+  category: CategoryId | "all";
+}) {
   const { products, categories } = useCatalogue();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
   const query = useMemo(
-    () => normaliseQuery(parse(new URLSearchParams(params.toString()), category)),
+    () =>
+      normaliseQuery(parse(new URLSearchParams(params.toString()), category)),
     [params, category],
   );
   const results = useMemo(() => applyQuery(products, query), [products, query]);
@@ -48,15 +56,23 @@ export function CatalogueBrowser({ category }: { category: CategoryId | "all" })
   const clear = () => router.replace(pathname, { scroll: false });
   const tabs = [
     { href: "/shop", label: "All products", active: category === "all" },
-    ...categories.map((c) => ({ href: `/shop/${c.id}`, label: c.name, active: category === c.id })),
+    ...categories.map((c) => ({
+      href: `/shop/${c.id}`,
+      label: c.name,
+      active: category === c.id,
+    })),
   ];
   const info = categories.find((c) => c.id === category);
 
   return (
     <div className="wrap py-10">
       <header className="max-w-2xl">
-        <p className="eyebrow mb-3">{info ? info.tagline : "Palm oil, tapioca flakes and garri"}</p>
-        <h1 className="text-4xl md:text-5xl">{info ? info.name : "All products"}</h1>
+        <p className="eyebrow mb-3">
+          {info ? info.tagline : "Palm oil, tapioca flakes and garri"}
+        </p>
+        <h1 className="text-4xl md:text-5xl">
+          {info ? info.name : "All products"}
+        </h1>
         <p className="mt-3 text-ink-2">
           {info
             ? info.blurb
@@ -64,7 +80,10 @@ export function CatalogueBrowser({ category }: { category: CategoryId | "all" })
         </p>
       </header>
 
-      <nav aria-label="Category" className="mt-8 flex gap-1 border-b border-line overflow-x-auto">
+      <nav
+        aria-label="Category"
+        className="mt-8 flex gap-1 border-b border-line overflow-x-auto"
+      >
         {tabs.map((t) => (
           <Link
             key={t.href}
@@ -112,8 +131,12 @@ export function CatalogueBrowser({ category }: { category: CategoryId | "all" })
       <section aria-label="Results" className="mt-5">
         {results.length === 0 ? (
           <div className="panel p-10 text-center">
-            <p className="font-display text-2xl">No products match these filters</p>
-            <p className="mt-2 text-ink-2">Show products with no stock again, or pick another category.</p>
+            <p className="font-display text-2xl">
+              No products match these filters
+            </p>
+            <p className="mt-2 text-ink-2">
+              Show products with no stock again, or pick another category.
+            </p>
             <button className="btn btn-ink mt-5" onClick={clear}>
               Clear filters
             </button>

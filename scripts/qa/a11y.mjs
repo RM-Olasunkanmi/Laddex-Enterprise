@@ -14,20 +14,25 @@ const find = () => {
 const axeSource = readFileSync("node_modules/axe-core/axe.min.js", "utf8");
 const routes = [
   "/",
-  "/shop/palm-oil",
-  "/products/palm-oil?pack=po-25l",
+  "/shop",
+  "/shop/garri",
+  "/products/garri-igbo?pack=gi-25kg",
+  "/products/palm-oil?pack=po-5l",
   "/cart",
   "/delivery",
+  "/contact",
+  "/events",
   "/wholesale",
   "/wholesale/quote",
   "/wholesale/register",
   "/account",
   "/order",
   "/dashboard",
-  "/dashboard?role=admin&unit=ikeja",
+  "/dashboard/geography",
+  "/dashboard/geography?scale=state&unit=kano",
+  "/dashboard/insights",
   "/dashboard/reports",
   "/dashboard/inventory",
-  "/products/palm-oil?pack=po-500ml",
 ];
 const browser = await chromium.launch({
   executablePath: find(),
@@ -45,6 +50,7 @@ for (const route of routes) {
       ? { width: 390, height: 844 }
       : { width: 1440, height: 900 },
   });
+  if (process.env.DARK) await page.addInitScript(() => localStorage.setItem("laddex-theme", "dark"));
   await page.goto(BASE + route, { waitUntil: "networkidle", timeout: 90000 });
   await page.waitForTimeout(1500);
   await page.addScriptTag({ content: axeSource });

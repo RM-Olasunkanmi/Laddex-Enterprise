@@ -6,10 +6,13 @@ import { Tag } from "@/components/lx/primitives";
 import { packLabel } from "@/features/catalogue/selectors";
 import { generalise } from "@/features/spatial-intelligence/enrich";
 import { useDashboard } from "@/features/spatial-intelligence/state";
-import { SAMPLE_PICKUP_POINTS, SAMPLE_ZONES } from "@/fixtures/geography/zones";
-import { ALL_VARIANTS } from "@/fixtures/products/products";
-import { formatDate, formatDistanceKm, formatNaira } from "@/lib/formatters";
-import { straightLineKm } from "@/lib/geo/distance";
+import {
+  SEGMENT_LABEL,
+  CHANNEL_LABEL,
+} from "@/features/spatial-intelligence/types";
+import { REGIONS } from "@/fixtures/geography/regions";
+import { ALL_VARIANTS, PRODUCTS } from "@/fixtures/products/products";
+import { formatDate, formatNaira } from "@/lib/formatters";
 
 const TONE = {
   delivered: "success",
@@ -31,18 +34,9 @@ export function OrderInspector({
   backLabel: string;
 }) {
   const { dataset, state } = useDashboard();
-  const lga = dataset?.lgas.find((l) => l.id === order.lgaId)?.name ?? null;
-  const zone = SAMPLE_ZONES.find((z) => z.id === order.zoneId);
-  const pickup = SAMPLE_PICKUP_POINTS.find(
-    (p) => p.id === (order.pickupPointId ?? order.nearestPickupId),
-  );
-  const km =
-    order.location && pickup
-      ? straightLineKm(
-          [order.location.lng, order.location.lat],
-          [pickup.position.lng, pickup.position.lat],
-        )
-      : null;
+  const stateName =
+    dataset?.states.find((x) => x.id === order.stateId)?.name ?? null;
+  const regionName = REGIONS.find((r) => r.id === order.regionId)?.name ?? null;
   const shown = order.location
     ? state.role === "admin"
       ? generalise(order.location, 3)
@@ -76,9 +70,8 @@ export function OrderInspector({
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Tag tone={TONE[order.status]}>{order.status.replace(/-/g, " ")}</Tag>
-          <Tag>{order.segment}</Tag>
-          <Tag>{order.channel.replace("-", " ")}</Tag>
-          <Tag>{order.fulfilment}</Tag>
+          <Tag>{SEGMENT_LABEL[order.segment]}</Tag>
+          <Tag>{CHANNEL_LABEL[order.channel]}</Tag>
           {order.synthetic && <Tag tone="sample">Synthetic</Tag>}
         </div>
       </header>
@@ -108,7 +101,7 @@ export function OrderInspector({
               return (
                 <tr key={l.variantId}>
                   <td>
-                    {l.category === "palm-oil" ? "Palm oil" : "Tapioca"}{" "}
+                    {PRODUCTS.find((p) => p.id === v.productId)!.name}{" "}
                     {packLabel(v)}
                   </td>
                   <td className="r">{l.qty}</td>
@@ -129,8 +122,8 @@ export function OrderInspector({
               Delivery fee{" "}
               {order.deliveryFeeBasis === "manual-quote"
                 ? "(manual quote)"
-                : order.deliveryFeeBasis === "zone-rule"
-                  ? "(sample zone rule)"
+                : order.deliveryFeeBasis === "region-rule"
+                  ? "(sample regional rate)"
                   : ""}
             </dt>
             <dd className="mono">{formatNaira(order.deliveryFeeKobo)}</dd>
@@ -161,21 +154,16 @@ export function OrderInspector({
         </h3>
         {order.location ? (
           <dl className="grid grid-cols-[6.5rem_1fr] gap-y-1.5 text-sm">
-            <dt className="text-ink-3">LGA</dt>
-            <dd>{lga ?? "Outside the Lagos LGAs"}</dd>
-            <dt className="text-ink-3">Sample zone</dt>
-            <dd>{zone ? zone.name : lga ? "None" : "—"}</dd>
-            <dt className="text-ink-3">
-              {order.fulfilment === "pickup" ? "Collected at" : "Nearest point"}
-            </dt>
-            <dd>
-              {pickup?.name.replace("Sample point: ", "")}
-              {km !== null && (
-                <span className="block text-xs text-ink-3">
-                  {formatDistanceKm(km)} straight line, not road distance
-                </span>
-              )}
-            </dd>
+            <dt className="text-ink-3">State</dt>
+            <dd>{stateName ?? "Outside Nigeria's boundaries"}</dd>
+            <dt className="text-ink-3">Region</dt>
+            <dd>{regionName ?? "—"}</dd>
+            {order.lgaId && (
+              <>
+                <dt className="text-ink-3">LGA</dt>
+                <dd>{order.lgaId.split("-").slice(1).join(" ")}</dd>
+              </>
+            )}
             <dt className="text-ink-3">Position</dt>
             <dd className="mono text-xs">
               {shown!.lat}, {shown!.lng}

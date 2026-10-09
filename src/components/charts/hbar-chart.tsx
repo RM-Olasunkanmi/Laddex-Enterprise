@@ -1,6 +1,6 @@
 "use client";
 
-import { chart, color } from "@/lib/design/tokens";
+import { chart, v as color } from "@/lib/design/tokens";
 
 export interface HBarDatum {
   id: string;

@@ -4,14 +4,14 @@ The frontend runs entirely on typed fixtures behind replaceable adapters. Nothin
 
 ## Seams (where to plug in)
 
-| Concern | Interface | Fixture adapter | Replace with |
-|---|---|---|---|
-| Catalogue (products, packs, tiers, stock) | `CatalogueService` (`src/features/catalogue/contracts.ts`) | `adapters/fixture.ts` | Payload adapter reading Products, Variants and a new price-tier collection |
-| Address search | `GeocodingService` (`src/features/delivery/contracts.ts`) | gazetteer and Nominatim | Nigeria-aware geocoder with a production licence |
-| Delivery pricing | `DeliveryPricingService` | `pricing.ts` weight bands | Server-side rules per zone, returned for a cart and location |
-| Routing | `RoutingService` | none | Road-network routing for travel distance and time |
-| Dashboard data | `DashboardDataService` (`src/features/spatial-intelligence/dataset.ts`) | seeded synthetic orders | Authenticated orders API (see below) |
-| Cart, customer, delivery location | `createPersistedStore` (localStorage) | the stores themselves | Payload cart (`@payloadcms/plugin-ecommerce`) and session user; keep the selectors |
+| Concern                                   | Interface                                                               | Fixture adapter           | Replace with                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------- |
+| Catalogue (products, packs, tiers, stock) | `CatalogueService` (`src/features/catalogue/contracts.ts`)              | `adapters/fixture.ts`     | Payload adapter reading Products, Variants and a new price-tier collection         |
+| Address search                            | `GeocodingService` (`src/features/delivery/contracts.ts`)               | gazetteer and Nominatim   | Nigeria-aware geocoder with a production licence                                   |
+| Delivery pricing                          | `DeliveryPricingService`                                                | `pricing.ts` weight bands | Server-side rules per zone, returned for a cart and location                       |
+| Routing                                   | `RoutingService`                                                        | none                      | Road-network routing for travel distance and time                                  |
+| Dashboard data                            | `DashboardDataService` (`src/features/spatial-intelligence/dataset.ts`) | seeded synthetic orders   | Authenticated orders API (see below)                                               |
+| Cart, customer, delivery location         | `createPersistedStore` (localStorage)                                   | the stores themselves     | Payload cart (`@payloadcms/plugin-ecommerce`) and session user; keep the selectors |
 
 Components import types and selectors, never fixtures. Fixtures are imported only by adapters and tests. The catalogue is handed to client components through `CatalogueProvider`, so a new adapter changes one function (`getCatalogue`).
 

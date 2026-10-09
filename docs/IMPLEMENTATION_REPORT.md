@@ -1,53 +1,27 @@
-# Implementation report: Laddex frontend phase
+# Implementation report
 
-## Starting point
+## What changed in this revision (owner feedback)
 
-The brief named `giladfuchs/next-ecommerce` (Next.js 16, Payload CMS 3, PostgreSQL, Tailwind 4) as the foundation. The repository first opened in the session was an unrelated project, so the work was moved to the new `Laddex-Enterprise` repository, seeded with the starter as a clean baseline commit (`7317c8f`, MIT licence retained). The starter's own code is untouched except four deliberate edits: the dependency list, `devIndicators: false` in `next.config.ts`, `export const dynamic = "force-dynamic"` in the legacy `(app)` layout (so the build needs no database), and removal of the legacy CMS homepage route, which the Laddex homepage replaces.
+1. **Real logo** in the header, footer, staff rail and favicon.
+2. **Nationwide delivery**: all 36 states and the FCT, six regions, state then LGA selects, all 774 LGAs (loaded per state), region-shaded map. Rates are sample values.
+3. **Theme switch**: light and dark, remembered, no flash on load; charts use CSS variables and the MapLibre map is rebuilt with a matching basemap.
+4. **About section and enquiries**: short factual write-up on the home page; `/contact` form (preview only, sends nothing); contact details configurable in `src/content/business.ts` and hidden until supplied.
+5. **Real products**: the invented litre sizes and drawn renders are gone. Palm oil, tapioca flakes, Garri Igbo and Ijebu Garri use the supplied photos. Sizes and prices remain illustrative and labelled.
+6. **Retail, resale and events in one site**: three ways to buy on the home page, `/events` for souvenirs and bulk gifts, wholesale tiers on garri and others, "events" as a buyer segment in the analytics.
+7. **Analytics rebuilt for intelligence, not just a map**: Overview, Geographic explorer (region, state, LGA), and Spatial insights (Moran's I, LISA clusters, Gi* hot spots, Gini and Lorenz, location quotients, distance bands, growth, expansion candidates, region by month).
 
 ## Architecture
 
-A new route group `src/app/(laddex)` has its own root layout, so the Payload admin and legacy routes keep working beside it. Nothing duplicates the commerce model: pricing, cart, delivery and analytics are pure TypeScript behind interfaces that a Payload adapter can implement.
+Unchanged principles: typed contracts with fixture adapters (`CatalogueService`, `GeocodingService`, `DeliveryPricingService`, `RoutingService`, `DashboardDataService`), money in integer kobo, one pricing function for storefront and synthetic orders, boundaries joined by point-in-polygon. See `BACKEND_INTEGRATION.md`.
 
-```
-src/
-  app/(laddex)/            storefront (store group) and /dashboard (own dense shell)
-  components/              navigation, commerce, product, wholesale, checkout, delivery, maps, analytics, charts, lx
-  features/                catalogue, cart, customer, delivery, spatial-intelligence  (types, contracts, adapters, selectors, stores)
-  fixtures/                products, geography (zones, gazetteer), orders (generator), customers (history)
-  lib/                     design (tokens), geo (pip, area, distance, boundaries), data (stores, PRNG), formatters
-  styles/laddex.css        tokens as CSS variables and component classes
-public/geo/                real boundary files and source metadata
-scripts/                   geo:build, qa (e2e, a11y, perf, gallery, shot)
-docs/                      design, Figma, geospatial, assets, integration, QA, this report
-```
+## Decisions to confirm with the owner
 
-State: one mechanism, `createPersistedStore` (a small `useSyncExternalStore` wrapper over localStorage) for cart, customer and delivery location, and one reducer with context for the dashboard. No state library was added.
+- Real pack sizes and prices (palm oil is currently shown as 1 to 5 L bottles purely as a placeholder).
+- Whether palm oil is sold in other containers (the supplied photo shows large jerrycans as well as bottles).
+- Real delivery rates and any regions not served.
+- Where goods ship from (the distance analysis uses a placeholder base).
+- Contact details, and whether event orders offer custom labels or gift packaging.
 
-## Delivered against the brief
+## Not done
 
-| Deliverable | Status |
-|---|---|
-| Working frontend | Built; runs in dev and production |
-| Design system | Tokens (code and Figma), component inventory, validated chart palette |
-| Figma workspace | Created and populated; screenshots could not be uploaded (see `FIGMA.md`) |
-| UI/UX Pro Max | Installed via the documented CLI path (`uipro init --ai claude`), used for research, and its default recommendation was evaluated and rejected |
-| Storefront | Home, catalogue, product, cart and drawer, account, retail and wholesale paths, checkout preview and confirmation |
-| Retail / wholesale | Same catalogue and pricing function. Wholesale tiers shown as indicative until an account is approved; quote builder, registration with approval states, order history and reorder |
-| Delivery location | Search, map pin, LGA and sample-zone coverage by spatial join, options, fee estimate where a rule exists, quote-required and outside-coverage states |
-| Real map | MapLibre with real GRID3/geoBoundaries LGA and state polygons; camera moves only on deliberate actions; reduced-motion respected |
-| Spatial dashboard | Four aggregation scales (state, LGA, zone, pickup point) plus individual orders (admin), linked map, charts, inspector and tables; staff sections for orders, customers, inventory, wholesale, reports |
-| Statistics engine | Pure typed functions with definitions, zero-denominator handling, cancelled and returned handling, period-over-period change |
-| Tests | 80 unit tests, 39 browser checks, axe scan of 15 routes at two widths |
-| Documentation | This folder |
-
-## Decisions worth knowing
-
-- **Honest data labelling.** Prices, sizes, stock, zones, fees, orders and customer histories are fixtures. A "Sample data" tag, notices, and "to be confirmed" product fields appear wherever they matter. No testimonial, certification, origin, delivery time or customer count appears anywhere.
-- **Unit price first.** Each pack shows price per litre or per kilo, and sorting by it is offered only inside a single category, because litres and kilograms are not comparable.
-- **No claim of verified coverage.** Zones are labelled sample, distances are labelled straight-line, and a pricing rule's absence yields "quote required" rather than a guess.
-- **No fabricated analysis.** Clustering, density surfaces and heatmaps were left out because synthetic data would make them present invented patterns as insight. The primitives (point-in-polygon, area, aggregation) are in place for them.
-- **Legacy Payload commerce preserved but bypassed on the new routes.** Cart and checkout in the new flow are frontend-only previews. The integration path is in `BACKEND_INTEGRATION.md`.
-
-## Remaining work
-
-Backend adapters and persistence, payment, real authentication and role enforcement, real photography, real zones and prices, production geocoder and routing, verifying the online basemap and geocoder on a connected machine, cross-browser and real-device testing, a screen-reader review, and tracking the legacy routes' retirement. See `BACKEND_INTEGRATION.md` and `QA_REPORT.md`.
+Backend, payments, real inventory, real orders, authentication, server-side roles. The enquiry form and quote requests are not sent anywhere.

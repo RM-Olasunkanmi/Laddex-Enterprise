@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import type { Product } from "@/features/catalogue/types";
+
 import { AddToCartButton } from "@/components/commerce/add-to-cart";
 import { Price, UnitPrice } from "@/components/commerce/money";
 import { StockTag } from "@/components/lx/primitives";
 import { ProductPhoto } from "@/components/product/product-photo";
 import { pricePerBaseUnit } from "@/features/catalogue/pricing";
 import { packLabel, sortedVariants } from "@/features/catalogue/selectors";
-import type { Product } from "@/features/catalogue/types";
 
 /**
  * One product, with its sizes as selectable chips. The price, unit price, stock and add-to-cart
@@ -25,15 +26,23 @@ export function ProductCard({
   priority?: boolean;
 }) {
   const variants = sortedVariants(product);
-  const firstInStock = variants.find((v) => v.stock.status !== "out-of-stock") ?? variants[0];
-  const [id, setId] = useState(variants.find((v) => v.id === initialVariantId)?.id ?? firstInStock.id);
+  const firstInStock =
+    variants.find((v) => v.stock.status !== "out-of-stock") ?? variants[0];
+  const [id, setId] = useState(
+    variants.find((v) => v.id === initialVariantId)?.id ?? firstInStock.id,
+  );
   const variant = variants.find((v) => v.id === id)!;
   const href = `/products/${product.slug}?pack=${variant.id}`;
   const out = variant.stock.status === "out-of-stock";
 
   return (
     <article className="group flex flex-col bg-card border border-line rounded-md overflow-hidden transition-shadow duration-[var(--d-base)] hover:shadow-raised">
-      <Link href={href} className="relative block" tabIndex={-1} aria-hidden="true">
+      <Link
+        href={href}
+        className="relative block"
+        tabIndex={-1}
+        aria-hidden="true"
+      >
         <ProductPhoto
           product={product}
           sizes="(min-width: 1280px) 22vw, (min-width: 640px) 45vw, 50vw"
@@ -47,9 +56,17 @@ export function ProductCard({
             {product.name}
           </Link>
         </h3>
-        <p className="text-xs sm:text-sm text-ink-3 mt-0.5">{product.unitKind === "volume" ? "Sold by the litre" : "Sold by the kilo"}</p>
+        <p className="text-xs sm:text-sm text-ink-3 mt-0.5">
+          {product.unitKind === "volume"
+            ? "Sold by the litre"
+            : "Sold by the kilo"}
+        </p>
 
-        <div role="radiogroup" aria-label={`${product.name} size`} className="mt-3 flex flex-wrap gap-1.5">
+        <div
+          role="radiogroup"
+          aria-label={`${product.name} size`}
+          className="mt-3 flex flex-wrap gap-1.5"
+        >
           {variants.map((v) => {
             const sel = v.id === id;
             const sold = v.stock.status === "out-of-stock";
@@ -70,9 +87,15 @@ export function ProductCard({
 
         <div className="mt-3 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
-            <Price kobo={variant.retailPriceKobo} className="text-lg sm:text-xl font-semibold" />
+            <Price
+              kobo={variant.retailPriceKobo}
+              className="text-lg sm:text-xl font-semibold"
+            />
             <div>
-              <UnitPrice kobo={pricePerBaseUnit(variant)} unit={product.baseUnit} />
+              <UnitPrice
+                kobo={pricePerBaseUnit(variant)}
+                unit={product.baseUnit}
+              />
             </div>
           </div>
           <StockTag status={variant.stock.status} />
@@ -86,7 +109,10 @@ export function ProductCard({
             disabledReason="This size is out of stock"
             className="btn-sm min-h-11"
           />
-          <Link href={href} className="hidden sm:inline-flex btn btn-line btn-sm min-h-11">
+          <Link
+            href={href}
+            className="hidden sm:inline-flex btn btn-line btn-sm min-h-11"
+          >
             Details
           </Link>
         </div>

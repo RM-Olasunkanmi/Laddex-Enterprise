@@ -21,13 +21,20 @@ import {
   variantStats,
 } from "@/features/spatial-intelligence/metrics";
 import { useDashboard } from "@/features/spatial-intelligence/state";
-import { UNASSIGNED } from "@/features/spatial-intelligence/types";
+import {
+  SEGMENT_LABEL,
+  UNASSIGNED,
+} from "@/features/spatial-intelligence/types";
 import {
   DATASET_DAYS,
   DATASET_END,
   DATASET_START,
 } from "@/fixtures/orders/generate";
-import { ALL_VARIANTS } from "@/fixtures/products/products";
+import {
+  ALL_VARIANTS,
+  PRODUCTS,
+  categoryOf,
+} from "@/fixtures/products/products";
 import { chart } from "@/lib/design/tokens";
 import {
   formatInt,
@@ -37,7 +44,7 @@ import {
 } from "@/lib/formatters";
 import { loadSourcesMeta, type GeoSourcesMeta } from "@/lib/geo/geography";
 
-function Page({
+export function Page({
   title,
   lead,
   children,
@@ -63,7 +70,7 @@ function Page({
   );
 }
 
-function Loading() {
+export function Loading() {
   return (
     <div className="p-6 space-y-3" aria-busy="true">
       <div className="skel h-8 w-64" />
@@ -123,6 +130,7 @@ export function CustomersPage() {
       list,
       retail: seg("retail"),
       wholesale: seg("wholesale"),
+      events: seg("events"),
       repRetail: rep(seg("retail")),
       repWhole: rep(seg("wholesale")),
       total: list.reduce((s, c) => s + c.gross, 0),
@@ -140,7 +148,7 @@ export function CustomersPage() {
           ["Buying customers", formatInt(data.list.length)],
           ["Retail", formatInt(data.retail.length)],
           ["Wholesale", formatInt(data.wholesale.length)],
-          ["Repeat rate, retail", formatPercent(data.repRetail, 0)],
+          ["Events", formatInt(data.events.length)],
         ].map(([l, v]) => (
           <div key={l} className="panel p-4">
             <p className="text-xs text-ink-3">{l}</p>
@@ -182,7 +190,9 @@ export function CustomersPage() {
             {data.list.slice(0, 12).map((c) => (
               <tr key={c.id}>
                 <td className="mono">{c.id}</td>
-                <td>{c.segment}</td>
+                <td>
+                  {SEGMENT_LABEL[c.segment as keyof typeof SEGMENT_LABEL]}
+                </td>
                 <td className="r">{c.orders}</td>
                 <td className="r">{formatNaira(c.gross)}</td>
                 <td className="r">
@@ -247,14 +257,15 @@ export function InventoryPage() {
             .sort((a, b) => a.cover! - b.cover!)
             .map((r) => ({
               id: r.variant.id,
-              label: `${r.variant.productId === "palm-oil" ? "Palm oil" : "Tapioca"} ${packLabel(r.variant)}`,
+              label: `${PRODUCTS.find((p) => p.id === r.variant.productId)!.name} ${packLabel(r.variant)}`,
               value: Math.min(r.cover!, 400),
               display: r.cover! > 400 ? "400+" : r.cover!.toFixed(0),
-              fill:
-                r.variant.productId === "palm-oil"
-                  ? chart.palmOil
-                  : chart.tapioca,
-              hatch: r.variant.productId === "tapioca",
+              fill: {
+                "palm-oil": chart.palm,
+                tapioca: chart.tapioca,
+                garri: chart.garri,
+              }[categoryOf(r.variant.id)],
+              hatch: categoryOf(r.variant.id) === "tapioca",
             }))}
         />
       </ChartFrame>
@@ -287,7 +298,7 @@ export function InventoryPage() {
             {rows.map(({ v, variant, cover }) => (
               <tr key={variant.id}>
                 <td>
-                  {variant.productId === "palm-oil" ? "Palm oil" : "Tapioca"}{" "}
+                  {PRODUCTS.find((p) => p.id === variant.productId)!.name}{" "}
                   {packLabel(variant)}
                 </td>
                 <td className="r">{variant.stock.qtyAvailable}</td>
@@ -321,7 +332,7 @@ export function WholesalePage() {
   const data = useMemo(() => {
     if (!derived) return null;
     const orders = derived.inSelection.filter(
-      (o) => o.segment === "wholesale" && o.status !== "cancelled",
+      (o) => o.segment !== "retail" && o.status !== "cancelled",
     );
     let lines = 0,
       metMoq = 0;
@@ -346,13 +357,13 @@ export function WholesalePage() {
   if (!derived || !data) return <Loading />;
   return (
     <Page
-      title="Wholesale operations"
-      lead="Wholesale buying in the selected period and geography, and how orders land against minimum quantities and price tiers."
+      title="Wholesale and events"
+      lead="Wholesale and event buying in the selected period and geography, and how orders land against minimum quantities and price tiers."
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["Wholesale gross", formatNairaCompact(data.k.grossKobo)],
-          ["Wholesale orders", formatInt(data.k.ordersActive)],
+          ["Trade and events gross", formatNairaCompact(data.k.grossKobo)],
+          ["Orders", formatInt(data.k.ordersActive)],
           ["Active accounts", formatInt(data.accounts)],
           [
             "Lines meeting minimum",
@@ -391,7 +402,7 @@ export function WholesalePage() {
             fill: chart.wholesale,
             hatch: true,
           }))}
-          empty="No wholesale orders in this selection"
+          empty="No wholesale or event orders in this selection"
         />
       </ChartFrame>
       <div className="panel p-4">
@@ -454,11 +465,11 @@ export function ReportsPage() {
   );
   if (!derived || !dataset) return <Loading />;
   const download = () => {
-    const stats = [...aggregateByUnit(derived.scoped, "lga").values()];
+    const stats = [...aggregateByUnit(derived.scoped, "state").values()];
     const rows: (string | number)[][] = [
       [
-        "lga_id",
-        "lga_name",
+        "state_id",
+        "state_name",
         "orders_placed",
         "orders_active",
         "gross_ngn",
@@ -471,8 +482,8 @@ export function ReportsPage() {
     for (const s of stats)
       rows.push([
         s.id,
-        dataset.lgas.find((l) => l.id === s.id)?.name ??
-          (s.id === UNASSIGNED ? "Outside Lagos or no location" : s.id),
+        dataset.states.find((l) => l.id === s.id)?.name ??
+          (s.id === UNASSIGNED ? "No usable location" : s.id),
         s.ordersPlaced,
         s.ordersActive,
         s.grossKobo / 100,
@@ -489,7 +500,7 @@ export function ReportsPage() {
     );
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `laddex-lga-summary-${state.filters.from}-${state.filters.to}.csv`;
+    a.download = `laddex-state-summary-${state.filters.from}-${state.filters.to}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
   };
@@ -512,14 +523,16 @@ export function ReportsPage() {
             Computed with the storefront pricing function from illustrative
             catalogue prices.
           </dd>
-          <dt className="text-ink-3">Zones</dt>
+          <dt className="text-ink-3">Regions</dt>
           <dd>
-            Sample service zones grouping real LGAs. Not verified coverage.
+            The six geopolitical zones, each a fixed list of states. Delivery
+            rates per region are samples.
           </dd>
           <dt className="text-ink-3">Spatial join</dt>
           <dd>
-            Point-in-polygon of order coordinates against LGA and state polygons
-            (WGS84, longitude/latitude).
+            Point-in-polygon of order coordinates against state polygons, and
+            against the LGA polygons of a state once it is opened (WGS84,
+            longitude/latitude).
           </dd>
           <dt className="text-ink-3">Distances</dt>
           <dd>Great-circle (straight line). No road routing.</dd>
@@ -550,7 +563,7 @@ export function ReportsPage() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-2xl">Metric definitions</h2>
           <button className="btn btn-line btn-sm min-h-10" onClick={download}>
-            Download LGA summary (CSV)
+            Download state summary (CSV)
           </button>
         </div>
         <dl className="grid gap-3 md:grid-cols-2">

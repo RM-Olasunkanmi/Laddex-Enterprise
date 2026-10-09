@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 
 import { niceMax, ticks } from "./scales";
 
-import { chart, color } from "@/lib/design/tokens";
+import { chart, v as color } from "@/lib/design/tokens";
 import { formatDay, formatNairaCompact, formatNaira } from "@/lib/formatters";
 
 export interface LinePoint {
@@ -148,7 +148,7 @@ export function LineChart({
               cy={y(h.value)}
               r="4.5"
               fill={color.ember}
-              stroke="#FFFDF8"
+              stroke="var(--color-card)"
               strokeWidth="2"
             />
           </g>

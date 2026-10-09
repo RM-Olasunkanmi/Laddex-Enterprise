@@ -1,7 +1,7 @@
 import type { PackVariant } from "@/features/catalogue/types";
 
 import { tierSaving } from "@/features/catalogue/pricing";
-import { chart, color } from "@/lib/design/tokens";
+import { chart, v as color } from "@/lib/design/tokens";
 import {
   formatNaira,
   formatNairaCompact,

@@ -111,7 +111,7 @@ export function RegisterForm() {
           className="field min-h-24"
           value={v.volume}
           onChange={(e) => setV({ ...v, volume: e.target.value })}
-          placeholder="e.g. twelve 25 L jerrycans of palm oil, ten 25 kg sacks of tapioca"
+          placeholder="e.g. forty 25 kg sacks of garri a month, twelve cartons of palm oil"
         />
         <p className="hint mt-1">
           Helps staff review the application. Not a commitment.

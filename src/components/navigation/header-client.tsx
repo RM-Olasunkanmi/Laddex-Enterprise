@@ -17,7 +17,7 @@ export function PersonaSelect() {
       <span className="text-rail-text/80">Viewing as</span>
       <select
         aria-label="Preview the storefront as a customer type"
-        className="bg-ink text-rail-text border border-rail-line rounded-sm px-2 py-1 text-xs"
+        className="bg-rail text-rail-text border border-rail-line rounded-sm px-2 py-1 text-xs"
         value={hydrated ? profile.access : "guest"}
         onChange={(e) => setPersona(e.target.value as CustomerAccess)}
       >

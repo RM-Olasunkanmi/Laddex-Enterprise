@@ -14,8 +14,15 @@ const FILLS = [
  * Static, server-rendered outline of Nigeria's 36 states and the FCT, shaded by delivery region.
  * Real simplified boundaries, no JavaScript, no map library.
  */
-export function RegionSketch({ className = "", showLegend = true }: { className?: string; showLegend?: boolean }) {
-  const regionIdx = (id: string) => REGIONS.findIndex((r) => r.stateIds.includes(id));
+export function RegionSketch({
+  className = "",
+  showLegend = true,
+}: {
+  className?: string;
+  showLegend?: boolean;
+}) {
+  const regionIdx = (id: string) =>
+    REGIONS.findIndex((r) => r.stateIds.includes(id));
   return (
     <figure className={className}>
       <svg
@@ -40,7 +47,11 @@ export function RegionSketch({ className = "", showLegend = true }: { className?
         <figcaption className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-xs">
           {REGIONS.map((r, i) => (
             <span key={r.id} className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="w-3 h-3 rounded-[1px] border border-ink/40" style={{ background: FILLS[i], opacity: 0.7 }} />
+              <span
+                aria-hidden="true"
+                className="w-3 h-3 rounded-[1px] border border-ink/40"
+                style={{ background: FILLS[i], opacity: 0.7 }}
+              />
               {r.name} <span className="text-ink-3">({r.stateIds.length})</span>
             </span>
           ))}

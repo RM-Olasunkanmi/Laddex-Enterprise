@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-import { BUSINESS } from "@/content/business";
-
 import { Wordmark } from "./site-header";
+
+import { BUSINESS } from "@/content/business";
 
 const col = (title: string, items: { href: string; label: string }[]) => (
   <div>
@@ -34,7 +34,10 @@ export function SiteFooter() {
             Palm oil, tapioca flakes and garri, for households, shops and
             events. Delivery across Nigeria. Prices in Nigerian Naira.
           </p>
-          {(BUSINESS.phone || BUSINESS.whatsapp || BUSINESS.email || BUSINESS.address) && (
+          {(BUSINESS.phone ||
+            BUSINESS.whatsapp ||
+            BUSINESS.email ||
+            BUSINESS.address) && (
             <ul className="mt-4 space-y-1 text-sm text-ink-2 list-none p-0">
               {BUSINESS.phone && <li>Phone: {BUSINESS.phone}</li>}
               {BUSINESS.whatsapp && <li>WhatsApp: {BUSINESS.whatsapp}</li>}

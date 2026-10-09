@@ -1,5 +1,5 @@
-import { GeoWorkspace } from "@/components/analytics/geo-workspace";
+import { OverviewPage } from "@/components/analytics/overview-page";
 
 export default function DashboardPage() {
-  return <GeoWorkspace />;
+  return <OverviewPage />;
 }

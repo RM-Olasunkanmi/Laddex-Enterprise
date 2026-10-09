@@ -1,7 +1,7 @@
+import type { LngLat, LocationResolution } from "./types";
+
 import { REGIONS, regionOfState } from "@/fixtures/geography/regions";
 import { unitAt, type AdminUnit } from "@/lib/geo/geography";
-
-import type { LngLat, LocationResolution } from "./types";
 
 /**
  * Resolve a point to state, geopolitical region and (when that state's LGA file is supplied) LGA,
@@ -14,7 +14,16 @@ export function resolveLocation(
 ): LocationResolution {
   const state = unitAt(states, position.lng, position.lat);
   if (!state) {
-    return { position, stateId: null, stateName: null, regionId: null, regionName: null, lgaId: null, lgaName: null, coverage: "outside-nigeria" };
+    return {
+      position,
+      stateId: null,
+      stateName: null,
+      regionId: null,
+      regionName: null,
+      lgaId: null,
+      lgaName: null,
+      coverage: "outside-nigeria",
+    };
   }
   const region = regionOfState(state.id);
   const lga = lgas ? unitAt(lgas, position.lng, position.lat) : null;

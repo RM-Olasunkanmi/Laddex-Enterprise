@@ -4,12 +4,12 @@ The storefront and dashboard deploy as a **frontend-only Worker** using the Open
 
 ## What was verified, and what was not
 
-| | |
-|---|---|
-| Worker bundle builds (`opennextjs-cloudflare build`) | Yes |
-| Runs in the Workers runtime (workerd, via `wrangler dev --local`) | Yes: 13 routes return 200 with no runtime errors |
-| Full browser suite against that Worker | Yes: 39 of 39 checks pass |
-| Actual deployment to a Cloudflare account | **No.** The build sandbox had no API token and could not reach `api.cloudflare.com`. Run the steps below from your machine |
+|                                                                   |                                                                                                                            |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Worker bundle builds (`opennextjs-cloudflare build`)              | Yes                                                                                                                        |
+| Runs in the Workers runtime (workerd, via `wrangler dev --local`) | Yes: 13 routes return 200 with no runtime errors                                                                           |
+| Full browser suite against that Worker                            | Yes: 39 of 39 checks pass                                                                                                  |
+| Actual deployment to a Cloudflare account                         | **No.** The build sandbox had no API token and could not reach `api.cloudflare.com`. Run the steps below from your machine |
 
 ## Deploy from your machine
 

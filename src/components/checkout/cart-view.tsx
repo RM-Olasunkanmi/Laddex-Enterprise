@@ -81,7 +81,11 @@ export function CartView() {
                 key={l.variant.id}
                 className="p-4 grid grid-cols-[5.5rem_1fr] sm:grid-cols-[6.5rem_1fr_auto] gap-4"
               >
-                <ProductPhoto product={l.product} sizes="104px" className="rounded-sm h-24 w-full sm:h-26" />
+                <ProductPhoto
+                  product={l.product}
+                  sizes="104px"
+                  className="rounded-sm h-24 w-full sm:h-26"
+                />
                 <div className="min-w-0">
                   <Link
                     href={`/products/${l.product.slug}?pack=${l.variant.id}`}

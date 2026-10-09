@@ -4,11 +4,10 @@ import { useMemo, useState } from "react";
 
 import { Tag } from "@/components/lx/primitives";
 import { packLabel } from "@/features/catalogue/selectors";
-import { unitName } from "@/features/spatial-intelligence/geo-units";
 import { aggregateByUnit } from "@/features/spatial-intelligence/metrics";
 import { useDashboard } from "@/features/spatial-intelligence/state";
 import {
-  OUTSIDE_ZONES,
+  SEGMENT_LABEL,
   UNASSIGNED,
 } from "@/features/spatial-intelligence/types";
 import { ALL_VARIANTS } from "@/fixtures/products/products";
@@ -46,7 +45,7 @@ export function OrderTable() {
   const areaRows = useMemo(
     () =>
       derived
-        ? [...aggregateByUnit(derived.inSelection, "lga").values()].sort(
+        ? [...aggregateByUnit(derived.inSelection, "state").values()].sort(
             (a, b) => b.grossKobo - a.grossKobo,
           )
         : [],
@@ -58,17 +57,17 @@ export function OrderTable() {
         <div className="skel h-40" aria-busy="true" />
       </div>
     );
-  const lgaName = (id: string | null) =>
+  const stateName = (id: string | null) =>
     id
-      ? (dataset.lgas.find((l) => l.id === id)?.name ?? id)
-      : "Outside Lagos / unlocated";
+      ? (dataset.states.find((l) => l.id === id)?.name ?? id)
+      : "No usable location";
 
   if (state.role !== "admin") {
     return (
       <section aria-labelledby="ot-title" className="p-4">
         <div className="flex items-center justify-between gap-3 mb-3">
           <h2 id="ot-title" className="!text-xl">
-            Areas in this selection
+            States in this selection
           </h2>
           <Tag tone="info">Analyst view: aggregates only</Tag>
         </div>
@@ -80,12 +79,12 @@ export function OrderTable() {
           className="overflow-x-auto border border-line rounded-sm"
           tabIndex={0}
           role="region"
-          aria-label="Areas in this selection"
+          aria-label="States in this selection"
         >
           <table className="dtable">
             <thead>
               <tr>
-                <th scope="col">Local government area</th>
+                <th scope="col">State</th>
                 <th scope="col" className="!text-right">
                   Orders
                 </th>
@@ -93,7 +92,7 @@ export function OrderTable() {
                   Gross sales
                 </th>
                 <th scope="col" className="!text-right">
-                  Wholesale
+                  Trade and events
                 </th>
               </tr>
             </thead>
@@ -109,14 +108,14 @@ export function OrderTable() {
                 <tr key={a.id}>
                   <td>
                     {a.id === UNASSIGNED
-                      ? "Outside Lagos / unlocated"
-                      : lgaName(a.id)}
+                      ? "No usable location"
+                      : stateName(a.id)}
                   </td>
                   <td className="r">{a.ordersPlaced}</td>
                   <td className="r">{formatNaira(a.grossKobo)}</td>
                   <td className="r">
                     {a.grossKobo
-                      ? `${Math.round((a.wholesaleKobo / a.grossKobo) * 100)}%`
+                      ? `${Math.round(((a.bySegment.wholesale + a.bySegment.events) / a.grossKobo) * 100)}%`
                       : "—"}
                   </td>
                 </tr>
@@ -174,7 +173,7 @@ export function OrderTable() {
               <th scope="col">Order</th>
               {th("date", "Date")}
               <th scope="col">Segment</th>
-              <th scope="col">Area</th>
+              <th scope="col">State</th>
               <th scope="col">Items</th>
               {th("goods", "Goods", true)}
               <th scope="col">Status</th>
@@ -204,8 +203,8 @@ export function OrderTable() {
                   </button>
                 </td>
                 <td className="whitespace-nowrap">{formatDay(o.placedAt)}</td>
-                <td>{o.segment}</td>
-                <td>{lgaName(o.lgaId)}</td>
+                <td>{SEGMENT_LABEL[o.segment]}</td>
+                <td>{stateName(o.stateId)}</td>
                 <td className="text-ink-2">
                   {o.lines
                     .map(
@@ -234,5 +233,3 @@ export function OrderTable() {
     </section>
   );
 }
-
-export { unitName, OUTSIDE_ZONES };

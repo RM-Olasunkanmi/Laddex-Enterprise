@@ -72,8 +72,10 @@ export function StackedBar({
 }
 
 export const SERIES = {
-  palm: chart.palmOil,
+  palm: chart.palm,
   tapioca: chart.tapioca,
+  garri: chart.garri,
   retail: chart.retail,
   wholesale: chart.wholesale,
+  events: chart.events,
 };

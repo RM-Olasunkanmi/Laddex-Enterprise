@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { useState } from "react";
 
-import { Tag } from "@/components/lx/primitives";
 import type { Product } from "@/features/catalogue/types";
+
+import { Tag } from "@/components/lx/primitives";
 
 /**
  * Main image plus real thumbnails. Photographs come from the product's `photographs` list; the
@@ -18,8 +19,13 @@ export function ProductGallery({ product }: { product: Product }) {
   const portrait = active.height > active.width * 1.2;
   return (
     <div>
-      <div className={`relative bg-paper-2 border border-line rounded-md overflow-hidden ${portrait ? "aspect-[4/5]" : "aspect-[4/3]"}`}>
-        <div key={active.id} className="absolute inset-0 animate-[fadein_var(--d-base)_var(--ease)]">
+      <div
+        className={`relative bg-paper-2 border border-line rounded-md overflow-hidden ${portrait ? "aspect-[4/5]" : "aspect-[4/3]"}`}
+      >
+        <div
+          key={active.id}
+          className="absolute inset-0 animate-[fadein_var(--d-base)_var(--ease)]"
+        >
           <Image
             src={active.src}
             alt={active.alt}
@@ -37,7 +43,10 @@ export function ProductGallery({ product }: { product: Product }) {
         )}
       </div>
       {photos.length > 1 && (
-        <ul className="mt-3 grid grid-cols-5 gap-2 list-none p-0" aria-label="Product photos">
+        <ul
+          className="mt-3 grid grid-cols-5 gap-2 list-none p-0"
+          aria-label="Product photos"
+        >
           {photos.map((p) => (
             <li key={p.id}>
               <button
@@ -47,7 +56,14 @@ export function ProductGallery({ product }: { product: Product }) {
                 onClick={() => setSelected(p.id)}
                 className={`relative block w-full aspect-square rounded-sm overflow-hidden border-2 ${p.id === active.id ? "border-ink" : "border-line hover:border-ink-3"}`}
               >
-                <Image src={p.src} alt="" fill sizes="96px" className="object-cover" style={{ objectPosition: p.position ?? "50% 50%" }} />
+                <Image
+                  src={p.src}
+                  alt=""
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                  style={{ objectPosition: p.position ?? "50% 50%" }}
+                />
               </button>
             </li>
           ))}

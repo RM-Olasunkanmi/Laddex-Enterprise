@@ -46,19 +46,6 @@ export function MapToolbar() {
         onChange={(on) => dispatch({ type: "layer", key: "symbols", on })}
       />
       <Toggle
-        label="Sample zones"
-        on={state.layers.zones}
-        onChange={(on) => dispatch({ type: "layer", key: "zones", on })}
-        disabled={
-          state.selection.scale === "zone" || state.selection.scale === "state"
-        }
-        title={
-          state.selection.scale === "zone"
-            ? "Zones are already the active scale"
-            : undefined
-        }
-      />
-      <Toggle
         label="Order points"
         on={state.layers.orderPoints && admin}
         onChange={(on) => dispatch({ type: "layer", key: "orderPoints", on })}

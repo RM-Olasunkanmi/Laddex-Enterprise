@@ -14,7 +14,10 @@ const baseBands = [
 ];
 /** Scale the base bands and round to the nearest 500 naira. */
 const bands = (scale: number): WeightBand[] =>
-  baseBands.map((b) => ({ ...b, feeKobo: Math.round((b.feeKobo * scale) / 50000) * 50000 }));
+  baseBands.map((b) => ({
+    ...b,
+    feeKobo: Math.round((b.feeKobo * scale) / 50000) * 50000,
+  }));
 
 export const REGIONS: Region[] = [
   {
@@ -44,7 +47,15 @@ export const REGIONS: Region[] = [
   {
     id: "north-west",
     name: "North West",
-    stateIds: ["jigawa", "kaduna", "kano", "katsina", "kebbi", "sokoto", "zamfara"],
+    stateIds: [
+      "jigawa",
+      "kaduna",
+      "kano",
+      "katsina",
+      "kebbi",
+      "sokoto",
+      "zamfara",
+    ],
     pricing: { kind: "weight-band", bands: bands(1.6) },
   },
   {
@@ -55,7 +66,9 @@ export const REGIONS: Region[] = [
   },
 ];
 
-export const regionOfState = (stateId: string | null | undefined): Region | null =>
+export const regionOfState = (
+  stateId: string | null | undefined,
+): Region | null =>
   stateId ? (REGIONS.find((r) => r.stateIds.includes(stateId)) ?? null) : null;
 
 export const STATE_REGION: Record<string, string> = Object.fromEntries(
@@ -63,7 +76,9 @@ export const STATE_REGION: Record<string, string> = Object.fromEntries(
 );
 
 /** Display names where the boundary file's name is not what people say. */
-export const STATE_NAME_OVERRIDE: Record<string, string> = { fct: "FCT (Abuja)" };
+export const STATE_NAME_OVERRIDE: Record<string, string> = {
+  fct: "FCT (Abuja)",
+};
 
 export const SAMPLE_DISCLAIMER =
   "Delivery regions are the six geopolitical zones. The rates shown are sample rates for building the interface, not Laddex's confirmed prices, and no delivery time is promised.";

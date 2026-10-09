@@ -91,7 +91,11 @@ export function CartDrawer() {
           <ul className="divide-y divide-line">
             {cart.lines.map((l) => (
               <li key={l.variant.id} className="py-4 flex gap-4">
-                <ProductPhoto product={l.product} sizes="80px" className="w-20 h-20 shrink-0 rounded-sm" />
+                <ProductPhoto
+                  product={l.product}
+                  sizes="80px"
+                  className="w-20 h-20 shrink-0 rounded-sm"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between gap-2">
                     <p className="font-medium">

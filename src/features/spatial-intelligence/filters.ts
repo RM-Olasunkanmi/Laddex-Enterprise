@@ -1,6 +1,5 @@
 import {
   OPEN_STATUSES,
-  OUTSIDE_ZONES,
   UNASSIGNED,
   type DashboardFilters,
   type EnrichedOrder,
@@ -131,26 +130,29 @@ export function filterOrders(
 
 export function unitKeyFor(o: EnrichedOrder, scale: GeoScale): string {
   switch (scale) {
+    case "region":
+      return o.regionId ?? UNASSIGNED;
     case "state":
       return o.stateId ?? UNASSIGNED;
     case "lga":
       return o.lgaId ?? UNASSIGNED;
-    case "zone":
-      return o.zoneId ?? (o.lgaId ? OUTSIDE_ZONES : UNASSIGNED);
-    case "pickup":
-      return o.fulfilment === "pickup" && o.pickupPointId
-        ? o.pickupPointId
-        : UNASSIGNED;
   }
 }
 
-/** Orders inside the selected geography. With no selected unit the whole extent is returned. */
+/**
+ * Orders inside the selected geography. With no selected unit the whole country is returned,
+ * except at LGA scale where the chosen state is the extent (LGAs only exist within one state).
+ */
 export function applyGeoSelection(
   orders: EnrichedOrder[],
-  sel: Pick<GeoSelection, "scale" | "unitId">,
+  sel: Pick<GeoSelection, "scale" | "unitId" | "stateId">,
 ): EnrichedOrder[] {
-  if (!sel.unitId) return orders;
-  return orders.filter((o) => unitKeyFor(o, sel.scale) === sel.unitId);
+  const base =
+    sel.scale === "lga" && sel.stateId
+      ? orders.filter((o) => o.stateId === sel.stateId)
+      : orders;
+  if (!sel.unitId) return base;
+  return base.filter((o) => unitKeyFor(o, sel.scale) === sel.unitId);
 }
 
 export const isOpen = (o: EnrichedOrder) => OPEN_STATUSES.includes(o.status);

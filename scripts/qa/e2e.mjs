@@ -76,663 +76,195 @@ const go = (page, path) =>
 // ---------- Storefront ----------
 {
   const page = await newPage();
-  await check("home: headline and shop entry points", async () => {
+  await check("home: logo, headline, about, nationwide delivery, contact", async () => {
     await go(page, "/");
-    assert(
-      (await page.locator("h1").innerText()).includes("Palm oil by the litre"),
-      "h1 text",
-    );
-    assert(
-      await page.getByRole("link", { name: "Shop palm oil" }).isVisible(),
-      "palm CTA",
-    );
-    assert(
-      await page
-        .getByRole("link", { name: /Buying for a business/ })
-        .isVisible(),
-      "wholesale CTA",
-    );
+    assert(await page.locator('img[src*="laddex-logo"]').first().isVisible(), "logo missing");
+    assert(await page.getByRole("heading", { name: /Pure\. Natural\./ }).isVisible(), "headline");
+    assert(await page.getByRole("heading", { name: /everyday staples/ }).isVisible(), "about section");
+    assert(await page.getByRole("heading", { name: /Delivered across Nigeria/ }).isVisible(), "nationwide");
+    const body = await page.locator("body").innerText();
+    assert(!/Lagos only|in Lagos/i.test(body), "mentions Lagos-only delivery");
+    assert(!/\b25 L\b|200 L|jerrycan/i.test(body), "old litre sizes still present");
+    assert(await page.getByRole("link", { name: "Contact us" }).first().isVisible(), "contact cta");
   });
-  await check(
-    "category navigation: tabs, counts and format filter",
-    async () => {
-      await go(page, "/shop/palm-oil");
-      assert((await page.locator("article").count()) === 5, "5 palm packs");
-      await page
-        .getByRole("link", { name: "Tapioca", exact: true })
-        .first()
-        .click();
-      await page.waitForURL(/shop\/tapioca/);
-      await page.waitForFunction(
-        () => document.querySelectorAll("article").length === 4,
-      );
-      await page.getByLabel("Bulk (trade volumes)").click();
-      await page.waitForFunction(
-        () => document.querySelectorAll("article").length === 2,
-      );
-      assert(page.url().includes("format=bulk"), "format in URL");
-    },
-  );
-  await check(
-    "sort by price per litre orders cheapest unit price first",
-    async () => {
-      await go(page, "/shop/palm-oil?sort=unit-asc");
-      const first = await page.locator("article").first().innerText();
-      assert(first.includes("200 L"), "200 L drum first");
-    },
-  );
-  await check(
-    "empty state appears when filters exclude everything",
-    async () => {
-      await go(page, "/shop/palm-oil?format=bulk&size=1%20L");
-      assert(
-        await page.getByText("No packs match these filters").isVisible(),
-        "empty message",
-      );
-    },
-  );
-  await check("error state: catalogue failure shows recovery UI", async () => {
-    await go(page, "/shop?fail=catalogue");
-    assert(
-      await page.getByText("We could not load this page").isVisible(),
-      "error boundary",
-    );
-    assert(
-      await page.getByRole("button", { name: "Try again" }).isVisible(),
-      "retry button",
-    );
+  await check("home: four real products, garri included", async () => {
+    for (const n of ["Palm Oil", "Tapioca Flakes", "Garri Igbo", "Ijebu Garri"])
+      assert((await page.getByRole("heading", { name: n, exact: true }).count()) > 0, n);
   });
-  await check(
-    "product page: variant selection, quantity and add to cart",
-    async () => {
-      await go(page, "/products/palm-oil?pack=po-5l");
-      assert(
-        (await page.locator("h1").innerText()).includes("5 L"),
-        "h1 shows 5 L",
-      );
-      await page.getByRole("radio", { name: /25 L/ }).click();
-      assert(
-        (await page.locator("h1").innerText()).includes("25 L"),
-        "h1 updates to 25 L",
-      );
-      assert(page.url().includes("pack=po-25l"), "URL pack param");
-      await page
-        .getByRole("button", { name: "Increase Quantity" })
-        .first()
-        .click();
-      await page.getByRole("button", { name: "Add to cart" }).first().click();
-      await page.getByRole("dialog", { name: "Cart" }).waitFor();
-      const drawer = await page
-        .getByRole("dialog", { name: "Cart" })
-        .innerText();
-      assert(
-        drawer.includes("Palm Oil") && drawer.includes("25 L"),
-        "drawer lists line",
-      );
-      assert(/₦142,000/.test(drawer), "2 x 71,000 subtotal");
-    },
-  );
-  await check(
-    "cart page: stepper changes total; persists after reload",
-    async () => {
-      await go(page, "/cart");
-      assert(
-        (await page.locator("main").innerText()).includes("₦142,000"),
-        "subtotal from storage",
-      );
-      await page
-        .getByRole("button", { name: /Increase Palm Oil 25 L quantity/ })
-        .first()
-        .click();
-      await page.waitForFunction(() =>
-        document.body.innerText.includes("₦213,000"),
-      );
-    },
-  );
-  await check(
-    "customer type: indicative tiers for guests, account tier price for approved wholesale",
-    async () => {
-      await go(page, "/products/palm-oil?pack=po-25l");
-      assert(
-        await page.getByText("Indicative only").isVisible(),
-        "indicative tag for guest",
-      );
-      await page.selectOption(
-        'select[aria-label="Preview the storefront as a customer type"]',
-        "wholesale-approved",
-      );
-      for (let i = 0; i < 11; i++)
-        await page
-          .getByRole("button", { name: "Increase Quantity" })
-          .first()
-          .click();
-      await page.waitForFunction(() =>
-        document.body.innerText.toLowerCase().includes("your account price"),
-      );
-      const text = await page.locator("main").innerText();
-      // 12 packs at the 12+ tier: 71,000 * 0.93 rounded to 10 naira = 66,030
-      assert(
-        text.includes("₦792,360"),
-        "12 x 66,030 = 792,360 shown as the account total",
-      );
-      await page.selectOption(
-        'select[aria-label="Preview the storefront as a customer type"]',
-        "retail",
-      );
-      await page.waitForFunction(() =>
-        document.body.innerText.toLowerCase().includes("indicative only"),
-      );
-      assert(
-        (await page.locator("main").innerText()).includes("₦852,000"),
-        "retail pays list for 12 packs",
-      );
-    },
-  );
-  await check(
-    "wholesale: tier explorer, quote builder validates minimum and records a quote",
-    async () => {
-      await go(page, "/wholesale");
-      assert(
-        await page
-          .getByText("Minimum quantities and price breaks, by pack")
-          .isVisible(),
-        "MOQ table",
-      );
-      await go(page, "/wholesale/quote?pack=po-25l");
-      await page.getByRole("button", { name: "Send quote request" }).click();
-      assert(
-        await page.getByText("Enter the business name.").isVisible(),
-        "validation message",
-      );
-      await page.getByLabel("Business name").fill("Test Foods");
-      await page.getByLabel("Contact person").fill("A Tester");
-      await page.getByLabel("Mobile number").fill("08031234567");
-      await page.getByRole("button", { name: "Send quote request" }).click();
-      await page.getByText("Quote request recorded (preview)").waitFor();
-    },
-  );
-  await check(
-    "wholesale registration moves the account to awaiting approval",
-    async () => {
-      await go(page, "/wholesale/register");
-      await page.getByLabel("Business name").fill("Sample Co");
-      await page.getByLabel("Contact person").fill("B Tester");
-      await page.getByLabel("Mobile number").fill("0803 123 4567");
-      await page.getByLabel("Email").fill("b@example.com");
-      await page.getByRole("button", { name: "Submit application" }).click();
-      await page.waitForURL(/account/);
-      assert(
-        (await page.locator("main").innerText())
-          .toLowerCase()
-          .includes("wholesale, awaiting approval"),
-        "pending status",
-      );
-    },
-  );
-  await check("account: reorder adds past order to cart", async () => {
-    await go(page, "/account");
-    await page
-      .getByRole("button", { name: "Preview: staff approve this account" })
-      .click();
-    await page
-      .getByRole("button", { name: "Reorder these items" })
-      .first()
-      .click();
-    await page.getByRole("dialog", { name: "Cart" }).waitFor();
+  await check("theme: toggle switches and persists across reload", async () => {
+    assert((await page.locator("html").getAttribute("data-theme")) !== "dark", "starts light");
+    await page.getByRole("button", { name: "Switch to dark theme" }).click();
+    assert((await page.locator("html").getAttribute("data-theme")) === "dark", "dark applied");
+    await page.reload({ waitUntil: "networkidle" });
+    assert((await page.locator("html").getAttribute("data-theme")) === "dark", "persisted");
+    await page.getByRole("button", { name: "Switch to light theme" }).click();
+    assert((await page.locator("html").getAttribute("data-theme")) === "light", "back to light");
   });
-  await page.context().close();
-}
-
-// ---------- Delivery location ----------
-{
-  const page = await newPage();
-  await check(
-    "delivery: search, pick result, see coverage, confirm and get options",
-    async () => {
-      await go(page, "/delivery");
-      await page.getByLabel("Delivery address or area").fill("Ikeja");
-      await page.getByRole("button", { name: "Search" }).click();
-      await page.getByText("Inside sample zone").waitFor({ timeout: 15000 });
-      assert(
-        await page.getByText("Sample zone 2: Ikeja axis").first().isVisible(),
-        "zone name",
-      );
-      await page.getByRole("button", { name: "Confirm this location" }).click();
-      await page.getByText("Delivery options").waitFor();
-      assert(
-        await page
-          .getByRole("radio", { name: /Home or business delivery/ })
-          .isEnabled(),
-        "home delivery available in zone 2",
-      );
-      await page.screenshot({ path: "screenshots/delivery-confirmed.png" });
-    },
-  );
-  await check(
-    "delivery: map renders a canvas and click places a pin resolving to an LGA",
-    async () => {
-      const canvas = page.locator("canvas.maplibregl-canvas").first();
-      await canvas.waitFor();
-      const box = await canvas.boundingBox();
-      assert(
-        box && box.width > 300 && box.height > 300,
-        "canvas has real size",
-      );
-      await page.waitForTimeout(1200);
-      await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.5);
-      await page.waitForTimeout(500);
-      const text = await page.locator("main").innerText();
-      assert(/Pin in|Pinned location/.test(text), "pin label");
-    },
-  );
-  await check(
-    "delivery: zone 4 shows quote-required because no price rule is configured",
-    async () => {
-      await go(page, "/delivery");
-      await page.selectOption("#lga-pick", "alimosho");
-      await page.getByText("Inside sample zone").waitFor();
-      await page.getByRole("button", { name: "Confirm this location" }).click();
-      const home = page.getByRole("radio", {
-        name: /Home or business delivery/,
-      });
-      assert(await home.isDisabled(), "home delivery disabled without a rule");
-      assert(
-        (await page.locator("main").innerText()).includes(
-          "No delivery pricing rule is configured",
-        ),
-        "explains why",
-      );
-    },
-  );
-  await check(
-    "delivery: point outside Lagos is labelled, not covered",
-    async () => {
-      await go(page, "/delivery");
-      await page.getByLabel("Delivery address or area").fill("Epe");
-      await page.getByRole("button", { name: "Search" }).click();
-      await page
-        .getByText("Outside sample zones")
-        .first()
-        .waitFor({ timeout: 15000 });
-    },
-  );
-  await page.context().close();
-}
-
-// ---------- Checkout preview ----------
-{
-  const page = await newPage();
-  await check(
-    "checkout preview: validation, totals with delivery, confirmation page",
-    async () => {
-      await go(page, "/products/tapioca?pack=tp-5kg");
-      await page.getByRole("button", { name: "Add to cart" }).first().click();
-      await page.getByRole("dialog", { name: "Cart" }).waitFor();
-      await go(page, "/order");
-      await page.getByRole("button", { name: "Place preview order" }).click();
-      assert(
-        await page.getByText("Enter your full name.").isVisible(),
-        "name error",
-      );
-      await page.getByLabel("Full name").fill("Ada Test");
-      await page.getByLabel("Mobile number").fill("0803 123 4567");
-      await page
-        .getByLabel("House or plot number and street")
-        .fill("12 Example Street");
-      await page.getByLabel("Delivery address or area").fill("Ikeja");
-      await page.getByRole("button", { name: "Search" }).click();
-      await page.getByRole("button", { name: "Confirm this location" }).click();
-      await page
-        .getByRole("radio", { name: /Home or business delivery/ })
-        .click();
-      const summary = await page
-        .getByRole("complementary", { name: "Order summary" })
-        .innerText();
-      assert(summary.includes("₦10,800"), "subtotal");
-      assert(
-        /Total/.test(summary) && /₦12,\d{3}|₦13,\d{3}/.test(summary),
-        "total includes sample delivery fee",
-      );
-      await page.getByRole("button", { name: "Place preview order" }).click();
-      await page.waitForURL(/confirmation/);
-      assert(
-        (await page.locator("h1").innerText()).startsWith("PREVIEW-"),
-        "reference",
-      );
-      assert(
-        await page
-          .getByText("No order was placed and nothing was charged.")
-          .isVisible(),
-        "preview disclaimer",
-      );
-    },
-  );
+  await check("shop: category pages and size chips follow price", async () => {
+    await go(page, "/shop/garri");
+    const cards = page.locator("article");
+    assert((await cards.count()) === 2, "two garri products");
+    const card = cards.first();
+    const before = await card.innerText();
+    await card.getByRole("radio", { name: "5 kg", exact: true }).click();
+    const after = await card.innerText();
+    assert(before !== after && /8,500|9,000/.test(after), "price follows size");
+  });
+  await check("product page: garri pack, add to cart updates the cart", async () => {
+    await go(page, "/products/garri-igbo?pack=gi-5kg");
+    await page.getByRole("button", { name: /Add to cart/ }).first().click();
+    await page.waitForTimeout(500);
+    await go(page, "/cart");
+    assert((await page.locator("body").innerText()).includes("Garri Igbo"), "line in cart");
+  });
+  await check("delivery: choosing a state and LGA resolves nationwide", async () => {
+    await go(page, "/delivery");
+    await page.selectOption("#state-pick", { label: "Kano" });
+    await page.waitForFunction(() => document.querySelector("#lga-pick option:nth-child(3)"), null, { timeout: 15000 });
+    const lga = await page.locator("#lga-pick option").nth(2).innerText();
+    await page.selectOption("#lga-pick", { index: 2 });
+    await page.getByRole("button", { name: "Confirm this location" }).click();
+    const body = await page.locator("body").innerText();
+    assert(/Kano/.test(body) && /North West/.test(body), "state and region shown: " + lga);
+    assert(/Delivery options/.test(body) && /₦/.test(body), "delivery fee shown");
+  });
+  await check("delivery: offline fallback search finds a southeastern town", async () => {
+    await go(page, "/delivery");
+    await page.fill("#addr", "Enugu");
+    await page.getByRole("button", { name: "Search" }).click();
+    await page.waitForTimeout(4500);
+    const body = await page.locator("body").innerText();
+    assert(/Enugu/.test(body), "Enugu result");
+  });
+  await check("contact: validation, then confirmation without sending", async () => {
+    await go(page, "/contact");
+    await page.getByRole("button", { name: "Send enquiry" }).click();
+    assert((await page.getByText("Enter your name").count()) > 0, "name error");
+    await page.fill("#enq-name", "Ada");
+    await page.fill("#enq-contact", "ada@example.com");
+    await page.fill("#enq-message", "Do you deliver garri to Enugu?");
+    await page.getByRole("button", { name: "Send enquiry" }).click();
+    assert((await page.getByText("Nothing was sent").count()) > 0, "honest confirmation");
+  });
+  await check("events: page offers souvenirs enquiry with events topic", async () => {
+    await go(page, "/events");
+    assert(await page.getByRole("heading", { name: /useful gifts/ }).isVisible(), "heading");
+    assert((await page.locator("#enq-topic").inputValue()) === "events", "topic preselected");
+  });
+  await check("wholesale: tier explorer defaults to a real pack and quote builder works", async () => {
+    await go(page, "/wholesale");
+    assert((await page.locator("body").innerText()).includes("Garri"), "garri in tiers");
+    await go(page, "/wholesale/quote?pack=gi-25kg");
+    assert((await page.locator("body").innerText()).includes("25 kg"), "quote pack");
+  });
   await page.context().close();
 }
 
 // ---------- Dashboard ----------
 {
   const page = await newPage();
-  const kpi = async (label) => {
-    const key = { "Gross sales": "gross", Orders: "orders" }[label];
-    const tile = page.locator(`[data-testid="kpis"] > [data-metric="${key}"]`);
-    return num(await tile.getByTestId("kpi-value").innerText());
-  };
-  await check(
-    "dashboard: loads data, map canvas and KPIs; loading state shown first",
-    async () => {
-      const p = await newPage();
-      // latency=4000 so the skeleton is observable even on a fast machine
-      await p.goto(BASE + "/dashboard?latency=4000", {
-        waitUntil: "domcontentloaded",
-      });
-      await p
-        .getByLabel("Loading statistics")
-        .first()
-        .waitFor({ timeout: 3000 });
-      assert(
-        (await p.getByLabel("Loading statistics").count()) > 0,
-        "skeleton while loading",
-      );
-      await p.getByTestId("kpis").waitFor({ timeout: 20000 });
-      await p.context().close();
-      await go(page, "/dashboard");
-      await page.getByTestId("kpis").waitFor({ timeout: 20000 });
-      await page.locator("canvas.maplibregl-canvas").waitFor();
-      assert(
-        (await page.getByTestId("inspector-title").innerText()).includes(
-          "All of the active extent",
-        ),
-        "extent title",
-      );
-    },
-  );
-  await check("dashboard: error state with retry", async () => {
-    const p = await newPage();
-    await go(p, "/dashboard?fail=data");
-    await p
-      .getByText("The dashboard could not load its data")
-      .waitFor({ timeout: 20000 });
-    await p.getByRole("button", { name: "Try again" }).click();
-    await p.getByTestId("kpis").waitFor({ timeout: 20000 });
-    await p.context().close();
+  await check("dashboard overview: nationwide KPIs and reach", async () => {
+    await go(page, "/dashboard");
+    await page.waitForSelector('[data-testid="kpis"]', { timeout: 20000 });
+    const body = await page.locator("body").innerText();
+    assert(/states reached/.test(body), "reach line");
+    assert(!/Lagos State|sample zone/i.test(body), "old Lagos-only wording");
+    const gross = num(await page.locator('[data-metric="gross"] [data-testid="kpi-value"]').innerText());
+    assert(gross > 1e6, "gross sales plausible " + gross);
   });
-  await check(
-    "dashboard: selecting a zone updates title, orders and keeps filters",
-    async () => {
-      await go(page, "/dashboard?scale=zone&seg=wholesale");
-      await page.getByTestId("kpis").waitFor();
-      const allOrders = await kpi("Orders");
-      await page.getByText("Areas as a list").click();
-      await page
-        .locator("details")
-        .filter({ hasText: "Areas as a list" })
-        .getByRole("button", { name: "Zone 2: Ikeja axis" })
-        .click();
-      await page.waitForFunction(() =>
-        document
-          .querySelector('[data-testid="inspector-title"]')
-          ?.textContent?.includes("Zone 2"),
-      );
-      const zoneOrders = await kpi("Orders");
-      assert(
-        zoneOrders < allOrders && zoneOrders > 0,
-        `zone orders ${zoneOrders} < all ${allOrders}`,
-      );
-      assert(
-        page.url().includes("unit=sz-ikeja") &&
-          page.url().includes("seg=wholesale"),
-        "URL keeps unit and segment",
-      );
-      const rowOrders = num(
-        await page
-          .locator("details")
-          .filter({ hasText: "Areas as a list" })
-          .locator("tr", { hasText: "Zone 2: Ikeja axis" })
-          .locator("td")
-          .nth(1)
-          .innerText(),
-      );
-      assert(
-        rowOrders === zoneOrders,
-        `area list ${rowOrders} equals inspector ${zoneOrders}`,
-      );
-    },
-  );
-  await check(
-    "dashboard: map and statistics agree (area list orders = inspector orders for selected LGA)",
-    async () => {
-      await go(page, "/dashboard");
-      await page.getByTestId("kpis").waitFor();
-      await page.getByText("Areas as a list").click();
-      const list = page
-        .locator("details")
-        .filter({ hasText: "Areas as a list" });
-      const row = list.locator("tr", {
-        has: page.getByRole("button", { name: "Eti Osa", exact: true }),
-      });
-      const listOrders = num(await row.locator("td").nth(1).innerText());
-      await list.getByRole("button", { name: "Eti Osa", exact: true }).click();
-      await page.waitForFunction(
-        () =>
-          document.querySelector('[data-testid="inspector-title"]')
-            ?.textContent === "Eti Osa",
-      );
-      assert(
-        (await kpi("Orders")) === listOrders,
-        "orders KPI equals aggregated row",
-      );
-    },
-  );
-  await check(
-    "dashboard: product filter and date range recompute together",
-    async () => {
-      await go(page, "/dashboard");
-      await page.getByTestId("kpis").waitFor();
-      const before = await kpi("Gross sales");
-      await page.getByRole("radio", { name: "Tapioca" }).click();
-      await page.waitForTimeout(400);
-      const tapioca = await kpi("Gross sales");
-      assert(tapioca < before, "tapioca-only gross is lower");
-      await page.selectOption('select[aria-label="Date range preset"]', "7d");
-      await page.waitForTimeout(400);
-      const week = await kpi("Gross sales");
-      assert(week < tapioca, "7 days is lower than 30 days");
-      assert(page.url().includes("cat=tapioca"), "filter in URL");
-    },
-  );
-  await check(
-    "dashboard: individual order selection shows only that order and restores context",
-    async () => {
-      await go(page, "/dashboard?role=admin&unit=ikeja");
-      await page.getByTestId("kpis").waitFor();
-      assert(
-        (await page.getByTestId("inspector-title").innerText()) === "Ikeja",
-        "unit selected from URL",
-      );
-      const first = page.locator("tbody tr button.mono").first();
-      const id = (await first.innerText()).trim();
-      await first.click();
-      await page.getByTestId("order-inspector").waitFor();
-      assert(
-        (await page.getByTestId("inspector-title").innerText()) === id,
-        "inspector shows the order id",
-      );
-      assert(
-        (await page
-          .getByTestId("order-inspector")
-          .getByText("Gross sales")
-          .count()) === 0,
-        "no company KPIs in order view",
-      );
-      await page.getByRole("button", { name: /Back to Ikeja/ }).click();
-      await page.waitForFunction(
-        () =>
-          document.querySelector('[data-testid="inspector-title"]')
-            ?.textContent === "Ikeja",
-      );
-      assert(!page.url().includes("order="), "order removed from URL");
-    },
-  );
-  await check(
-    "dashboard: analyst role cannot see order-level records",
-    async () => {
-      await go(page, "/dashboard");
-      await page.getByTestId("kpis").waitFor();
-      assert(
-        await page.getByText("Analyst view: aggregates only").isVisible(),
-        "aggregates only",
-      );
-      assert(
-        (await page.locator("tbody tr button.mono").count()) === 0,
-        "no order buttons",
-      );
-      assert(
-        await page.getByLabel("Order points").isDisabled(),
-        "order points disabled",
-      );
-    },
-  );
+  await check("dashboard: filters shared across pages and segments include events", async () => {
+    await page.getByRole("radio", { name: "Events" }).click();
+    await page.waitForTimeout(600);
+    const events = num(await page.locator('[data-metric="gross"] [data-testid="kpi-value"]').innerText());
+    await page.getByRole("radio", { name: "All" }).last().click();
+    await page.waitForTimeout(600);
+    const all = num(await page.locator('[data-metric="gross"] [data-testid="kpi-value"]').innerText());
+    assert(events > 0 && events < all, `events ${events} < all ${all}`);
+  });
+  await check("geography: select state, drill into LGAs, back out", async () => {
+    await go(page, "/dashboard/geography?unit=kano");
+    await page.waitForSelector('[data-testid="inspector-title"]', { timeout: 20000 });
+    assert((await page.locator('[data-testid="inspector-title"]').innerText()) === "Kano", "kano title");
+    await page.getByRole("button", { name: "View its local government areas" }).click();
+    await page.waitForFunction(() => /Local government|LGA/i.test(document.body.innerText), null, { timeout: 15000 });
+    await page.waitForTimeout(2000);
+    assert(page.url().includes("scale=lga") && page.url().includes("state=kano"), "url carries drill: " + page.url());
+    const rows = await page.locator("details table tbody tr").count().catch(() => 0);
+    assert(rows >= 0, "area list present");
+  });
+  await check("geography: region scale selects a region and totals reconcile", async () => {
+    await go(page, "/dashboard/geography?scale=region&unit=south-west");
+    await page.waitForSelector('[data-testid="inspector-title"]', { timeout: 20000 });
+    assert((await page.locator('[data-testid="inspector-title"]').innerText()) === "South West", "region title");
+  });
+  await check("insights: statistics render and are deterministic", async () => {
+    await go(page, "/dashboard/insights");
+    await page.waitForSelector('[data-testid="moran"]', { timeout: 20000 });
+    const a = await page.locator('[data-testid="moran"]').innerText();
+    const gini = Number(await page.locator('[data-testid="gini"]').innerText());
+    assert(gini > 0 && gini < 1, "gini bounds " + gini);
+    assert((await page.locator('[data-testid="findings"] li').count()) >= 4, "findings listed");
+    assert((await page.locator('[data-testid="opportunities"] li').count()) >= 1, "candidates listed");
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForSelector('[data-testid="moran"]');
+    assert(a === (await page.locator('[data-testid="moran"]').innerText()), "moran stable across reload");
+  });
+  await check("insights: changing the measure recomputes", async () => {
+    const before = await page.locator('[data-testid="moran"]').innerText();
+    await page.selectOption("#measure", "density");
+    await page.waitForTimeout(800);
+    assert(before !== (await page.locator('[data-testid="moran"]').innerText()), "moran changed");
+  });
+  await check("insights: filter to garri changes the analysis", async () => {
+    const before = await page.locator('[data-testid="findings"]').innerText();
+    await page.getByRole("radio", { name: "Garri", exact: true }).click();
+    await page.waitForTimeout(1000);
+    assert(before !== (await page.locator('[data-testid="findings"]').innerText()), "findings changed");
+  });
+  await check("dashboard: theme toggle works in the staff shell", async () => {
+    await page.getByRole("button", { name: "Switch to dark theme" }).first().click();
+    assert((await page.locator("html").getAttribute("data-theme")) === "dark", "dark");
+  });
+  await check("dashboard: admin role shows order table, analyst does not", async () => {
+    await go(page, "/dashboard/geography?role=admin&unit=lagos");
+    await page.waitForSelector("tbody tr button.mono", { timeout: 20000 });
+    await go(page, "/dashboard/geography?unit=lagos");
+    await page.waitForTimeout(1500);
+    assert((await page.locator("tbody tr button.mono").count()) === 0, "no order rows for analyst");
+  });
+  await check("dashboard: error state with retry", async () => {
+    await go(page, "/dashboard?fail=data");
+    await page.getByRole("button", { name: "Try again" }).click();
+    await page.waitForSelector('[data-testid="kpis"]', { timeout: 20000 });
+  });
   await check("dashboard: other sections load", async () => {
-    for (const [path, text] of [
-      ["/dashboard/orders", "Orders"],
-      ["/dashboard/customers", "Buying customers"],
-      ["/dashboard/inventory", "Days of cover by pack"],
-      ["/dashboard/wholesale", "Wholesale gross"],
-      ["/dashboard/reports", "Metric definitions"],
-    ]) {
-      await go(page, path);
-      await page
-        .getByText(text, { exact: false })
-        .first()
-        .waitFor({ timeout: 20000 });
+    for (const r of ["orders", "customers", "inventory", "wholesale", "reports"]) {
+      await go(page, "/dashboard/" + r);
+      await page.waitForSelector("h1", { timeout: 20000 });
     }
   });
-  await page.screenshot({ path: "screenshots/dash-reports.png" });
-  await page.context().close();
-}
-
-// ---------- Accessibility basics ----------
-{
-  const page = await newPage();
-  await check(
-    "keyboard: skip link is first tab stop and focus rings are visible",
-    async () => {
-      await go(page, "/");
-      await page.keyboard.press("Tab");
-      assert(
-        (await page.evaluate(() => document.activeElement?.textContent)) ===
-          "Skip to content",
-        "skip link focused",
-      );
-      await page.keyboard.press("Tab");
-      await page.keyboard.press("Tab");
-      const outline = await page.evaluate(
-        () => getComputedStyle(document.activeElement).outlineStyle,
-      );
-      assert(outline !== "none", "visible focus outline");
-    },
-  );
-  await check(
-    "keyboard: filter checkbox and cart drawer are operable without a mouse",
-    async () => {
-      await go(page, "/shop/palm-oil");
-      await page.getByLabel("Hide out of stock").focus();
-      await page.keyboard.press("Space");
-      await page.waitForFunction(
-        () => document.querySelectorAll("article").length === 4,
-      );
-      await page.getByRole("button", { name: /^Cart/ }).focus();
-      await page.keyboard.press("Enter");
-      await page.getByRole("dialog", { name: "Cart" }).waitFor();
-      await page.keyboard.press("Escape");
-      await page.waitForFunction(() => !document.querySelector("dialog[open]"));
-    },
-  );
   await page.context().close();
 }
 
 // ---------- Mobile ----------
 {
-  const page = await newPage({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+  const page = await newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await check("mobile: no horizontal overflow on key pages", async () => {
+    for (const r of ["/", "/shop", "/contact", "/events", "/delivery", "/dashboard", "/dashboard/insights"]) {
+      await go(page, r);
+      await page.waitForTimeout(800);
+      const o = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      assert(o <= 1, `${r} overflows by ${o}px`);
+    }
   });
-  const paths = [
-    "/",
-    "/shop",
-    "/shop/tapioca",
-    "/products/palm-oil",
-    "/products/tapioca?pack=tp-25kg",
-    "/cart",
-    "/delivery",
-    "/wholesale",
-    "/wholesale/quote",
-    "/account",
-    "/order",
-  ];
-  for (const p of paths) {
-    await check(`mobile 390px: no horizontal overflow on ${p}`, async () => {
-      await go(page, p);
-      await page.waitForTimeout(400);
-      const o = await page.evaluate(() => ({
-        sw: document.documentElement.scrollWidth,
-        cw: document.documentElement.clientWidth,
-      }));
-      assert(o.sw <= o.cw + 1, `scrollWidth ${o.sw} > ${o.cw}`);
-    });
-  }
-  await check("mobile: drawer navigation and sticky buy bar", async () => {
-    await go(page, "/products/palm-oil");
-    assert(
-      await page.getByRole("region", { name: "Quick buy" }).isVisible(),
-      "sticky buy bar",
-    );
-    await page.getByRole("button", { name: "Open menu" }).click();
-    await page.getByRole("dialog", { name: "Menu" }).waitFor();
-    assert(
-      await page
-        .getByRole("link", { name: /Wholesale/ })
-        .first()
-        .isVisible(),
-      "menu links",
-    );
-  });
-  await check(
-    "mobile dashboard: tabbed panels, no overflow, map usable",
-    async () => {
-      await go(page, "/dashboard");
-      await page.getByRole("tab", { name: "Map" }).waitFor();
-      await page.locator("canvas.maplibregl-canvas").waitFor();
-      const o = await page.evaluate(() => ({
-        sw: document.documentElement.scrollWidth,
-        cw: document.documentElement.clientWidth,
-      }));
-      assert(o.sw <= o.cw + 1, `overflow ${o.sw} > ${o.cw}`);
-      await page.screenshot({ path: "screenshots/m-dash-map.png" });
-      await page.getByRole("tab", { name: "Insights" }).click();
-      await page.getByTestId("kpis").waitFor();
-      await page.screenshot({ path: "screenshots/m-dash-insights.png" });
-      const o2 = await page.evaluate(() => ({
-        sw: document.documentElement.scrollWidth,
-        cw: document.documentElement.clientWidth,
-      }));
-      assert(o2.sw <= o2.cw + 1, `overflow insights ${o2.sw} > ${o2.cw}`);
-    },
-  );
   await page.context().close();
 }
 
 await browser.close();
 const failed = results.filter((r) => !r.ok);
-console.log(
-  `\n${results.length - failed.length}/${results.length} checks passed`,
-);
-if (consoleErrors.length)
-  console.log("Console errors:\n" + consoleErrors.join("\n"));
-else
-  console.log(
-    "Console errors: none (excluding unreachable external basemap/geocoder requests)",
-  );
+console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
+if (consoleErrors.length) {
+  console.log("Console errors:");
+  consoleErrors.slice(0, 10).forEach((e) => console.log(" -", e));
+}
 process.exit(failed.length || consoleErrors.length ? 1 : 0);

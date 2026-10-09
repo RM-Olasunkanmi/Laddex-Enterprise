@@ -28,14 +28,15 @@ export default async function WholesalePage() {
       <section className="border-b border-line bg-paper-2/60">
         <div className="wrap py-12 lg:py-16 grid gap-8 lg:grid-cols-[1.3fr_1fr] items-end">
           <div>
-            <p className="eyebrow mb-4">Wholesale and distribution</p>
+            <p className="eyebrow mb-4">Wholesale, resale and events</p>
             <h1 className="text-5xl lg:text-6xl">
-              Buy by the pallet, priced by the pack.
+              Buy in volume, priced by the pack.
             </h1>
             <p className="mt-5 text-lg text-ink-2 max-w-xl">
-              Price breaks are set for each pack size, with a minimum order for
-              each. Register a business to buy at your tier, ask for a quote for
-              an unusual volume, and reorder from past purchases.
+              For shops, resellers, caterers and event suppliers. Price breaks are set
+              for each pack size, with a minimum order for each. Register a business to buy at your
+              tier, ask for a quote for an unusual volume, and reorder from past purchases. Buying
+              souvenirs for an event? See the events page.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <ButtonLink href="/wholesale/register">

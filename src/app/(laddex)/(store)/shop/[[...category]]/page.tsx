@@ -41,7 +41,8 @@ export default async function ShopPage({
   const slug = category?.[0];
   if (
     category &&
-    (category.length > 1 || (slug !== "palm-oil" && slug !== "tapioca" && slug !== "garri"))
+    (category.length > 1 ||
+      (slug !== "palm-oil" && slug !== "tapioca" && slug !== "garri"))
   )
     notFound();
   // Awaiting the catalogue here (not only in the layout) lets the diagnostics apply to this route.

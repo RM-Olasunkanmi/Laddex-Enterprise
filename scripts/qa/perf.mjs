@@ -13,12 +13,14 @@ const find = () => {
 };
 const routes = [
   "/",
-  "/shop/palm-oil",
-  "/products/palm-oil?pack=po-25l",
+  "/shop",
+  "/products/garri-igbo?pack=gi-25kg",
   "/cart",
   "/delivery",
+  "/contact",
   "/wholesale",
   "/dashboard",
+  "/dashboard/insights",
 ];
 const browser = await chromium.launch({
   executablePath: find(),

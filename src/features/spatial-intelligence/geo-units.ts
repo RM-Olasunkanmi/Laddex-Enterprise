@@ -1,9 +1,10 @@
-import { OUTSIDE_ZONES, UNASSIGNED, type GeoScale } from "./types";
+import { UNASSIGNED, type GeoScale } from "./types";
 
 import type { DashboardDataset } from "./dataset";
+import type { AdminUnit } from "@/lib/geo/geography";
 import type { BBox } from "@/lib/geo/pip";
 
-import { SAMPLE_PICKUP_POINTS, SAMPLE_ZONES } from "@/fixtures/geography/zones";
+import { REGIONS } from "@/fixtures/geography/regions";
 import { geometryAreaKm2 } from "@/lib/geo/area";
 import { geometryCentroid } from "@/lib/geo/pip";
 
@@ -15,102 +16,66 @@ export interface GeoUnit {
   centroid: [number, number];
   bbox: BBox | null;
   areaKm2: number | null;
-  /** Parent label such as the zone or state, for context. */
+  /** Parent label such as the region or state, for context. */
   detail?: string;
 }
 
-const LAGOS_ONLY_STATES = new Set(["lagos", "ogun"]);
+const union = (boxes: BBox[]): BBox =>
+  boxes.reduce<BBox>(
+    (b, m) => [
+      Math.min(b[0], m[0]),
+      Math.min(b[1], m[1]),
+      Math.max(b[2], m[2]),
+      Math.max(b[3], m[3]),
+    ],
+    [Infinity, Infinity, -Infinity, -Infinity],
+  );
 
-/** Builds the selectable units at a scale from the loaded boundaries. Pure and cheap (20 LGAs). */
-export function unitsAt(scale: GeoScale, ds: DashboardDataset): GeoUnit[] {
+/** Builds the selectable units at a scale. States and regions are always available; LGAs need the chosen state's file. */
+export function unitsAt(
+  scale: GeoScale,
+  ds: DashboardDataset,
+  lgas?: AdminUnit[] | null,
+): GeoUnit[] {
   switch (scale) {
+    case "state":
+      return ds.states.map((s) => ({
+        id: s.id,
+        name: s.name,
+        scale,
+        centroid: geometryCentroid(s.geometry),
+        bbox: s.bbox,
+        areaKm2: ds.stateAreaKm2[s.id] ?? null,
+        detail: REGIONS.find((r) => r.stateIds.includes(s.id))?.name,
+      }));
+    case "region":
+      return REGIONS.map((r) => {
+        const members = ds.states.filter((s) => r.stateIds.includes(s.id));
+        const centroids = members.map((m) => geometryCentroid(m.geometry));
+        return {
+          id: r.id,
+          name: r.name,
+          scale,
+          centroid: [
+            centroids.reduce((a, c) => a + c[0], 0) / centroids.length,
+            centroids.reduce((a, c) => a + c[1], 0) / centroids.length,
+          ] as [number, number],
+          bbox: union(members.map((m) => m.bbox)),
+          areaKm2: members.reduce(
+            (s, m) => s + (ds.stateAreaKm2[m.id] ?? 0),
+            0,
+          ),
+          detail: `${members.length} states`,
+        };
+      });
     case "lga":
-      return ds.lgas.map((l) => ({
+      return (lgas ?? []).map((l) => ({
         id: l.id,
         name: l.name,
         scale,
         centroid: geometryCentroid(l.geometry),
         bbox: l.bbox,
-        areaKm2: ds.lgaAreaKm2[l.id] ?? null,
-        detail: SAMPLE_ZONES.find((z) => z.lgaIds.includes(l.id))?.short,
-      }));
-    case "state":
-      return ds.states
-        .filter((s) => LAGOS_ONLY_STATES.has(s.id))
-        .map((s) => ({
-          id: s.id,
-          name: s.name,
-          scale,
-          centroid: geometryCentroid(s.geometry),
-          bbox: s.bbox,
-          areaKm2: geometryAreaKm2(s.geometry),
-        }));
-    case "zone":
-      return [
-        ...SAMPLE_ZONES.map((z) => {
-          const members = ds.lgas.filter((l) => z.lgaIds.includes(l.id));
-          const bb = members.reduce<BBox>(
-            (b, m) => [
-              Math.min(b[0], m.bbox[0]),
-              Math.min(b[1], m.bbox[1]),
-              Math.max(b[2], m.bbox[2]),
-              Math.max(b[3], m.bbox[3]),
-            ],
-            [Infinity, Infinity, -Infinity, -Infinity],
-          );
-          const biggest = members
-            .slice()
-            .sort(
-              (a, b) => (ds.lgaAreaKm2[b.id] ?? 0) - (ds.lgaAreaKm2[a.id] ?? 0),
-            )[0];
-          return {
-            id: z.id,
-            name: z.name.replace("Sample zone ", "Zone "),
-            scale,
-            centroid: geometryCentroid(biggest.geometry),
-            bbox: bb,
-            areaKm2: members.reduce(
-              (s, m) => s + (ds.lgaAreaKm2[m.id] ?? 0),
-              0,
-            ),
-            detail: `${members.length} LGAs`,
-          } satisfies GeoUnit;
-        }),
-        (() => {
-          const members = ds.lgas.filter(
-            (l) => !SAMPLE_ZONES.some((z) => z.lgaIds.includes(l.id)),
-          );
-          const bb = members.reduce<BBox>(
-            (b, m) => [
-              Math.min(b[0], m.bbox[0]),
-              Math.min(b[1], m.bbox[1]),
-              Math.max(b[2], m.bbox[2]),
-              Math.max(b[3], m.bbox[3]),
-            ],
-            [Infinity, Infinity, -Infinity, -Infinity],
-          );
-          return {
-            id: OUTSIDE_ZONES,
-            name: "Lagos, outside sample zones",
-            scale,
-            centroid: [3.62, 6.52] as [number, number],
-            bbox: bb,
-            areaKm2: members.reduce(
-              (s, m) => s + (ds.lgaAreaKm2[m.id] ?? 0),
-              0,
-            ),
-            detail: `${members.length} LGAs`,
-          } satisfies GeoUnit;
-        })(),
-      ];
-    case "pickup":
-      return SAMPLE_PICKUP_POINTS.map((p) => ({
-        id: p.id,
-        name: p.name.replace("Sample point: ", "Pickup: "),
-        scale,
-        centroid: [p.position.lng, p.position.lat],
-        bbox: null,
-        areaKm2: null,
+        areaKm2: l.areaKm2 ?? geometryAreaKm2(l.geometry),
       }));
   }
 }
@@ -135,30 +100,14 @@ export function unitBBox(
     ];
   const [x, y] = u.centroid;
   return [
-    [x - 0.04, y - 0.04],
-    [x + 0.04, y + 0.04],
+    [x - 0.1, y - 0.1],
+    [x + 0.1, y + 0.1],
   ];
 }
 
-const FULL_LAGOS: [[number, number], [number, number]] = [
-  [2.69, 6.37],
-  [4.38, 6.71],
+export const NIGERIA_EXTENT: [[number, number], [number, number]] = [
+  [2.6, 4.2],
+  [14.8, 13.95],
 ];
-/** Densest part of the state (Ojo to Ikorodu and Eti-Osa). Used when the map is too narrow for the full strip. */
-const METRO_LAGOS: [[number, number], [number, number]] = [
-  [3.0, 6.36],
-  [3.64, 6.72],
-];
-
-/** Default extent for a scale. Lagos is a wide, thin strip, so narrow containers get the metro view. */
-export function extentFor(
-  scale: GeoScale,
-  aspect = 3,
-): [[number, number], [number, number]] {
-  if (scale === "state")
-    return [
-      [2.6, 6.1],
-      [4.7, 7.9],
-    ];
-  return aspect < 2 ? METRO_LAGOS : FULL_LAGOS;
-}
+export const extentFor = (): [[number, number], [number, number]] =>
+  NIGERIA_EXTENT;
