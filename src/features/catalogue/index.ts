@@ -1,4 +1,8 @@
-import { createFixtureCatalogue, type FixtureOptions } from "./adapters/fixture";
+import {
+  createFixtureCatalogue,
+  type FixtureOptions,
+} from "./adapters/fixture";
+
 import type { CatalogueService } from "./contracts";
 
 /**

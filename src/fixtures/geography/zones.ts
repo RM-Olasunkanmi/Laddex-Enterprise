@@ -1,4 +1,8 @@
-import type { PickupPoint, SampleZone, WeightBand } from "@/features/delivery/types";
+import type {
+  PickupPoint,
+  SampleZone,
+  WeightBand,
+} from "@/features/delivery/types";
 
 /**
  * SAMPLE SERVICE ZONES. Illustrative groupings of real LGAs used to build and review the
@@ -11,14 +15,25 @@ const bands = (scale: number): WeightBand[] =>
     { upToKg: 30, feeKobo: 250000 },
     { upToKg: 100, feeKobo: 500000 },
     { upToKg: 300, feeKobo: 950000 },
-  ].map((b) => ({ ...b, feeKobo: Math.round((b.feeKobo * scale) / 5000) * 5000 }));
+  ].map((b) => ({
+    ...b,
+    feeKobo: Math.round((b.feeKobo * scale) / 5000) * 5000,
+  }));
 
 export const SAMPLE_ZONES: SampleZone[] = [
   {
     id: "sz-central",
     name: "Sample zone 1: Central Lagos",
     short: "Zone 1",
-    lgaIds: ["lagos-island", "lagos-mainland", "apapa", "surulere", "mushin", "shomolu", "ajeromi-ifelodun"],
+    lgaIds: [
+      "lagos-island",
+      "lagos-mainland",
+      "apapa",
+      "surulere",
+      "mushin",
+      "shomolu",
+      "ajeromi-ifelodun",
+    ],
     pricing: { kind: "weight-band", bands: bands(1) },
   },
   {
@@ -50,9 +65,24 @@ export const zoneForLga = (lgaId: string | null): SampleZone | null =>
 
 /** SAMPLE distribution points. Positions are approximate localities, not real Laddex premises. */
 export const SAMPLE_PICKUP_POINTS: PickupPoint[] = [
-  { id: "pp-apapa", name: "Sample point: Apapa", position: { lng: 3.3594, lat: 6.4489 }, zoneId: "sz-central" },
-  { id: "pp-ikeja", name: "Sample point: Ikeja", position: { lng: 3.3515, lat: 6.6018 }, zoneId: "sz-ikeja" },
-  { id: "pp-lekki", name: "Sample point: Lekki Phase 1", position: { lng: 3.4723, lat: 6.4474 }, zoneId: "sz-lekki" },
+  {
+    id: "pp-apapa",
+    name: "Sample point: Apapa",
+    position: { lng: 3.3594, lat: 6.4489 },
+    zoneId: "sz-central",
+  },
+  {
+    id: "pp-ikeja",
+    name: "Sample point: Ikeja",
+    position: { lng: 3.3515, lat: 6.6018 },
+    zoneId: "sz-ikeja",
+  },
+  {
+    id: "pp-lekki",
+    name: "Sample point: Lekki Phase 1",
+    position: { lng: 3.4723, lat: 6.4474 },
+    zoneId: "sz-lekki",
+  },
 ];
 
 export const SAMPLE_DISCLAIMER =

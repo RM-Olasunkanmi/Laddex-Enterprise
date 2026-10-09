@@ -10,14 +10,22 @@ export type PolygonalGeometry =
   | { type: "Polygon"; coordinates: PolygonCoords }
   | { type: "MultiPolygon"; coordinates: PolygonCoords[] };
 
-export type BBox = [minLng: number, minLat: number, maxLng: number, maxLat: number];
+export type BBox = [
+  minLng: number,
+  minLat: number,
+  maxLng: number,
+  maxLat: number,
+];
 
 export function ringContains(ring: Ring, lng: number, lat: number): boolean {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [xi, yi] = ring[i];
     const [xj, yj] = ring[j];
-    if (yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+    if (
+      yi > lat !== yj > lat &&
+      lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi
+    ) {
       inside = !inside;
     }
   }
@@ -25,7 +33,11 @@ export function ringContains(ring: Ring, lng: number, lat: number): boolean {
 }
 
 /** First ring is the outer boundary, remaining rings are holes. */
-export function polygonContains(poly: PolygonCoords, lng: number, lat: number): boolean {
+export function polygonContains(
+  poly: PolygonCoords,
+  lng: number,
+  lat: number,
+): boolean {
   if (poly.length === 0 || !ringContains(poly[0], lng, lat)) return false;
   for (let k = 1; k < poly.length; k++) {
     if (ringContains(poly[k], lng, lat)) return false;
@@ -33,7 +45,11 @@ export function polygonContains(poly: PolygonCoords, lng: number, lat: number): 
   return true;
 }
 
-export function geometryContains(g: PolygonalGeometry, lng: number, lat: number): boolean {
+export function geometryContains(
+  g: PolygonalGeometry,
+  lng: number,
+  lat: number,
+): boolean {
   if (g.type === "Polygon") return polygonContains(g.coordinates, lng, lat);
   return g.coordinates.some((p) => polygonContains(p, lng, lat));
 }
@@ -88,7 +104,8 @@ export function geometryCentroid(g: PolygonalGeometry): Position {
       cy += (ring[j][1] + ring[i][1]) * f;
     }
     const area = Math.abs(a / 2);
-    if (area > best.area && a !== 0) best = { area, c: [cx / (3 * a), cy / (3 * a)] };
+    if (area > best.area && a !== 0)
+      best = { area, c: [cx / (3 * a), cy / (3 * a)] };
   }
   return best.c;
 }

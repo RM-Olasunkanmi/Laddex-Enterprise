@@ -1,6 +1,6 @@
-import { CATEGORIES, PRODUCTS } from "@/fixtures/products/products";
-
 import type { CatalogueService } from "../contracts";
+
+import { CATEGORIES, PRODUCTS } from "@/fixtures/products/products";
 
 export class CatalogueUnavailableError extends Error {
   constructor() {
@@ -18,7 +18,9 @@ export interface FixtureOptions {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export function createFixtureCatalogue(opts: FixtureOptions = {}): CatalogueService {
+export function createFixtureCatalogue(
+  opts: FixtureOptions = {},
+): CatalogueService {
   const gate = async () => {
     if (opts.latencyMs) await wait(opts.latencyMs);
     if (opts.fail) throw new CatalogueUnavailableError();

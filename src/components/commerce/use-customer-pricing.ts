@@ -13,6 +13,9 @@ export function useCart() {
   const items = cartStore.use();
   const profile = customerStore.use();
   const hydrated = cartStore.useHydrated();
-  const summary = useMemo(() => summariseCart(items, products, profile.access), [items, products, profile.access]);
+  const summary = useMemo(
+    () => summariseCart(items, products, profile.access),
+    [items, products, profile.access],
+  );
   return { ...summary, items, access: profile.access, hydrated };
 }

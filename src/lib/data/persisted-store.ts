@@ -17,7 +17,11 @@ export interface PersistedStore<T> {
   useHydrated(): boolean;
 }
 
-export function createPersistedStore<T>(key: string, initial: T, version = 1): PersistedStore<T> {
+export function createPersistedStore<T>(
+  key: string,
+  initial: T,
+  version = 1,
+): PersistedStore<T> {
   let current: T = initial;
   let raw: string | null = null;
   let hydrated = false;
@@ -53,7 +57,8 @@ export function createPersistedStore<T>(key: string, initial: T, version = 1): P
       return current;
     },
     set(next) {
-      const value = typeof next === "function" ? (next as (p: T) => T)(store.get()) : next;
+      const value =
+        typeof next === "function" ? (next as (p: T) => T)(store.get()) : next;
       current = value;
       try {
         raw = JSON.stringify(value);

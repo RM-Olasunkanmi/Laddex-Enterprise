@@ -16,7 +16,15 @@ interface Props {
   openDrawer?: boolean;
 }
 
-export function AddToCartButton({ variantId, qty, disabled, disabledReason, label = "Add to cart", className = "", openDrawer = true }: Props) {
+export function AddToCartButton({
+  variantId,
+  qty,
+  disabled,
+  disabledReason,
+  label = "Add to cart",
+  className = "",
+  openDrawer = true,
+}: Props) {
   const [done, setDone] = useState(false);
   return (
     <>

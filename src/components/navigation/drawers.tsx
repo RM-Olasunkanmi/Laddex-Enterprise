@@ -4,17 +4,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 
-import { PackVisual } from "@/components/product/pack-visual";
 import { Price } from "@/components/commerce/money";
 import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCart } from "@/components/commerce/use-customer-pricing";
-import { packLabel } from "@/features/catalogue/selectors";
+import { PackVisual } from "@/components/product/pack-visual";
 import { removeFromCart, setQty } from "@/features/cart/store";
+import { packLabel } from "@/features/catalogue/selectors";
 import { cartDrawer, navDrawer } from "@/lib/data/ui-store";
 import { formatNaira } from "@/lib/formatters";
 
 /** Native <dialog>: focus is trapped and Escape closes it without extra code. */
-function Drawer({ open, onClose, side, label, children }: { open: boolean; onClose: () => void; side: "left" | "right"; label: string; children: ReactNode }) {
+function Drawer({
+  open,
+  onClose,
+  side,
+  label,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  side: "left" | "right";
+  label: string;
+  children: ReactNode;
+}) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -55,12 +67,22 @@ export function CartDrawer() {
         {cart.lines.length === 0 ? (
           <div className="py-12 text-center">
             <p className="font-display text-xl">Nothing here yet</p>
-            <p className="mt-2 text-ink-2 text-sm">Pick a pack size from palm oil or tapioca.</p>
+            <p className="mt-2 text-ink-2 text-sm">
+              Pick a pack size from palm oil or tapioca.
+            </p>
             <div className="mt-5 flex justify-center gap-2">
-              <Link className="btn btn-ink btn-sm" href="/shop/palm-oil" onClick={close}>
+              <Link
+                className="btn btn-ink btn-sm"
+                href="/shop/palm-oil"
+                onClick={close}
+              >
                 Palm oil
               </Link>
-              <Link className="btn btn-line btn-sm" href="/shop/tapioca" onClick={close}>
+              <Link
+                className="btn btn-line btn-sm"
+                href="/shop/tapioca"
+                onClick={close}
+              >
                 Tapioca
               </Link>
             </div>
@@ -70,19 +92,39 @@ export function CartDrawer() {
             {cart.lines.map((l) => (
               <li key={l.variant.id} className="py-4 flex gap-4">
                 <div className="w-20 h-24 shrink-0 bg-paper-2 rounded-sm grid place-items-end">
-                  <PackVisual packaging={l.variant.packaging} category={l.product.category} sizeLabel={packLabel(l.variant)} caption={false} className="w-full h-full p-1" />
+                  <PackVisual
+                    packaging={l.variant.packaging}
+                    category={l.product.category}
+                    sizeLabel={packLabel(l.variant)}
+                    caption={false}
+                    className="w-full h-full p-1"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between gap-2">
                     <p className="font-medium">
-                      {l.product.name} <span className="mono text-ink-3 text-sm">{packLabel(l.variant)}</span>
+                      {l.product.name}{" "}
+                      <span className="mono text-ink-3 text-sm">
+                        {packLabel(l.variant)}
+                      </span>
                     </p>
                     <Price kobo={l.totalKobo} className="font-semibold" />
                   </div>
-                  <p className="mono text-xs text-ink-3 mt-0.5">{formatNaira(l.price.unitPriceKobo)} each</p>
+                  <p className="mono text-xs text-ink-3 mt-0.5">
+                    {formatNaira(l.price.unitPriceKobo)} each
+                  </p>
                   <div className="mt-2 flex items-center justify-between">
-                    <QuantityStepper size="sm" label={`${l.product.name} ${packLabel(l.variant)} quantity`} value={l.qty} min={1} onChange={(n) => setQty(l.variant.id, n)} />
-                    <button className="text-sm underline underline-offset-4 text-ink-2 min-h-11 px-2" onClick={() => removeFromCart(l.variant.id)}>
+                    <QuantityStepper
+                      size="sm"
+                      label={`${l.product.name} ${packLabel(l.variant)} quantity`}
+                      value={l.qty}
+                      min={1}
+                      onChange={(n) => setQty(l.variant.id, n)}
+                    />
+                    <button
+                      className="text-sm underline underline-offset-4 text-ink-2 min-h-11 px-2"
+                      onClick={() => removeFromCart(l.variant.id)}
+                    >
                       Remove
                     </button>
                   </div>
@@ -98,7 +140,9 @@ export function CartDrawer() {
             <span className="text-ink-2">Subtotal</span>
             <Price kobo={cart.subtotalKobo} className="text-xl font-semibold" />
           </div>
-          <p className="text-xs text-ink-3">Delivery is calculated from your address at checkout.</p>
+          <p className="text-xs text-ink-3">
+            Delivery is calculated from your address at checkout.
+          </p>
           <div className="grid grid-cols-2 gap-2">
             <Link href="/cart" className="btn btn-line" onClick={close}>
               View cart
@@ -140,15 +184,25 @@ export function NavDrawer() {
         <ul>
           {links.map((l) => (
             <li key={l.href + l.label} className="border-b border-line">
-              <Link href={l.href} className="flex items-baseline justify-between px-5 min-h-14 py-3 hover:bg-paper-2" onClick={close}>
+              <Link
+                href={l.href}
+                className="flex items-baseline justify-between px-5 min-h-14 py-3 hover:bg-paper-2"
+                onClick={close}
+              >
                 <span className="font-display text-xl">{l.label}</span>
-                <span className="mono text-[0.6875rem] uppercase tracking-wider text-ink-3">{l.note}</span>
+                <span className="mono text-[0.6875rem] uppercase tracking-wider text-ink-3">
+                  {l.note}
+                </span>
               </Link>
             </li>
           ))}
         </ul>
         <div className="p-5">
-          <Link href="/dashboard" className="btn btn-line w-full" onClick={close}>
+          <Link
+            href="/dashboard"
+            className="btn btn-line w-full"
+            onClick={close}
+          >
             Open spatial dashboard
           </Link>
           <p className="hint mt-2">Business tool. Uses synthetic data.</p>

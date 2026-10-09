@@ -1,10 +1,14 @@
-import { lineTotal, priceFor, type PriceResult } from "@/features/catalogue/pricing";
-import { findVariant } from "@/features/catalogue/selectors";
+import type { CartItem } from "./store";
 import type { PackVariant, Product } from "@/features/catalogue/types";
 import type { CustomerAccess } from "@/features/customer/types";
 import type { Kobo } from "@/lib/formatters";
 
-import type { CartItem } from "./store";
+import {
+  lineTotal,
+  priceFor,
+  type PriceResult,
+} from "@/features/catalogue/pricing";
+import { findVariant } from "@/features/catalogue/selectors";
 
 export interface CartLine {
   product: Product;
@@ -28,7 +32,11 @@ export interface CartSummary {
   packCount: number;
 }
 
-export function summariseCart(items: CartItem[], products: Product[], access: CustomerAccess): CartSummary {
+export function summariseCart(
+  items: CartItem[],
+  products: Product[],
+  access: CustomerAccess,
+): CartSummary {
   const lines: CartLine[] = [];
   const missing: string[] = [];
   for (const item of items) {
@@ -44,12 +52,16 @@ export function summariseCart(items: CartItem[], products: Product[], access: Cu
       qty: item.qty,
       price: priceFor(variant, item.qty, access),
       totalKobo: lineTotal(variant, item.qty, access),
-      belowWholesaleMin: access === "wholesale-approved" && item.qty < variant.wholesaleMinQty,
+      belowWholesaleMin:
+        access === "wholesale-approved" && item.qty < variant.wholesaleMinQty,
       weightKg: variant.shippingWeightKg * item.qty,
     });
   }
   const subtotalKobo = lines.reduce((s, l) => s + l.totalKobo, 0);
-  const listSubtotalKobo = lines.reduce((s, l) => s + l.variant.retailPriceKobo * l.qty, 0);
+  const listSubtotalKobo = lines.reduce(
+    (s, l) => s + l.variant.retailPriceKobo * l.qty,
+    0,
+  );
   return {
     lines,
     missing,

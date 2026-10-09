@@ -1,15 +1,37 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from "react";
-
-import { ALL_VARIANTS } from "@/fixtures/products/products";
-import { DATASET_END, DATASET_START } from "@/fixtures/orders/generate";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+  type ReactNode,
+} from "react";
 
 import { fixtureDashboardData, type DashboardDataset } from "./dataset";
-import { addDays, applyGeoSelection, DEFAULT_FILTERS, filterOrders, previousPeriod } from "./filters";
+import {
+  addDays,
+  applyGeoSelection,
+  DEFAULT_FILTERS,
+  filterOrders,
+  previousPeriod,
+} from "./filters";
 import { unitsAt, type GeoUnit } from "./geo-units";
 import { aggregateByUnit, computeKpis, type UnitStat } from "./metrics";
-import type { DashboardFilters, EnrichedOrder, GeoScale, GeoSelection, Role } from "./types";
+
+import type {
+  DashboardFilters,
+  EnrichedOrder,
+  GeoScale,
+  GeoSelection,
+  Role,
+} from "./types";
+
+import { DATASET_END, DATASET_START } from "@/fixtures/orders/generate";
+import { ALL_VARIANTS } from "@/fixtures/products/products";
 
 export interface State {
   filters: DashboardFilters;
@@ -22,14 +44,40 @@ export interface State {
   resetToken: number;
 }
 
-export type FillMetric = "salesPerKm2" | "ordersPerKm2" | "aov" | "fulfilment" | "wholesaleShare";
+export type FillMetric =
+  "salesPerKm2" | "ordersPerKm2" | "aov" | "fulfilment" | "wholesaleShare";
 
-export const FILL_METRICS: { key: FillMetric; label: string; unit: string; metric: string }[] = [
-  { key: "salesPerKm2", label: "Sales per km²", unit: "NGN/km²", metric: "gross" },
-  { key: "ordersPerKm2", label: "Orders per km²", unit: "orders/km²", metric: "density" },
+export const FILL_METRICS: {
+  key: FillMetric;
+  label: string;
+  unit: string;
+  metric: string;
+}[] = [
+  {
+    key: "salesPerKm2",
+    label: "Sales per km²",
+    unit: "NGN/km²",
+    metric: "gross",
+  },
+  {
+    key: "ordersPerKm2",
+    label: "Orders per km²",
+    unit: "orders/km²",
+    metric: "density",
+  },
   { key: "aov", label: "Average order value", unit: "NGN", metric: "aov" },
-  { key: "fulfilment", label: "Fulfilment rate", unit: "%", metric: "fulfilment" },
-  { key: "wholesaleShare", label: "Wholesale share of sales", unit: "%", metric: "gross" },
+  {
+    key: "fulfilment",
+    label: "Fulfilment rate",
+    unit: "%",
+    metric: "fulfilment",
+  },
+  {
+    key: "wholesaleShare",
+    label: "Wholesale share of sales",
+    unit: "%",
+    metric: "gross",
+  },
 ];
 
 type Action =
@@ -62,20 +110,39 @@ export function reducer(s: State, a: Action): State {
       return { ...s, filters: { ...s.filters, ...a.patch } };
     case "scale":
       // A unit id from another scale is meaningless, so selection resets with the scale.
-      return { ...s, selection: { scale: a.scale, unitId: null, orderId: null } };
+      return {
+        ...s,
+        selection: { scale: a.scale, unitId: null, orderId: null },
+      };
     case "selectUnit":
-      return { ...s, selection: { ...s.selection, unitId: a.unitId, orderId: null } };
+      return {
+        ...s,
+        selection: { ...s.selection, unitId: a.unitId, orderId: null },
+      };
     case "selectOrder":
       // Order selection overlays the unit selection without discarding it, so clearing restores context.
       return { ...s, selection: { ...s.selection, orderId: a.orderId } };
     case "role":
-      return { ...s, role: a.role, selection: a.role === "analyst" ? { ...s.selection, orderId: null } : s.selection, layers: a.role === "analyst" ? { ...s.layers, orderPoints: false } : s.layers };
+      return {
+        ...s,
+        role: a.role,
+        selection:
+          a.role === "analyst"
+            ? { ...s.selection, orderId: null }
+            : s.selection,
+        layers:
+          a.role === "analyst" ? { ...s.layers, orderPoints: false } : s.layers,
+      };
     case "fill":
       return { ...s, fillMetric: a.metric };
     case "layer":
       return { ...s, layers: { ...s.layers, [a.key]: a.on } };
     case "resetExtent":
-      return { ...s, selection: { ...s.selection, unitId: null, orderId: null }, resetToken: s.resetToken + 1 };
+      return {
+        ...s,
+        selection: { ...s.selection, unitId: null, orderId: null },
+        resetToken: s.resetToken + 1,
+      };
     case "resetAll":
       return { ...initial, role: s.role, resetToken: s.resetToken + 1 };
   }
@@ -120,19 +187,40 @@ function parseUrl(search: string): Partial<State> {
     f.to = to > DATASET_END ? DATASET_END : to;
   }
   const list = (k: string) => p.get(k)?.split(",").filter(Boolean) ?? [];
-  const cats = list("cat").filter((c): c is "palm-oil" | "tapioca" => c === "palm-oil" || c === "tapioca");
+  const cats = list("cat").filter(
+    (c): c is "palm-oil" | "tapioca" => c === "palm-oil" || c === "tapioca",
+  );
   if (cats.length) f.categories = cats;
   const vars = list("pack").filter((v) => ALL_VARIANTS.some((x) => x.id === v));
   if (vars.length) f.variantIds = vars;
-  const segs = list("seg").filter((s): s is "retail" | "wholesale" => s === "retail" || s === "wholesale");
+  const segs = list("seg").filter(
+    (s): s is "retail" | "wholesale" => s === "retail" || s === "wholesale",
+  );
   if (segs.length) f.segments = segs;
-  const chs = list("ch").filter((c): c is "online" | "phone" | "wholesale-desk" => ["online", "phone", "wholesale-desk"].includes(c));
+  const chs = list("ch").filter(
+    (c): c is "online" | "phone" | "wholesale-desk" =>
+      ["online", "phone", "wholesale-desk"].includes(c),
+  );
   if (chs.length) f.channels = chs;
-  const sts = list("st").filter((s): s is DashboardFilters["statuses"][number] => ["placed", "processing", "out-for-delivery", "delivered", "cancelled", "returned"].includes(s));
+  const sts = list("st").filter(
+    (s): s is DashboardFilters["statuses"][number] =>
+      [
+        "placed",
+        "processing",
+        "out-for-delivery",
+        "delivered",
+        "cancelled",
+        "returned",
+      ].includes(s),
+  );
   if (sts.length) f.statuses = sts;
   if (Object.keys(f).length) patch.filters = { ...DEFAULT_FILTERS, ...f };
   const scale = p.get("scale") as GeoScale | null;
-  const sel: GeoSelection = { scale: scale && SCALES.includes(scale) ? scale : "lga", unitId: p.get("unit"), orderId: p.get("order") };
+  const sel: GeoSelection = {
+    scale: scale && SCALES.includes(scale) ? scale : "lga",
+    unitId: p.get("unit"),
+    orderId: p.get("order"),
+  };
   if (scale || sel.unitId || sel.orderId) patch.selection = sel;
   if (p.get("role") === "admin") patch.role = "admin";
   const fill = p.get("fill") as FillMetric | null;
@@ -181,10 +269,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const wait = Number(q.get("latency")) || 0;
     const run = async () => {
       if (wait) await new Promise((r) => setTimeout(r, wait));
-      if (q.get("fail") === "data" && attempt === 0) throw new Error("The orders service did not respond.");
+      if (q.get("fail") === "data" && attempt === 0)
+        throw new Error("The orders service did not respond.");
       return fixtureDashboardData.load();
     };
-    run().then((d) => live && setDataset(d)).catch((e: Error) => live && setError(e.message || "Data could not be loaded."));
+    run()
+      .then((d) => live && setDataset(d))
+      .catch(
+        (e: Error) =>
+          live && setError(e.message || "Data could not be loaded."),
+      );
     return () => {
       live = false;
     };
@@ -192,7 +286,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    window.history.replaceState(null, "", toUrl(state) + (window.location.hash ?? ""));
+    window.history.replaceState(
+      null,
+      "",
+      toUrl(state) + (window.location.hash ?? ""),
+    );
   }, [state, hydrated]);
 
   const derived = useMemo<Derived | null>(() => {
@@ -200,15 +298,31 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const { filters, selection } = state;
     const scoped = filterOrders(dataset.orders, filters);
     const inSelection = applyGeoSelection(scoped, selection);
-    const previous = applyGeoSelection(filterOrders(dataset.orders, filters, previousPeriod(filters)), selection);
+    const previous = applyGeoSelection(
+      filterOrders(dataset.orders, filters, previousPeriod(filters)),
+      selection,
+    );
     const units = unitsAt(selection.scale, dataset);
     const unitStats = aggregateByUnit(scoped, selection.scale);
-    const order = selection.orderId ? (dataset.orders.find((o) => o.id === selection.orderId) ?? null) : null;
-    return { scoped, inSelection, previous, unitStats, units, order, selectedUnit: units.find((u) => u.id === selection.unitId) ?? null };
+    const order = selection.orderId
+      ? (dataset.orders.find((o) => o.id === selection.orderId) ?? null)
+      : null;
+    return {
+      scoped,
+      inSelection,
+      previous,
+      unitStats,
+      units,
+      order,
+      selectedUnit: units.find((u) => u.id === selection.unitId) ?? null,
+    };
   }, [dataset, state]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
-  const value = useMemo<Ctx>(() => ({ state, dispatch, dataset, error, retry, derived, hydrated }), [state, dataset, error, retry, derived, hydrated]);
+  const value = useMemo<Ctx>(
+    () => ({ state, dispatch, dataset, error, retry, derived, hydrated }),
+    [state, dataset, error, retry, derived, hydrated],
+  );
   return <DashCtx.Provider value={value}>{children}</DashCtx.Provider>;
 }
 
@@ -221,7 +335,16 @@ export function useDashboard(): Ctx {
 /** KPIs for the current selection and for the previous period, from the same filtered orders. */
 export function useKpis() {
   const { derived } = useDashboard();
-  return useMemo(() => (derived ? { current: computeKpis(derived.inSelection), previous: computeKpis(derived.previous) } : null), [derived]);
+  return useMemo(
+    () =>
+      derived
+        ? {
+            current: computeKpis(derived.inSelection),
+            previous: computeKpis(derived.previous),
+          }
+        : null,
+    [derived],
+  );
 }
 
 export { addDays };

@@ -6,23 +6,43 @@ import { color, contrast } from "./tokens";
 
 const css = readFileSync("src/styles/laddex.css", "utf8");
 const cssVar = (name: string) =>
-  new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{6})`).exec(css)?.[1]?.toLowerCase();
+  new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{6})`)
+    .exec(css)?.[1]
+    ?.toLowerCase();
 
-const kebab = (s: string) => s.replace(/[A-Z0-9]/g, (m) => `-${m.toLowerCase()}`);
+const kebab = (s: string) =>
+  s.replace(/[A-Z0-9]/g, (m) => `-${m.toLowerCase()}`);
 
 describe("design tokens", () => {
   it("keeps CSS custom properties in sync with tokens.ts", () => {
     const pairs: [string, string][] = [
-      ["paper", color.paper], ["paper-2", color.paper2], ["card", color.card], ["ink", color.ink],
-      ["ink-2", color.ink2], ["ink-3", color.ink3], ["line", color.line], ["line-strong", color.lineStrong],
-      ["ember", color.ember], ["ember-deep", color.emberDeep], ["ember-tint", color.emberTint],
-      ["slate", color.slate], ["slate-deep", color.slateDeep], ["slate-tint", color.slateTint],
-      ["ochre", color.ochre], ["ochre-deep", color.ochreDeep], ["ochre-tint", color.ochreTint],
-      ["success", color.success], ["warning", color.warning], ["danger", color.danger],
-      ["rail", color.rail], ["rail-text", color.railText],
+      ["paper", color.paper],
+      ["paper-2", color.paper2],
+      ["card", color.card],
+      ["ink", color.ink],
+      ["ink-2", color.ink2],
+      ["ink-3", color.ink3],
+      ["line", color.line],
+      ["line-strong", color.lineStrong],
+      ["ember", color.ember],
+      ["ember-deep", color.emberDeep],
+      ["ember-tint", color.emberTint],
+      ["slate", color.slate],
+      ["slate-deep", color.slateDeep],
+      ["slate-tint", color.slateTint],
+      ["ochre", color.ochre],
+      ["ochre-deep", color.ochreDeep],
+      ["ochre-tint", color.ochreTint],
+      ["success", color.success],
+      ["warning", color.warning],
+      ["danger", color.danger],
+      ["rail", color.rail],
+      ["rail-text", color.railText],
     ];
     for (const [name, hex] of pairs) {
-      expect(cssVar(name), `--color-${name} (${kebab(name)})`).toBe(hex.toLowerCase());
+      expect(cssVar(name), `--color-${name} (${kebab(name)})`).toBe(
+        hex.toLowerCase(),
+      );
     }
   });
 

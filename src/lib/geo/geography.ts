@@ -1,4 +1,10 @@
-import { bboxContains, geometryBBox, geometryContains, type BBox, type PolygonalGeometry } from "./pip";
+import {
+  bboxContains,
+  geometryBBox,
+  geometryContains,
+  type BBox,
+  type PolygonalGeometry,
+} from "./pip";
 
 export type AdminLevel = "state" | "lga";
 
@@ -33,9 +39,17 @@ export function toAdminUnits(fc: RawCollection): AdminUnit[] {
 }
 
 /** Spatial join of a point to the administrative unit that contains it (bbox pre-filter, then PIP). */
-export function unitAt(units: AdminUnit[], lng: number, lat: number): AdminUnit | null {
+export function unitAt(
+  units: AdminUnit[],
+  lng: number,
+  lat: number,
+): AdminUnit | null {
   for (const u of units) {
-    if (bboxContains(u.bbox, lng, lat) && geometryContains(u.geometry, lng, lat)) return u;
+    if (
+      bboxContains(u.bbox, lng, lat) &&
+      geometryContains(u.geometry, lng, lat)
+    )
+      return u;
   }
   return null;
 }
@@ -46,20 +60,34 @@ export interface GeographySource {
   states: AdminUnit[] | null;
 }
 
-export function toFeatureCollection(units: AdminUnit[], extra?: (u: AdminUnit) => Record<string, unknown>) {
+export function toFeatureCollection(
+  units: AdminUnit[],
+  extra?: (u: AdminUnit) => Record<string, unknown>,
+) {
   return {
     type: "FeatureCollection" as const,
     features: units.map((u) => ({
       type: "Feature" as const,
       id: u.id,
-      properties: { id: u.id, name: u.name, level: u.level, ...(extra ? extra(u) : {}) },
+      properties: {
+        id: u.id,
+        name: u.name,
+        level: u.level,
+        ...(extra ? extra(u) : {}),
+      },
       geometry: u.geometry,
     })),
   };
 }
 
-export const LAGOS_VIEW = { center: [3.4, 6.53] as [number, number], zoom: 9.2 };
-export const LAGOS_BOUNDS: [[number, number], [number, number]] = [[2.69, 6.37], [4.38, 6.71]];
+export const LAGOS_VIEW = {
+  center: [3.4, 6.53] as [number, number],
+  zoom: 9.2,
+};
+export const LAGOS_BOUNDS: [[number, number], [number, number]] = [
+  [2.69, 6.37],
+  [4.38, 6.71],
+];
 
 async function loadJson<T>(path: string, base?: string): Promise<T> {
   const url = base ? new URL(path, base).toString() : path;
@@ -73,19 +101,23 @@ let statePromise: Promise<AdminUnit[]> | null = null;
 
 /** About 87 KB. Lagos only: the whole country is never loaded for a Lagos view. */
 export function loadLagosLgas(): Promise<AdminUnit[]> {
-  lgaPromise ??= loadJson<RawCollection>("/geo/lagos-lgas.json").then(toAdminUnits).catch((e) => {
-    lgaPromise = null;
-    throw e;
-  });
+  lgaPromise ??= loadJson<RawCollection>("/geo/lagos-lgas.json")
+    .then(toAdminUnits)
+    .catch((e) => {
+      lgaPromise = null;
+      throw e;
+    });
   return lgaPromise;
 }
 
 /** About 285 KB. Requested only when a state-level view or an out-of-Lagos pin needs it. */
 export function loadStates(): Promise<AdminUnit[]> {
-  statePromise ??= loadJson<RawCollection>("/geo/ng-states.json").then(toAdminUnits).catch((e) => {
-    statePromise = null;
-    throw e;
-  });
+  statePromise ??= loadJson<RawCollection>("/geo/ng-states.json")
+    .then(toAdminUnits)
+    .catch((e) => {
+      statePromise = null;
+      throw e;
+    });
   return statePromise;
 }
 
@@ -94,4 +126,5 @@ export interface GeoSourcesMeta {
   lgas: Record<string, string | number>;
   attribution: string;
 }
-export const loadSourcesMeta = () => loadJson<GeoSourcesMeta>("/geo/sources.json");
+export const loadSourcesMeta = () =>
+  loadJson<GeoSourcesMeta>("/geo/sources.json");

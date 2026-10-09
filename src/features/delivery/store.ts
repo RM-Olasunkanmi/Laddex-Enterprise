@@ -1,8 +1,8 @@
 "use client";
 
-import { createPersistedStore } from "@/lib/data/persisted-store";
-
 import type { DeliveryLocation, LocationResolution } from "./types";
+
+import { createPersistedStore } from "@/lib/data/persisted-store";
 
 export interface DeliveryState {
   location: DeliveryLocation | null;
@@ -12,9 +12,21 @@ export interface DeliveryState {
   optionId: string | null;
 }
 
-export const deliveryStore = createPersistedStore<DeliveryState>("delivery", { location: null, resolution: null, optionId: null });
+export const deliveryStore = createPersistedStore<DeliveryState>("delivery", {
+  location: null,
+  resolution: null,
+  optionId: null,
+});
 
-export const setDeliveryLocation = (location: DeliveryLocation | null, resolution: LocationResolution | null = null) =>
-  deliveryStore.set((s) => ({ location, resolution, optionId: location ? s.optionId : null }));
+export const setDeliveryLocation = (
+  location: DeliveryLocation | null,
+  resolution: LocationResolution | null = null,
+) =>
+  deliveryStore.set((s) => ({
+    location,
+    resolution,
+    optionId: location ? s.optionId : null,
+  }));
 
-export const setDeliveryOption = (optionId: string | null) => deliveryStore.set((s) => ({ ...s, optionId }));
+export const setDeliveryOption = (optionId: string | null) =>
+  deliveryStore.set((s) => ({ ...s, optionId }));

@@ -1,9 +1,10 @@
+import { enrichOrders } from "./enrich";
+
+import type { EnrichedOrder } from "./types";
+
 import { generateSyntheticOrders } from "@/fixtures/orders/generate";
 import { geometryAreaKm2 } from "@/lib/geo/area";
 import { loadLagosLgas, loadStates, type AdminUnit } from "@/lib/geo/geography";
-
-import { enrichOrders } from "./enrich";
-import type { EnrichedOrder } from "./types";
 
 export interface DashboardDataset {
   orders: EnrichedOrder[];
@@ -23,13 +24,22 @@ export interface DashboardDataService {
   load(): Promise<DashboardDataset>;
 }
 
-export function buildDataset(lgas: AdminUnit[], states: AdminUnit[]): DashboardDataset {
-  const orders = enrichOrders(generateSyntheticOrders({ lgas, states }), lgas, states);
+export function buildDataset(
+  lgas: AdminUnit[],
+  states: AdminUnit[],
+): DashboardDataset {
+  const orders = enrichOrders(
+    generateSyntheticOrders({ lgas, states }),
+    lgas,
+    states,
+  );
   return {
     orders,
     lgas,
     states,
-    lgaAreaKm2: Object.fromEntries(lgas.map((l) => [l.id, geometryAreaKm2(l.geometry)])),
+    lgaAreaKm2: Object.fromEntries(
+      lgas.map((l) => [l.id, geometryAreaKm2(l.geometry)]),
+    ),
     source: "synthetic-fixtures",
   };
 }

@@ -3,7 +3,8 @@ import type { Kobo, Unit } from "@/lib/formatters";
 export type CategoryId = "palm-oil" | "tapioca";
 export type UnitKind = "volume" | "mass";
 export type SalesFormat = "packaged" | "bulk";
-export type PackagingType = "bottle" | "jerrycan" | "drum" | "pouch" | "bag" | "sack";
+export type PackagingType =
+  "bottle" | "jerrycan" | "drum" | "pouch" | "bag" | "sack";
 
 /** Marks values that come from development fixtures rather than confirmed Laddex data. */
 export type DataStatus = "illustrative" | "confirmed";

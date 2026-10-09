@@ -12,9 +12,14 @@ export function mulberry32(seed: number) {
 
 export type Rng = () => number;
 
-export const pick = <T>(rng: Rng, items: readonly T[]): T => items[Math.min(items.length - 1, Math.floor(rng() * items.length))];
+export const pick = <T>(rng: Rng, items: readonly T[]): T =>
+  items[Math.min(items.length - 1, Math.floor(rng() * items.length))];
 
-export function weightedPick<T>(rng: Rng, items: readonly T[], weight: (t: T) => number): T {
+export function weightedPick<T>(
+  rng: Rng,
+  items: readonly T[],
+  weight: (t: T) => number,
+): T {
   const total = items.reduce((s, i) => s + weight(i), 0);
   let r = rng() * total;
   for (const i of items) {

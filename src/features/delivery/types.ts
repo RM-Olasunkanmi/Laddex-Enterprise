@@ -37,7 +37,8 @@ export interface PickupPoint {
  * - outside-lagos: outside the Lagos LGAs loaded for this prototype.
  * None of these states means Laddex verifiably delivers there.
  */
-export type CoverageStatus = "sample-zone" | "outside-sample-zones" | "outside-lagos";
+export type CoverageStatus =
+  "sample-zone" | "outside-sample-zones" | "outside-lagos";
 
 export interface LocationResolution {
   position: LngLat;

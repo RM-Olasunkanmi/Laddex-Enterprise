@@ -2,8 +2,9 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import type { Map as MlMap, StyleSpecification } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
+
+import type { Map as MlMap, StyleSpecification } from "maplibre-gl";
 
 import { map as mapTokens } from "@/lib/design/tokens";
 import { LAGOS_BOUNDS } from "@/lib/geo/geography";
@@ -17,15 +18,32 @@ const ONLINE_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const OFFLINE_STYLE: StyleSpecification = {
   version: 8,
   sources: {},
-  layers: [{ id: "background", type: "background", paint: { "background-color": mapTokens.background } }],
+  layers: [
+    {
+      id: "background",
+      type: "background",
+      paint: { "background-color": mapTokens.background },
+    },
+  ],
 };
 
-export const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+export const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Camera moves are deliberate and short. They are skipped entirely under reduced motion. */
-export function flyTo(map: MlMap, opts: Parameters<MlMap["fitBounds"]>[1] & { bounds: [[number, number], [number, number]] }) {
+export function flyTo(
+  map: MlMap,
+  opts: Parameters<MlMap["fitBounds"]>[1] & {
+    bounds: [[number, number], [number, number]];
+  },
+) {
   const { bounds, ...rest } = opts;
-  map.fitBounds(bounds, { duration: prefersReducedMotion() ? 0 : 650, maxZoom: 14, ...rest });
+  map.fitBounds(bounds, {
+    duration: prefersReducedMotion() ? 0 : 650,
+    maxZoom: 14,
+    ...rest,
+  });
 }
 
 interface Options {
@@ -41,9 +59,15 @@ interface Options {
  * (offline, blocked, rate-limited) the map falls back to a plain background and keeps working.
  * The instance and all listeners are removed on unmount.
  */
-export function useMapLibre({ bounds = LAGOS_BOUNDS, interactive = true, ariaLabel }: Options) {
+export function useMapLibre({
+  bounds = LAGOS_BOUNDS,
+  interactive = true,
+  ariaLabel,
+}: Options) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState<{ map: MlMap; ml: MaplibreModule } | null>(null);
+  const [ready, setReady] = useState<{ map: MlMap; ml: MaplibreModule } | null>(
+    null,
+  );
   const [basemap, setBasemap] = useState<BasemapState>("loading");
 
   useEffect(() => {
@@ -81,8 +105,18 @@ export function useMapLibre({ bounds = LAGOS_BOUNDS, interactive = true, ariaLab
         touchPitch: false,
         cooperativeGestures: false,
       });
-      instance.addControl(new ml.AttributionControl({ compact: true, customAttribution: "Boundaries: geoBoundaries (GRID3), CC BY 4.0" }), "bottom-right");
-      if (interactive) instance.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
+      instance.addControl(
+        new ml.AttributionControl({
+          compact: true,
+          customAttribution: "Boundaries: geoBoundaries (GRID3), CC BY 4.0",
+        }),
+        "bottom-right",
+      );
+      if (interactive)
+        instance.addControl(
+          new ml.NavigationControl({ showCompass: false }),
+          "top-right",
+        );
       instance.getCanvas().setAttribute("aria-label", ariaLabel);
       instance.touchZoomRotate.disableRotation();
       instance.once("load", () => {
@@ -99,8 +133,12 @@ export function useMapLibre({ bounds = LAGOS_BOUNDS, interactive = true, ariaLab
       setReady(null);
     };
     // The map is created once per mount; bounds and label are initial values.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { containerRef, map: ready?.map ?? null, ml: ready?.ml ?? null, basemap };
+  return {
+    containerRef,
+    map: ready?.map ?? null,
+    ml: ready?.ml ?? null,
+    basemap,
+  };
 }

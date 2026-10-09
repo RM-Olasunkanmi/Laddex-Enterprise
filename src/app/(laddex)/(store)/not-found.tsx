@@ -8,7 +8,9 @@ export default function NotFound() {
       <p className="mt-3 text-ink-2">The link may be old or mistyped.</p>
       <div className="mt-6 flex gap-3">
         <ButtonLink href="/shop/palm-oil">Palm oil</ButtonLink>
-        <ButtonLink href="/shop/tapioca" variant="ink">Tapioca</ButtonLink>
+        <ButtonLink href="/shop/tapioca" variant="ink">
+          Tapioca
+        </ButtonLink>
       </div>
     </div>
   );

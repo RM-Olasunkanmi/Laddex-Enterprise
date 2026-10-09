@@ -1,13 +1,17 @@
+import type { LngLat, LocationResolution } from "./types";
+
 import { SAMPLE_ZONES, zoneForLga } from "@/fixtures/geography/zones";
 import { unitAt, type AdminUnit } from "@/lib/geo/geography";
-
-import type { LngLat, LocationResolution } from "./types";
 
 /**
  * Resolve a point to LGA, (optionally) state, sample zone and coverage status using a spatial
  * join. `states` is only needed to name a state for points outside Lagos.
  */
-export function resolveLocation(position: LngLat, lgas: AdminUnit[], states?: AdminUnit[] | null): LocationResolution {
+export function resolveLocation(
+  position: LngLat,
+  lgas: AdminUnit[],
+  states?: AdminUnit[] | null,
+): LocationResolution {
   const lga = unitAt(lgas, position.lng, position.lat);
   if (lga) {
     const zone = zoneForLga(lga.id);

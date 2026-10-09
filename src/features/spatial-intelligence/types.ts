@@ -4,10 +4,20 @@ import type { Kobo } from "@/lib/formatters";
 
 export type Segment = "retail" | "wholesale";
 export type Channel = "online" | "phone" | "wholesale-desk";
-export type OrderStatus = "placed" | "processing" | "out-for-delivery" | "delivered" | "cancelled" | "returned";
+export type OrderStatus =
+  | "placed"
+  | "processing"
+  | "out-for-delivery"
+  | "delivered"
+  | "cancelled"
+  | "returned";
 export type Fulfilment = "delivery" | "pickup";
 
-export const OPEN_STATUSES: OrderStatus[] = ["placed", "processing", "out-for-delivery"];
+export const OPEN_STATUSES: OrderStatus[] = [
+  "placed",
+  "processing",
+  "out-for-delivery",
+];
 
 export interface OrderLine {
   variantId: string;

@@ -7,13 +7,21 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: { default: "Laddex Enterprise: palm oil and tapioca", template: "%s | Laddex Enterprise" },
-  description: "Palm oil by the litre and tapioca by the kilo, in retail packs and wholesale volumes, with delivery checked against your address.",
+  title: {
+    default: "Laddex Enterprise: palm oil and tapioca",
+    template: "%s | Laddex Enterprise",
+  },
+  description:
+    "Palm oil by the litre and tapioca by the kilo, in retail packs and wholesale volumes, with delivery checked against your address.",
 };
 
 export const viewport: Viewport = { themeColor: "#F6F2EA" };
 
-export default function LaddexRootLayout({ children }: { children: ReactNode }) {
+export default function LaddexRootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <html lang="en-NG">
       <body>

@@ -1,16 +1,24 @@
-import { GAZETTEER } from "@/fixtures/geography/gazetteer";
-
 import type { GeocodingService } from "../contracts";
 import type { GeocodeResult } from "../types";
 
-const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+import { GAZETTEER } from "@/fixtures/geography/gazetteer";
+
+const norm = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 /** Offline adapter over approximate locality centroids. Honest about precision. */
 export const gazetteerGeocoder: GeocodingService = {
   async search(query, opts) {
     const q = norm(query);
     if (q.length < 2) return [];
-    const hits = GAZETTEER.filter((g) => norm(g.name).includes(q) || norm(g.area).includes(q));
+    const hits = GAZETTEER.filter(
+      (g) => norm(g.name).includes(q) || norm(g.area).includes(q),
+    );
     return hits.slice(0, opts?.limit ?? 6).map<GeocodeResult>((g) => ({
       id: `gaz-${norm(g.name).replace(/ /g, "-")}`,
       label: g.name,
@@ -45,7 +53,10 @@ export const nominatimGeocoder: GeocodingService = {
     url.searchParams.set("countrycodes", "ng");
     url.searchParams.set("limit", String(opts?.limit ?? 5));
     url.searchParams.set("viewbox", "2.69,6.71,4.38,6.37");
-    const res = await fetch(url, { signal: opts?.signal, headers: { Accept: "application/json" } });
+    const res = await fetch(url, {
+      signal: opts?.signal,
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) throw new Error(`Geocoder responded ${res.status}`);
     const items = (await res.json()) as NominatimItem[];
     return items.map<GeocodeResult>((i) => {
@@ -55,7 +66,9 @@ export const nominatimGeocoder: GeocodingService = {
         label: first.trim(),
         secondary: rest.slice(0, 3).join(",").trim(),
         position: { lng: Number(i.lon), lat: Number(i.lat) },
-        precision: ["house", "building", "road"].includes(i.addresstype ?? "") ? "address" : "locality-centroid",
+        precision: ["house", "building", "road"].includes(i.addresstype ?? "")
+          ? "address"
+          : "locality-centroid",
         source: "nominatim",
       };
     });
@@ -68,7 +81,10 @@ export interface SearchOutcome {
   degraded: boolean;
 }
 
-export async function searchWithFallback(query: string, signal?: AbortSignal): Promise<SearchOutcome> {
+export async function searchWithFallback(
+  query: string,
+  signal?: AbortSignal,
+): Promise<SearchOutcome> {
   try {
     const results = await nominatimGeocoder.search(query, { signal });
     if (results.length) return { results, degraded: false };

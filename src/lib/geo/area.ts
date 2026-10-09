@@ -9,12 +9,22 @@ function ringAreaKm2(ring: Ring): number {
   const kx = KM_PER_DEG_LAT * Math.cos((lat0 * Math.PI) / 180);
   let a = 0;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    a += ring[j][0] * kx * (ring[i][1] * KM_PER_DEG_LAT) - ring[i][0] * kx * (ring[j][1] * KM_PER_DEG_LAT);
+    a +=
+      ring[j][0] * kx * (ring[i][1] * KM_PER_DEG_LAT) -
+      ring[i][0] * kx * (ring[j][1] * KM_PER_DEG_LAT);
   }
   return Math.abs(a) / 2;
 }
 
 export function geometryAreaKm2(g: PolygonalGeometry): number {
   const polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
-  return polys.reduce((sum, poly) => sum + poly.reduce((s, ring, i) => s + (i === 0 ? ringAreaKm2(ring) : -ringAreaKm2(ring)), 0), 0);
+  return polys.reduce(
+    (sum, poly) =>
+      sum +
+      poly.reduce(
+        (s, ring, i) => s + (i === 0 ? ringAreaKm2(ring) : -ringAreaKm2(ring)),
+        0,
+      ),
+    0,
+  );
 }

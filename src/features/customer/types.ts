@@ -4,7 +4,8 @@
  * - wholesale-pending: applied, not yet approved. Treated like retail for charging.
  * - wholesale-approved: tier pricing applies and is shown as the account's price.
  */
-export type CustomerAccess = "guest" | "retail" | "wholesale-pending" | "wholesale-approved";
+export type CustomerAccess =
+  "guest" | "retail" | "wholesale-pending" | "wholesale-approved";
 
 export interface CustomerProfile {
   access: CustomerAccess;
@@ -24,4 +25,5 @@ export const ACCESS_LABEL: Record<CustomerAccess, string> = {
   "wholesale-approved": "Wholesale, approved",
 };
 
-export const isWholesale = (a: CustomerAccess) => a === "wholesale-pending" || a === "wholesale-approved";
+export const isWholesale = (a: CustomerAccess) =>
+  a === "wholesale-pending" || a === "wholesale-approved";

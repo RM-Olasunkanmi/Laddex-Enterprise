@@ -1,14 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
-import { PackLadder } from "@/components/product/pack-ladder";
-import { PackVisual } from "@/components/product/pack-visual";
-import { packScale } from "@/components/product/pack-ladder";
+import type { PackVariant, Product } from "@/features/catalogue/types";
+
 import { PACKAGING_LABEL } from "@/components/lx/labels";
 import { Tag } from "@/components/lx/primitives";
+import { PackLadder, packScale } from "@/components/product/pack-ladder";
+import { PackVisual } from "@/components/product/pack-visual";
 import { packLabel } from "@/features/catalogue/selectors";
-import type { PackVariant, Product } from "@/features/catalogue/types";
 
 type Slide = { id: string; label: string; node: React.ReactNode };
 
@@ -16,22 +17,57 @@ type Slide = { id: string; label: string; node: React.ReactNode };
  * Gallery with thumbnails. Photographs, when supplied in `product.photographs`, come first.
  * Until then every slide is a development render and is labelled as such.
  */
-export function ProductGallery({ product, variant }: { product: Product; variant: PackVariant }) {
+export function ProductGallery({
+  product,
+  variant,
+}: {
+  product: Product;
+  variant: PackVariant;
+}) {
   const [selected, setSelected] = useState("pack");
   const photos = product.photographs.filter((p) => p.src);
   const slides: Slide[] = [
-    ...photos.map<Slide>((p) => ({
+    ...photos.map<Slide>((p, i) => ({
       id: p.id,
       label: p.alt,
-      // eslint-disable-next-line @next/next/no-img-element
-      node: <img src={p.src} alt={p.alt} className="w-full h-full object-cover" loading="eager" />,
+      node: (
+        <Image
+          src={p.src!}
+          alt={p.alt}
+          fill
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          priority={i === 0}
+          className="object-cover"
+        />
+      ),
     })),
     {
       id: "pack",
       label: `${packLabel(variant)} pack`,
-      node: <PackVisual packaging={variant.packaging} category={product.category} sizeLabel={packLabel(variant)} scale={0.62 + 0.38 * (packScale(variant, product) - 0.5) / 0.5} className="w-full h-full p-6" />,
+      node: (
+        <PackVisual
+          packaging={variant.packaging}
+          category={product.category}
+          sizeLabel={packLabel(variant)}
+          scale={0.62 + (0.38 * (packScale(variant, product) - 0.5)) / 0.5}
+          className="w-full h-full p-6"
+        />
+      ),
     },
-    { id: "range", label: "Full range to scale", node: <div className="h-full grid place-items-center p-5"><PackLadder product={product} activeId={variant.id} tone={product.category === "palm-oil" ? "ember" : "slate"} compact /></div> },
+    {
+      id: "range",
+      label: "Full range to scale",
+      node: (
+        <div className="h-full grid place-items-center p-5">
+          <PackLadder
+            product={product}
+            activeId={variant.id}
+            tone={product.category === "palm-oil" ? "ember" : "slate"}
+            compact
+          />
+        </div>
+      ),
+    },
     {
       id: "label",
       label: "Pack facts",
@@ -40,12 +76,18 @@ export function ProductGallery({ product, variant }: { product: Product; variant
           <p className="eyebrow">Pack facts</p>
           <p className="font-display text-6xl mt-2">{packLabel(variant)}</p>
           <dl className="mt-6 grid grid-cols-2 gap-y-3 text-sm max-w-sm">
-            <dt className="text-ink-3">Packaging</dt><dd>{PACKAGING_LABEL[variant.packaging]}</dd>
-            <dt className="text-ink-3">Format</dt><dd className="capitalize">{variant.format}</dd>
-            <dt className="text-ink-3">SKU</dt><dd className="mono">{variant.sku}</dd>
-            <dt className="text-ink-3">Shipping weight</dt><dd className="mono">about {variant.shippingWeightKg} kg</dd>
+            <dt className="text-ink-3">Packaging</dt>
+            <dd>{PACKAGING_LABEL[variant.packaging]}</dd>
+            <dt className="text-ink-3">Format</dt>
+            <dd className="capitalize">{variant.format}</dd>
+            <dt className="text-ink-3">SKU</dt>
+            <dd className="mono">{variant.sku}</dd>
+            <dt className="text-ink-3">Shipping weight</dt>
+            <dd className="mono">about {variant.shippingWeightKg} kg</dd>
           </dl>
-          <div className="mt-6"><Tag tone="sample">Illustrative values</Tag></div>
+          <div className="mt-6">
+            <Tag tone="sample">Illustrative values</Tag>
+          </div>
         </div>
       ),
     },
@@ -55,7 +97,10 @@ export function ProductGallery({ product, variant }: { product: Product; variant
   return (
     <div>
       <div className="relative bg-paper-2 border border-line rounded-md aspect-[4/3] lg:aspect-[5/4] overflow-hidden">
-        <div key={active.id} className="absolute inset-0 animate-[fadein_var(--d-base)_var(--ease)]">
+        <div
+          key={active.id}
+          className="absolute inset-0 animate-[fadein_var(--d-base)_var(--ease)]"
+        >
           {active.node}
         </div>
         {isRender && (
@@ -64,10 +109,18 @@ export function ProductGallery({ product, variant }: { product: Product; variant
           </span>
         )}
       </div>
-      <ul className="mt-3 grid grid-cols-4 gap-2 list-none p-0" aria-label="Product views">
+      <ul
+        className="mt-3 grid grid-cols-4 gap-2 list-none p-0"
+        aria-label="Product views"
+      >
         {slides.map((s) => (
           <li key={s.id}>
-            <button type="button" aria-pressed={s.id === active.id} onClick={() => setSelected(s.id)} className={`w-full min-h-11 px-2 py-2 text-xs rounded-sm border text-left ${s.id === active.id ? "border-ink bg-card" : "border-line bg-paper hover:border-ink-3"}`}>
+            <button
+              type="button"
+              aria-pressed={s.id === active.id}
+              onClick={() => setSelected(s.id)}
+              className={`w-full min-h-11 px-2 py-2 text-xs rounded-sm border text-left ${s.id === active.id ? "border-ink bg-card" : "border-line bg-paper hover:border-ink-3"}`}
+            >
               {s.label}
             </button>
           </li>
