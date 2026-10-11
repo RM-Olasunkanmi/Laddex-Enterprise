@@ -20,9 +20,10 @@ export const metadata: Metadata = {
 export default async function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reference?: string; trxref?: string }>;
+  searchParams: Promise<{ reference?: string; trxref?: string; transfer?: string }>;
 }) {
-  const { reference, trxref } = await searchParams;
+  const { reference, trxref, transfer } = await searchParams;
+  if (transfer) return <TransferConfirmation reference={transfer} />;
   const ref = reference ?? trxref;
   if (!ref) {
     return (
@@ -132,6 +133,90 @@ export default async function ConfirmationPage({
         <div className="mt-6 flex gap-3 flex-wrap">
           <Link href="/contact" className="btn btn-primary">
             Contact / pickup booking
+          </Link>
+          <Link href="/shop" className="btn btn-line">
+            Continue shopping
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Shown after a bank-transfer receipt is uploaded. Reads only non-sensitive fields. */
+async function TransferConfirmation({ reference }: { reference: string }) {
+  let status: string | null = null;
+  let totalKobo: number | null = null;
+  try {
+    const payload = await getPayload({ config });
+    const found = await payload.find({
+      collection: "checkout-sessions",
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+      where: {
+        and: [
+          { reference: { equals: reference } },
+          { "payment.method": { equals: "bank-transfer" } },
+        ],
+      },
+    });
+    status = found.docs[0]?.status ?? null;
+    totalKobo = found.docs[0]?.grandTotalKobo ?? null;
+  } catch {
+    // Fall through to the not-found state.
+  }
+
+  if (!status) {
+    return (
+      <div className="wrap py-10">
+        <div className="panel p-10 text-center max-w-xl">
+          <p className="font-display text-3xl">We could not find that order</p>
+          <p className="mt-2 text-ink-2">
+            If you already paid, do not pay again. Contact us with your receipt.
+          </p>
+          <Link href="/contact" className="btn btn-primary mt-6">
+            Contact the store
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const confirmed = status === "paid" || status === "order-created";
+  const rejected = status === "rejected";
+  return (
+    <div className="wrap py-10">
+      <ClearCartOnPaid />
+      <div className="max-w-3xl">
+        <p className="eyebrow">
+          {confirmed ? "Payment confirmed" : rejected ? "Payment not matched" : "Receipt received"}
+        </p>
+        <h1 className="text-4xl md:text-5xl mt-1">
+          {confirmed
+            ? "Thank you, your order is confirmed"
+            : rejected
+              ? "We could not match your payment"
+              : "Thank you, we have your receipt"}
+        </h1>
+        <p className="mt-2 text-ink-2">
+          Order reference <span className="mono">{reference}</span>
+          {totalKobo != null ? <> &middot; {formatNaira(totalKobo)}</> : null}. Keep
+          this reference.
+        </p>
+        <Notice tone={rejected ? "warning" : "info"} className="mt-6" title="What happens next">
+          {confirmed
+            ? "Our team will confirm your delivery window on the phone number you provided."
+            : rejected
+              ? "We could not find this transfer in our account. If you did pay, contact us on WhatsApp with your receipt and this reference."
+              : "We are checking that your transfer has arrived. Your order is confirmed once we have verified it, and we will contact you on the phone number you gave. Please do not pay again."}
+        </Notice>
+        <div className="mt-6 flex gap-3 flex-wrap">
+          <Link href={`/order/confirmation?transfer=${encodeURIComponent(reference)}`} className="btn btn-line">
+            Check status
+          </Link>
+          <Link href="/contact" className="btn btn-primary">
+            Contact us
           </Link>
           <Link href="/shop" className="btn btn-line">
             Continue shopping

@@ -7,6 +7,7 @@ export default [
   {
     ignores: [
       "**/node_modules/**",
+      "src/migrations/**",
       "other/**",
       ".claude/**",
       ".cf-build/**",

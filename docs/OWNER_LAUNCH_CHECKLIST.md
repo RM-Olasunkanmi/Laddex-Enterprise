@@ -37,5 +37,6 @@ database migration has passed staging tests.
 - Notification email/SMTP details and the staff WhatsApp process for new orders.
 - Named staff roles for catalogue publishing, inventory, order handling,
   wholesale approval and analytics access.
-- Paystack test and live keys, verified webhook URL, refund process and a person
+- Bank account for transfers (bank, exact account name, 10-digit number), and who checks the account and marks orders paid in /admin.
+- Paystack test and live keys (only if Paystack is used later), verified webhook URL, refund process and a person
   responsible for reconciling failed/refunded sessions.

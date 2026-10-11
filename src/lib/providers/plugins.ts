@@ -50,7 +50,12 @@ const generateURL: GenerateURL<SeoDocument> = ({ collectionSlug, doc }) => {
 
 let storagePlugin: Plugin | undefined;
 
-const uploadCollections = ["media", "seo-media", "gallery-media"] as const;
+const uploadCollections = [
+  "media",
+  "seo-media",
+  "gallery-media",
+  "payment-receipts",
+] as const;
 type UploadCollection = (typeof uploadCollections)[number];
 
 const createStorageCollections = <T>(
@@ -70,19 +75,33 @@ if (appConfig.STORAGE_PROVIDER === "vercel") {
     addRandomSuffix: true,
     collections: createStorageCollections((collection) => ({
       prefix: storagePrefix(collection),
-      ...(appConfig.STORAGE_URL ? { disablePayloadAccessControl: true } : {}),
+      // Receipts always go through Payload's access control (staff only).
+      ...(appConfig.STORAGE_URL && collection !== "payment-receipts"
+        ? { disablePayloadAccessControl: true }
+        : {}),
     })),
   });
 } else if (appConfig.STORAGE_PROVIDER === "s3") {
   storagePlugin = s3Storage({
     collections: createStorageCollections((collection) => ({
       disableLocalStorage: true,
-      disablePayloadAccessControl: true,
       prefix: storagePrefix(collection),
-      generateFileURL: ({ filename, prefix }) => {
-        const key = prefix ? `${prefix}/${filename}` : filename;
-        return `${appConfig.STORAGE_URL}/${key}`;
-      },
+      // Receipts stay private: served through Payload, not the public media domain.
+      ...(collection === "payment-receipts"
+        ? {}
+        : {
+            disablePayloadAccessControl: true,
+            generateFileURL: ({
+              filename,
+              prefix,
+            }: {
+              filename: string;
+              prefix?: string;
+            }) => {
+              const key = prefix ? `${prefix}/${filename}` : filename;
+              return `${appConfig.STORAGE_URL}/${key}`;
+            },
+          }),
     })),
     bucket: appConfig.S3_BUCKET,
     config: {

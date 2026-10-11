@@ -1,6 +1,7 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
+  await db.execute(sql`CREATE SCHEMA IF NOT EXISTS "laddex"`)
   await db.execute(sql`
    CREATE TYPE "laddex"."enum_products_laddex_category" AS ENUM('palm-oil', 'tapioca', 'garri');
   CREATE TYPE "laddex"."enum_products_laddex_base_unit" AS ENUM('l', 'kg');

@@ -7,6 +7,7 @@ export { Reviews } from "./Reviews";
 export { GalleryMedia, Media, SeoMedia } from "./MediaCollections";
 export { Orders } from "./Orders";
 export { Pages } from "./Pages";
+export { PaymentReceipts } from "./PaymentReceipts";
 export { Products } from "./Products";
 export { QuoteRequests } from "./QuoteRequests";
 export { SiteSettings } from "./SiteSettings";

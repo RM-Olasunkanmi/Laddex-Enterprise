@@ -87,6 +87,7 @@ export interface Config {
     users: User;
     transactions: Transaction;
     'checkout-sessions': CheckoutSession;
+    'payment-receipts': PaymentReceipt;
     'delivery-zones': DeliveryZone;
     'distribution-points': DistributionPoint;
     'wholesale-applications': WholesaleApplication;
@@ -122,6 +123,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     'checkout-sessions': CheckoutSessionsSelect<false> | CheckoutSessionsSelect<true>;
+    'payment-receipts': PaymentReceiptsSelect<false> | PaymentReceiptsSelect<true>;
     'delivery-zones': DeliveryZonesSelect<false> | DeliveryZonesSelect<true>;
     'distribution-points': DistributionPointsSelect<false> | DistributionPointsSelect<true>;
     'wholesale-applications': WholesaleApplicationsSelect<false> | WholesaleApplicationsSelect<true>;
@@ -696,11 +698,55 @@ export interface CheckoutSession {
   grandTotalKobo: number;
   feeBasis: 'region-rule' | 'manual-quote' | 'none';
   currency: 'NGN';
-  status: 'created' | 'initialized' | 'paid' | 'order-created' | 'failed' | 'expired';
+  /**
+   * Bank transfers: check the money has arrived in the account, then set to Paid to create the order. Set to Rejected if it has not.
+   */
+  status:
+    'created' | 'initialized' | 'awaiting-verification' | 'paid' | 'order-created' | 'rejected' | 'failed' | 'expired';
+  /**
+   * Bank-transfer proof submitted by the customer.
+   */
+  payment?: {
+    method?: ('paystack' | 'bank-transfer') | null;
+    /**
+     * Name on the sending account.
+     */
+    payerName?: string | null;
+    payerBank?: string | null;
+    /**
+     * As reported by the customer, in kobo (100 kobo = ₦1). Verify against the statement.
+     */
+    amountPaidKobo?: number | null;
+    paidAt?: string | null;
+    transferReference?: string | null;
+    receipt?: (number | null) | PaymentReceipt;
+    /**
+     * Internal. Reason for rejecting, or what you matched.
+     */
+    staffNote?: string | null;
+  };
   order?: (number | null) | Order;
   failureReason?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-receipts".
+ */
+export interface PaymentReceipt {
+  id: number;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1226,6 +1272,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'checkout-sessions';
         value: number | CheckoutSession;
+      } | null)
+    | ({
+        relationTo: 'payment-receipts';
+        value: number | PaymentReceipt;
       } | null)
     | ({
         relationTo: 'delivery-zones';
@@ -1894,10 +1944,39 @@ export interface CheckoutSessionsSelect<T extends boolean = true> {
   feeBasis?: T;
   currency?: T;
   status?: T;
+  payment?:
+    | T
+    | {
+        method?: T;
+        payerName?: T;
+        payerBank?: T;
+        amountPaidKobo?: T;
+        paidAt?: T;
+        transferReference?: T;
+        receipt?: T;
+        staffNote?: T;
+      };
   order?: T;
   failureReason?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-receipts_select".
+ */
+export interface PaymentReceiptsSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

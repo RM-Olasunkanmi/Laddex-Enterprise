@@ -26,8 +26,11 @@ import {
 import { isValidOrderStatusTransition } from "@/lib/core/util";
 import { stripePaymentIntentField } from "@/lib/stripe/server";
 
+// Orders are only ever created from a verified payment: the Paystack webhook, or
+// staff confirming a bank transfer against the account statement.
 const trustedPaystackOrder = (req: { context?: Record<string, unknown> }) =>
-  req.context?.trustedOrderSource === "paystack-webhook";
+  req.context?.trustedOrderSource === "paystack-webhook" ||
+  req.context?.trustedOrderSource === "bank-transfer-confirmed";
 
 export const Orders: CollectionOverride = ({ defaultCollection }) => {
   return {
@@ -362,11 +365,14 @@ export const Orders: CollectionOverride = ({ defaultCollection }) => {
             const sessionId =
               typeof rawSession === "object" ? rawSession?.id : rawSession;
             if (!sessionId) throw new Error("A checkout session is required.");
+            // Pass `req` so a status set earlier in this same transaction (staff
+            // confirming a bank transfer) is visible to this check.
             const session = await req.payload.findByID({
               collection: "checkout-sessions",
               id: sessionId,
               depth: 0,
               overrideAccess: true,
+              req,
             });
             if (
               session.status !== "paid" ||

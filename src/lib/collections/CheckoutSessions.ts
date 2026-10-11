@@ -1,6 +1,60 @@
-import type { CollectionConfig } from "payload";
+import type { CollectionAfterChangeHook, CollectionConfig } from "payload";
 
 import { adminOnlyAccess } from "@/lib/collections/base-fields";
+
+/**
+ * Staff mark a bank-transfer session `paid` after matching the money in the account.
+ * That creates the real order (and takes stock) through the same trusted path the
+ * Paystack webhook uses, in the same transaction: if stock ran out, the whole save
+ * fails and the session stays awaiting verification.
+ */
+const createOrderWhenTransferConfirmed: CollectionAfterChangeHook = async ({
+  doc,
+  previousDoc,
+  operation,
+  req,
+}) => {
+  if (
+    operation !== "update" ||
+    doc.status !== "paid" ||
+    previousDoc?.status === "paid" ||
+    doc.payment?.method !== "bank-transfer"
+  ) {
+    return doc;
+  }
+  if (doc.feeBasis === "manual-quote") {
+    throw new Error("A manual delivery quote cannot be confirmed as paid.");
+  }
+  if (Number(doc.payment?.amountPaidKobo) < Number(doc.grandTotalKobo)) {
+    throw new Error(
+      "The customer reported paying less than the order total. Correct the reported amount after checking the statement, or reject the transfer.",
+    );
+  }
+
+  req.context ??= {};
+  req.context.trustedOrderSource = "bank-transfer-confirmed";
+  const cart = typeof doc.cart === "object" ? doc.cart.id : doc.cart;
+  const order = await req.payload.create({
+    collection: "orders",
+    data: {
+      checkoutSession: doc.id,
+      cart,
+      name: doc.name,
+      phone: doc.phone,
+      email: doc.email,
+      items: [],
+      paymentIntentId: doc.reference,
+    },
+    req,
+  });
+  await req.payload.update({
+    collection: "checkout-sessions",
+    id: doc.id,
+    data: { status: "order-created", order: order.id },
+    req,
+  });
+  return doc;
+};
 
 export const CheckoutSessions: CollectionConfig = {
   slug: "checkout-sessions",
@@ -10,6 +64,7 @@ export const CheckoutSessions: CollectionConfig = {
     defaultColumns: ["reference", "email", "status", "grandTotalKobo", "createdAt"],
   },
   access: adminOnlyAccess,
+  hooks: { afterChange: [createOrderWhenTransferConfirmed] },
   fields: [
     { name: "reference", type: "text", required: true, unique: true, index: true },
     { name: "idempotencyKey", type: "text", required: true, unique: true, index: true, maxLength: 100 },
@@ -67,7 +122,44 @@ export const CheckoutSessions: CollectionConfig = {
       type: "select",
       required: true,
       defaultValue: "created",
-      options: ["created", "initialized", "paid", "order-created", "failed", "expired"],
+      options: [
+        "created",
+        "initialized",
+        "awaiting-verification",
+        "paid",
+        "order-created",
+        "rejected",
+        "failed",
+        "expired",
+      ],
+      admin: {
+        description:
+          "Bank transfers: check the money has arrived in the account, then set to Paid to create the order. Set to Rejected if it has not.",
+      },
+    },
+    {
+      name: "payment",
+      type: "group",
+      admin: { description: "Bank-transfer proof submitted by the customer." },
+      fields: [
+        {
+          name: "method",
+          type: "select",
+          options: ["paystack", "bank-transfer"],
+        },
+        { name: "payerName", type: "text", maxLength: 120, admin: { description: "Name on the sending account." } },
+        { name: "payerBank", type: "text", maxLength: 120 },
+        {
+          name: "amountPaidKobo",
+          type: "number",
+          min: 0,
+          admin: { description: "As reported by the customer, in kobo (100 kobo = ₦1). Verify against the statement." },
+        },
+        { name: "paidAt", type: "date", admin: { date: { pickerAppearance: "dayOnly" } } },
+        { name: "transferReference", type: "text", maxLength: 120 },
+        { name: "receipt", type: "relationship", relationTo: "payment-receipts" },
+        { name: "staffNote", type: "textarea", maxLength: 1000, admin: { description: "Internal. Reason for rejecting, or what you matched." } },
+      ],
     },
     { name: "order", type: "relationship", relationTo: "orders" },
     { name: "failureReason", type: "text", maxLength: 500 },

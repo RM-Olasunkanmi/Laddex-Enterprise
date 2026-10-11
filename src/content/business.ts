@@ -37,3 +37,19 @@ export const ENQUIRY_TOPICS = [
   { id: "other", label: "Something else" },
 ] as const;
 export type EnquiryTopic = (typeof ENQUIRY_TOPICS)[number]["id"];
+
+/**
+ * Where customers send bank transfers. Read from env so the real account is never
+ * committed. Transfer checkout is enabled only when all three values are set and the
+ * account number is a 10-digit NUBAN.
+ */
+export const BANK_TRANSFER = {
+  bankName: (process.env.NEXT_PUBLIC_BANK_NAME ?? "").trim(),
+  accountName: (process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME ?? "").trim(),
+  accountNumber: (process.env.NEXT_PUBLIC_BANK_ACCOUNT_NUMBER ?? "").trim(),
+} as const;
+
+export const BANK_TRANSFER_ENABLED =
+  BANK_TRANSFER.bankName.length > 0 &&
+  BANK_TRANSFER.accountName.length > 0 &&
+  /^\d{10}$/.test(BANK_TRANSFER.accountNumber);

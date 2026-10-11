@@ -3,11 +3,9 @@
 Target: Payload CMS + storefront on Vercel, Postgres on Neon (or Supabase),
 media on Vercel Blob, payments via Paystack. No new dependencies required.
 
-> **Release blocker:** the current schema changes do not have a generated
-> database migration because no database is available in this workspace. With a
-> disposable development database configured, run `pnpm payload migrate:create`
-> from the repository root, review the generated migration, run `pnpm migrate`
-> against staging, and commit the migration before any production deployment.
+> **Migrations:** `src/migrations` holds the initial schema and `bank_transfer`.
+> Both were tested on a fresh Postgres 16 and are applied on the Supabase project.
+> After any schema change run `pnpm payload migrate:create <name>` and commit it.
 
 > The repo also has a Cloudflare Workers path (OpenNext, frontend-only). That
 > path cannot run Payload or the `/api/*` routes that read the database, so
@@ -65,6 +63,27 @@ seeds. If TLS verification fails, append `?sslmode=no-verify`.
    - Payments: keep `NEXT_PUBLIC_ENABLE_STRIPE=false` and
      `NEXT_PUBLIC_ENABLE_PAYSTACK=false` until launch (see section 4).
 4. Deploy. Admin lives at `/admin`; the storefront is the same deployment.
+
+## 2b. Bank-transfer payments (instead of Paystack)
+
+Set `NEXT_PUBLIC_BANK_NAME`, `NEXT_PUBLIC_BANK_ACCOUNT_NAME` and
+`NEXT_PUBLIC_BANK_ACCOUNT_NUMBER` (10 digits) in Vercel and redeploy (they are
+baked in at build time). Keep Paystack disabled. Checkout then shows the account
+details and the exact total, and asks for payer name, bank, amount, date and a
+receipt (JPG/PNG/WebP/PDF, under 4 MB; Vercel rejects larger request bodies).
+
+Staff routine, for every order:
+1. `/admin` > Laddex > Checkout sessions, filter status `awaiting-verification`.
+2. Open the receipt (Payment > Receipt) and match the amount and sender in your
+   bank app/statement. A screenshot alone is not proof of payment.
+3. Set status to **Paid** and save: the order is created and stock reduced.
+   Saving fails, and nothing changes, if the customer reported less than the
+   total or stock ran out. Set **Rejected** (add a note) if the money is not there.
+
+Receipts are private: only signed-in admins can open them. Add Vercel Firewall
+rate limiting on `/api/orders/bank-transfer` to curb junk uploads. Delivery
+orders also need active, owner-approved delivery zones; with only the sample
+(inactive) zones, checkout answers "needs a quote" and points customers to WhatsApp.
 
 ## 3. Custom domain (optional, later)
 

@@ -48,3 +48,6 @@ yarn-error.log*
 /gallery-media/
 /seo-media/
 /media/
+
+# Local private uploads (payment receipts)
+/.private
