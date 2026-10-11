@@ -93,6 +93,9 @@ export default buildConfig({
     schemaName: "laddex",
     pool: {
       connectionString: appConfig.DATABASE_URL,
+      // Serverless functions each hold their own pool; keep it small so many
+      // concurrent invocations stay inside the Supabase pooler's client limit.
+      ...(process.env.VERCEL ? { max: 3 } : {}),
     },
   }),
   editor: baseEditor,

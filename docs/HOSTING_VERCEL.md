@@ -15,7 +15,24 @@ media on Vercel Blob, payments via Paystack. No new dependencies required.
 > from disk — boundaries are bundled JSON imports — so the API routes also
 > survive the Workers build if the DB calls are guarded.
 
-## 1. Database (Neon)
+## 0. Current state (Supabase)
+
+The Supabase project `wwmlcreroanokrmekmpe` (eu-west-1) already holds the
+`laddex` schema, the initial migration and the seeded catalogue (4 products, 16
+variants, 6 inactive sample delivery zones). Only the `laddex` schema belongs to
+this app; `public` belongs to other projects and is never touched. Remaining:
+the Vercel project (section 2), env vars, and the RLS hardening below.
+
+**Row Level Security.** The `laddex` tables have RLS off. Payload connects as
+the `postgres` role (bypasses RLS), so enabling RLS with no policies locks out
+the Supabase anon/authenticated API without affecting the app. Do this before
+launch, and do not add `laddex` to the project's exposed API schemas.
+
+**Connection string.** On Vercel use the *transaction pooler* URL (port 6543)
+for `DATABASE_URL`; use the direct/session URL (5432) for `pnpm migrate` and
+seeds. If TLS verification fails, append `?sslmode=no-verify`.
+
+## 1. Database (Neon, or Supabase as above)
 
 1. Create a project at https://neon.tech (free tier is enough to start).
 2. Copy the pooled connection string, e.g.
