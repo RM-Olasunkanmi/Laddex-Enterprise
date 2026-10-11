@@ -70,16 +70,26 @@ function toVariant(v: Doc, productId: string, includeTiers: boolean): PackVarian
 /**
  * Without a storage provider, Payload keeps uploads on the local disk of whichever machine ran the
  * upload. A serverless deployment (Vercel) does not have those files, so every /api/*-media/file URL
- * fails there. In that case, and when a product has no gallery at all, use the same photographs
- * bundled in /public/products (the files the media seed uploads), matched by product slug.
+ * fails there. The production catalogue was seeded that way: `seed/laddex-media.ts` uploaded copies
+ * of the photographs bundled in /public/products, using the fixture alt text.
+ *
+ * So the bundled originals are served when (a) uploads cannot be reached on this host, (b) the
+ * product has no gallery, or (c) its gallery is the seeded copies (recognised by alt text). Photos
+ * staff upload later in /admin, with their own alt text, are shown as uploaded.
  */
 const UPLOADS_UNREACHABLE = !process.env.STORAGE_PROVIDER && !!process.env.VERCEL;
+
+/** Alt text the media seed used, including a palm oil photo later replaced in the fixtures. */
+const SEEDED_ALTS = new Set([
+  ...PRODUCTS.flatMap((f) => f.photographs.map((ph) => ph.alt)),
+  "Laddex palm oil bottles on a woven mat beside a glass bowl of palm oil",
+]);
 
 function bundledPhotographs(slug: string): Product["photographs"] {
   return PRODUCTS.find((f) => f.slug === slug)?.photographs ?? [];
 }
 
-function toProduct(p: Doc, variants: PackVariant[]): Product | null {
+export function toProduct(p: Doc, variants: PackVariant[]): Product | null {
   const l = p?.laddex;
   if (!l?.category || !l?.baseUnit) return null;
   const category = l.category as CategoryId;
@@ -104,8 +114,11 @@ function toProduct(p: Doc, variants: PackVariant[]): Product | null {
     : [];
   const slug = String(p.slug ?? p.id);
   const bundled = bundledPhotographs(slug);
+  const seededCopies =
+    photographs.length > 0 && photographs.every((ph) => SEEDED_ALTS.has(ph.alt));
   const usable =
-    (UPLOADS_UNREACHABLE || photographs.length === 0) && bundled.length > 0
+    (UPLOADS_UNREACHABLE || photographs.length === 0 || seededCopies) &&
+    bundled.length > 0
       ? bundled
       : photographs;
   return {
