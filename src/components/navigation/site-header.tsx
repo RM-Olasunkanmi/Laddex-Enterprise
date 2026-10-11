@@ -51,7 +51,7 @@ export function SiteHeader() {
         <Wordmark />
         <PrimaryNav />
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <ThemeToggle className="hidden sm:inline-flex !border-transparent" />
+          <ThemeToggle />
           <CartButton />
           <MobileNavButton />
         </div>

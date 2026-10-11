@@ -77,7 +77,7 @@ export default async function HomePage() {
               {BUSINESS.tagline.replace(/\.$/, "")} &middot; Epe, Lagos State
             </p>
             <h1 className="display hero-fade mt-4 text-[2.5rem] text-ink [--i:1] xs:text-[2.875rem] sm:text-6xl xl:text-[4.25rem]">
-              Palm oil, garri and tapioca, from&nbsp;Epe to your kitchen.
+              Palm oil, garri and tapioca for homes, shops and&nbsp;events.
             </h1>
             <p className="lede hero-fade mt-5 max-w-xl [--i:2]">
               {BUSINESS.name} supplies palm oil, tapioca flakes, Garri Igbo and
