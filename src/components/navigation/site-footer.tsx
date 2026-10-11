@@ -6,10 +6,10 @@ import { BUSINESS, BUSINESS_CONTACT } from "@/content/business";
 
 const col = (title: string, items: { href: string; label: string }[]) => (
   <div>
-    <h3 className="eyebrow !font-mono !font-medium !text-[0.6875rem] mb-4 [font-family:var(--font-mono)]">
+    <h3 className="eyebrow !font-mono !font-medium !text-[0.6875rem] mb-3 [font-family:var(--font-mono)]">
       {title}
     </h3>
-    <ul className="space-y-2.5">
+    <ul className="space-y-2 text-sm">
       {items.map((i) => (
         <li key={i.href + i.label}>
           <Link
@@ -26,9 +26,9 @@ const col = (title: string, items: { href: string; label: string }[]) => (
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t border-line-strong bg-paper-2">
-      <div className="wrap py-14 grid gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
-        <div className="max-w-xs">
+    <footer className="mt-20 border-t border-line-strong bg-paper-2">
+      <div className="wrap py-12 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-[1.4fr_repeat(3,1fr)] md:gap-12 md:py-14">
+        <div className="col-span-2 max-w-xs md:col-span-1">
           <Wordmark />
           <p className="mt-4 text-ink-2 text-sm">
             Palm oil, tapioca flakes and garri, for households, shops and
@@ -75,7 +75,7 @@ export function SiteFooter() {
         ])}
         {col("Delivery", [
           { href: "/delivery", label: "Check delivery availability" },
-          { href: "/order", label: "Checkout preview" },
+          { href: "/order", label: "Checkout" },
           { href: "/privacy", label: "Privacy" },
           { href: "/terms", label: "Terms" },
           { href: "/delivery-policy", label: "Delivery policy" },

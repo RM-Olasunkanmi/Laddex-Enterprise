@@ -9,6 +9,7 @@ import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCart } from "@/components/commerce/use-customer-pricing";
 import { ProductPhoto } from "@/components/product/product-photo";
 import { WhatsAppOrderButton } from "@/components/store/whatsapp-order";
+import { CHECKOUT_LIVE } from "@/content/business";
 import { removeFromCart, setQty } from "@/features/cart/store";
 import { packLabel } from "@/features/catalogue/selectors";
 import { cartDrawer, navDrawer } from "@/lib/data/ui-store";
@@ -146,7 +147,7 @@ export function CartDrawer() {
               View cart
             </Link>
             <Link href="/order" className="btn btn-primary" onClick={close}>
-              Checkout preview
+              {CHECKOUT_LIVE ? "Checkout" : "Checkout preview"}
             </Link>
           </div>
           <WhatsAppOrderButton className="btn btn-line w-full" />

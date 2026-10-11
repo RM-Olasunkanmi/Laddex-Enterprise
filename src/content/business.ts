@@ -53,3 +53,7 @@ export const BANK_TRANSFER_ENABLED =
   BANK_TRANSFER.bankName.length > 0 &&
   BANK_TRANSFER.accountName.length > 0 &&
   /^\d{10}$/.test(BANK_TRANSFER.accountNumber);
+
+/** True once a real payment route exists; until then checkout is labelled a preview. */
+export const CHECKOUT_LIVE =
+  BANK_TRANSFER_ENABLED || process.env.NEXT_PUBLIC_ENABLE_PAYSTACK === "true";

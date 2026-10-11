@@ -81,7 +81,7 @@ const go = (page, path) =>
     assert(await page.locator('img[src*="laddex-logo"]').first().isVisible(), "logo missing");
     assert(await page.getByRole("heading", { name: /Pure\. Natural\./ }).isVisible(), "headline");
     assert(await page.getByRole("heading", { name: /everyday staples/ }).isVisible(), "about section");
-    assert(await page.getByRole("heading", { name: /Delivered across Nigeria/ }).isVisible(), "nationwide");
+    assert(await page.getByRole("heading", { name: /Delivery across Nigeria/ }).isVisible(), "nationwide");
     const body = await page.locator("body").innerText();
     assert(!/Lagos only|in Lagos/i.test(body), "mentions Lagos-only delivery");
     assert(!/\b25 L\b|200 L|jerrycan/i.test(body), "old litre sizes still present");

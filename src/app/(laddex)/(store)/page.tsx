@@ -1,10 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { PackTable } from "@/components/commerce/pack-table";
 import { ProductCard } from "@/components/commerce/product-card";
-import { CountUp } from "@/components/lx/count-up";
-import { Marquee } from "@/components/lx/marquee";
 import {
   ButtonLink,
   Notice,
@@ -12,405 +9,118 @@ import {
   SectionHeading,
 } from "@/components/lx/primitives";
 import { RegionSketch } from "@/components/product/region-sketch";
-import { BUSINESS } from "@/content/business";
+import { BANK_TRANSFER_ENABLED, BUSINESS } from "@/content/business";
 import { getCatalogue } from "@/features/catalogue";
 import { REGIONS } from "@/fixtures/geography/regions";
 
-const TINT: Record<string, string> = {
-  "palm-oil": "bg-ember-tint",
-  tapioca: "bg-ochre-tint",
-  garri: "bg-leaf-tint",
-};
-const CATEGORY_PHOTO: Record<
-  string,
-  { src: string; w: number; h: number; alt: string }
-> = {
-  "palm-oil": {
-    src: "/products/palm-oil-lineup.webp",
-    w: 500,
-    h: 330,
-    alt: "Bottles of Laddex palm oil with red caps",
+const WAYS_TO_BUY = [
+  {
+    eyebrow: "For the household",
+    title: "Buy a pack at list price",
+    body: "Choose a size, then check delivery for your address.",
+    href: "/shop",
   },
-  tapioca: {
-    src: "/products/tapioca-flakes.webp",
-    w: 250,
-    h: 330,
-    alt: "Pouch of Laddex tapioca flakes",
+  {
+    eyebrow: "For shops and resellers",
+    title: "Buy in volume, priced in tiers",
+    body: "Price breaks are indicative. Request a current wholesale quote before ordering.",
+    href: "/wholesale",
   },
-  garri: {
-    src: "/products/garri-shelf.webp",
-    w: 268,
-    h: 250,
-    alt: "Garri Igbo and Ijebu Garri pouches on a shelf",
+  {
+    eyebrow: "For events and gifts",
+    title: "Souvenirs in numbers",
+    body: "Small sizes in bulk for weddings, ceremonies and corporate gifts, quoted per event.",
+    href: "/events",
   },
-};
+] as const;
 
 export default async function HomePage() {
-  const catalogue = getCatalogue();
-  const [products, categories] = await Promise.all([
-    catalogue.listProducts(),
-    catalogue.listCategories(),
-  ]);
+  const products = await getCatalogue().listProducts();
   const hasIllustrativeProducts = products.some((product) =>
     product.variants.some((variant) => variant.dataStatus === "illustrative"),
   );
   const paymentsEnabled = process.env.NEXT_PUBLIC_ENABLE_PAYSTACK === "true";
   const stateCount = REGIONS.reduce((n, r) => n + r.stateIds.length, 0);
 
+  const intro = paymentsEnabled
+    ? "Buy a single pack online, or buy in volume to resell."
+    : BANK_TRANSFER_ENABLED
+      ? "Choose your packs, pay by bank transfer and upload your receipt. We confirm every order."
+      : "Choose your packs, then send the order to Laddex for confirmation.";
+
   return (
     <>
-      <section className="relative overflow-hidden border-b border-line grain">
-        <div
-          aria-hidden="true"
-          className="absolute -right-24 -top-24 size-[34rem] rounded-full bg-ember-tint"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute -left-20 bottom-0 size-72 rounded-full bg-leaf-tint"
-        />
-        <div className="wrap relative grid gap-12 lg:grid-cols-[1.05fr_1fr] pt-12 pb-16 lg:pt-20 lg:pb-24 items-center">
+      <section className="border-b border-line">
+        <div className="wrap grid gap-10 pt-10 pb-12 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-16 lg:pt-20 lg:pb-20">
           <div>
-            <p
-              className="hero-fade eyebrow mb-6 inline-flex items-center gap-2 rounded-full border border-line-strong bg-card/80 px-3 py-1.5"
-              style={{ ["--i" as string]: 0 }}
-            >
-              <span
-                aria-hidden="true"
-                className="size-2 rounded-full bg-leaf"
-              />{" "}
-              Request delivery availability
-            </p>
-            <h1 className="text-[3.25rem] sm:text-7xl lg:text-[6rem] leading-[0.92]">
-              <span className="hero-line">
-                <span style={{ ["--i" as string]: 0 }}>Pure.</span>
-              </span>
-              <span className="hero-line">
-                <span style={{ ["--i" as string]: 1 }}>Natural.</span>
-              </span>
-              <span className="hero-line">
-                <span
-                  className="accent text-ember"
-                  style={{ ["--i" as string]: 2 }}
-                >
-                  Royal.
-                </span>
-              </span>
+            <p className="eyebrow">Epe, Lagos State &middot; Nigeria</p>
+            <h1 className="mt-5 text-[2.75rem] leading-[1.04] sm:text-6xl lg:text-[4.5rem]">
+              <span className="block">Pure. Natural.</span>
+              <span className="accent block text-ember">Royal.</span>
             </h1>
-            <p
-              className="hero-fade mt-7 text-lg sm:text-xl text-ink-2 max-w-xl"
-              style={{ ["--i" as string]: 1 }}
-            >
+            <p className="mt-6 max-w-xl text-lg text-ink-2">
               Palm oil, tapioca flakes, Garri Igbo and Ijebu Garri, for your
-              kitchen, your shop or your event. {paymentsEnabled
-                ? "Buy a single pack online, or buy in volume to resell."
-                : "Choose your packs, then send the order to Laddex for confirmation."}
+              kitchen, your shop or your event. {intro}
             </p>
-            <div
-              className="hero-fade mt-9 flex flex-wrap gap-3"
-              style={{ ["--i" as string]: 2 }}
-            >
-              <ButtonLink href="/shop">Shop all products</ButtonLink>
-              <ButtonLink href="/wholesale" variant="ink">
+            <div className="mt-8 flex flex-wrap gap-3">
+              <ButtonLink href="/shop">Shop products</ButtonLink>
+              <ButtonLink href="/wholesale" variant="line">
                 Buy to resell
-              </ButtonLink>
-              <ButtonLink href="/events" variant="quiet">
-                Souvenirs and events &rarr;
               </ButtonLink>
             </div>
           </div>
-          <div className="relative min-h-[26rem] sm:min-h-[32rem]">
-            <div
-              className="drift absolute right-0 top-0 w-[78%] rounded-[1.75rem] overflow-hidden border-4 border-card shadow-pop"
-              style={{ ["--r" as string]: "2deg", ["--i" as string]: 0 }}
-            >
+          <figure>
+            <div className="overflow-hidden rounded-lg border border-line bg-paper-2">
               <Image
                 src="/products/palm-oil-lineup.webp"
                 alt="Bottles of Laddex palm oil with red caps"
                 width={500}
                 height={330}
                 priority
-                className="w-full h-auto"
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                className="aspect-[3/2] w-full object-cover"
               />
             </div>
-            <div
-              className="drift absolute left-0 bottom-0 w-[44%] rounded-[1.5rem] overflow-hidden border-4 border-card shadow-pop"
-              style={{ ["--r" as string]: "-4deg", ["--i" as string]: 1 }}
-            >
-              <Image
-                src="/products/garri-shelf.webp"
-                alt="Garri Igbo, Ijebu Garri and tapioca flakes on a shelf"
-                width={268}
-                height={250}
-                className="w-full h-auto"
-              />
+            <figcaption className="mt-2 hint">
+              Palm oil, 1 L to 5 L. Sample photo supplied by Laddex.
+            </figcaption>
+          </figure>
+        </div>
+        <dl className="wrap grid divide-y divide-line border-t border-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          {[
+            [
+              "Retail and wholesale",
+              "Single packs for households, volume tiers for resellers.",
+            ],
+            [
+              "Delivery on request",
+              "Estimated by weight and region, confirmed by Laddex.",
+            ],
+            ["Visit the Epe store", `${BUSINESS.address}. Please book first.`],
+          ].map(([term, detail]) => (
+            <div key={term} className="py-4 sm:px-5 sm:first:pl-0">
+              <dt className="font-display text-base font-semibold">{term}</dt>
+              <dd className="mt-1 text-sm text-ink-2">{detail}</dd>
             </div>
-            <div
-              className="drift absolute right-4 bottom-6 w-[32%] rounded-[1.5rem] overflow-hidden border-4 border-card shadow-pop"
-              style={{ ["--r" as string]: "3deg", ["--i" as string]: 2 }}
-            >
-              <Image
-                src="/products/tapioca-flakes.webp"
-                alt="Laddex tapioca flakes pouch"
-                width={250}
-                height={330}
-                className="w-full h-auto"
-              />
-            </div>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 120 120"
-              className="spin-slow absolute left-[34%] top-[8%] size-28 sm:size-32 text-ink"
-            >
-              <defs>
-                <path
-                  id="ring"
-                  d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"
-                />
-              </defs>
-              <circle cx="60" cy="60" r="56" fill="var(--color-ochre)" />
-              <text
-                fontSize="11.5"
-                fontWeight="700"
-                letterSpacing="2.4"
-                fill="currentColor"
-                fontFamily="var(--font-mono)"
-              >
-                <textPath href="#ring">PALM OIL · GARRI · TAPIOCA · </textPath>
-              </text>
-              <circle cx="60" cy="60" r="12" fill="var(--color-ember)" />
-            </svg>
-            <p className="absolute -bottom-2 left-0 hint">
-              Sample photos supplied by Laddex.
-            </p>
-          </div>
-        </div>
+          ))}
+        </dl>
       </section>
 
-      <Marquee
-        className="bg-ink text-paper py-4"
-        items={[
-          "Palm oil",
-          "Garri Igbo",
-          "Ijebu Garri",
-          "Tapioca flakes",
-          "Delivery availability on request",
-          "Retail and wholesale",
-          "Souvenirs and events",
-        ]}
-      />
-
-      <section className="wrap pt-20" aria-labelledby="about">
-        <div className="rv grid gap-8 lg:grid-cols-[1fr_1.3fr] items-start">
-          <div>
-            <p className="eyebrow mb-3">About Laddex</p>
-            <h2 id="about" className="text-3xl md:text-4xl">
-              A Nigerian supplier of everyday staples
-            </h2>
-          </div>
-          <div className="text-ink-2 space-y-4 text-base md:text-lg">
-            <p>
-              {BUSINESS.name} supplies{" "}
-              {BUSINESS.products.slice(0, -1).join(", ").toLowerCase()} and{" "}
-              {BUSINESS.products[BUSINESS.products.length - 1].toLowerCase()}.
-              The same stock serves {BUSINESS.buyers.join(", ").toLowerCase()}.
-            </p>
-            <p>
-              Ask Laddex to confirm delivery availability for your location.
-              Illustrative estimates are based on weight and region and must be
-              confirmed before you buy.
-            </p>
-            <Link
-              href="/contact"
-              className="inline-block underline underline-offset-4 text-ink font-medium"
-            >
-              Ask a question or request a quote
-            </Link>
-            {BUSINESS.address && (
-              <p className="pt-2 border-t border-line">
-                <span className="font-medium text-ink">
-                  Visit the Epe store:
-                </span>{" "}
-                {BUSINESS.address} &middot; {BUSINESS.hours}{" "}
-                <Link
-                  href="/contact#visit"
-                  className="underline underline-offset-4 text-ink font-medium"
-                >
-                  Map &amp; directions
-                </Link>
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="wrap pt-16">
-        <div className="rv">
-          <SectionHeading
-            eyebrow="Products"
-            title={
-              <>
-                What we <span className="accent text-ember">supply</span>
-              </>
-            }
-          />
-        </div>
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {categories.map((c, index) => {
-            const ph = CATEGORY_PHOTO[c.id];
-            return (
-              <Link
-                key={c.id}
-                href={`/shop/${c.id}`}
-                style={{ ["--i" as string]: index }}
-                className="rv group panel lift overflow-hidden flex flex-col rounded-[1.5rem]"
-              >
-                <div className={`aspect-[4/3] overflow-hidden ${TINT[c.id]}`}>
-                  <Image
-                    src={ph.src}
-                    alt={ph.alt}
-                    width={ph.w}
-                    height={ph.h}
-                    className="w-full h-full object-cover transition-transform duration-[var(--d-slow)] group-hover:scale-[1.07]"
-                  />
-                </div>
-                <div className="p-5">
-                  <h3 className="text-3xl flex items-center justify-between">
-                    {c.name}
-                    <span
-                      aria-hidden="true"
-                      className="text-ember transition-transform duration-300 group-hover:translate-x-1"
-                    >
-                      →
-                    </span>
-                  </h3>
-                  <p className="mono text-xs uppercase tracking-wider text-ink-3 mt-1">
-                    {c.tagline}
-                  </p>
-                  <p className="mt-2 text-sm text-ink-2">{c.blurb}</p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="wrap pt-16">
+      <section className="wrap pt-16" aria-labelledby="range">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionHeading
-            eyebrow="Start here"
-            title="Pick a size and add to cart"
+            eyebrow="The range"
+            title={<span id="range">Choose a product and size</span>}
           >
-            Each card follows the size you choose, with its own price and stock.
+            Each card follows the size you pick, with its own price and stock.
           </SectionHeading>
           <Link href="/shop" className="btn btn-line">
             See every product
           </Link>
         </div>
-        <div className="mt-8 grid gap-3 sm:gap-5 grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           {products.map((p, i) => (
             <ProductCard key={p.id} product={p} priority={i < 2} />
-          ))}
-        </div>
-      </section>
-
-      <section className="wrap pt-24" aria-labelledby="ways">
-        <SectionHeading
-          eyebrow="Three ways to buy"
-          title={
-            <span id="ways">
-              One catalogue, <span className="accent text-ember">three</span>{" "}
-              kinds of customer
-            </span>
-          }
-        />
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {[
-            [
-              "For the household",
-              "Buy a pack at list price",
-              "Choose a size, then request delivery availability for your address.",
-              "/shop",
-              "Browse products",
-            ],
-            [
-              "For shops and resellers",
-              "Buy in volume, priced in tiers",
-              "Catalogue price breaks are indicative. Request a current wholesale quote before ordering.",
-              "/wholesale",
-              "Wholesale pricing",
-            ],
-            [
-              "For events and gifts",
-              "Souvenirs in numbers",
-              "Small sizes in bulk for weddings, ceremonies and corporate gifts, quoted per event.",
-              "/events",
-              "Plan an event",
-            ],
-          ].map(([eyebrow, title, body, href, cta], i) => (
-            <div
-              key={title}
-              style={{ ["--i" as string]: i }}
-              className={`rv lift p-6 sm:p-8 flex flex-col rounded-[1.5rem] ${i === 1 ? "bg-rail text-rail-text" : i === 2 ? "bg-leaf-tint border border-line" : "bg-ember-tint border border-line"}`}
-            >
-              <p className={`eyebrow ${i === 1 ? "!text-rail-text/70" : ""}`}>
-                {eyebrow}
-              </p>
-              <h3
-                className={`text-3xl mt-2 ${i === 1 ? "!text-rail-text" : ""}`}
-              >
-                {title}
-              </h3>
-              <p
-                className={`mt-3 ${i === 1 ? "text-rail-text/85" : "text-ink-2"}`}
-              >
-                {body}
-              </p>
-              <div className="mt-auto pt-6">
-                <ButtonLink href={href} variant={i === 1 ? "primary" : "line"}>
-                  {cta}
-                </ButtonLink>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section
-        className="mt-24 bg-rail text-rail-text relative overflow-hidden"
-        aria-label="Locations available for delivery checks"
-      >
-        <div className="wrap py-14 grid gap-10 sm:grid-cols-3 text-center">
-          {[
-            [stateCount, "states and the FCT", "Search across"],
-            [774, "local government areas", "Check by"],
-            [REGIONS.length, "illustrative regions", "Estimates grouped into"],
-          ].map(([n, label, lead], i) => (
-            <div
-              key={String(label)}
-              className="rv-scale"
-              style={{ ["--i" as string]: i }}
-            >
-              <p className="eyebrow !text-rail-text/70">{lead}</p>
-              <p className="font-display font-extrabold text-7xl sm:text-8xl text-ochre leading-none mt-2">
-                <CountUp to={Number(n)} />
-              </p>
-              <p className="mt-2 text-lg">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="wrap pt-24">
-        <SectionHeading
-          eyebrow="Sizes and prices"
-          title="Every pack, side by side"
-        >
-          Priced per litre or per kilo, so a small bottle and a large sack
-          compare directly.
-        </SectionHeading>
-        <div className="mt-8 grid gap-6">
-          {products.map((p) => (
-            <PackTable key={p.id} product={p} />
           ))}
         </div>
         {hasIllustrativeProducts && (
@@ -424,17 +134,79 @@ export default async function HomePage() {
         )}
       </section>
 
+      <section className="wrap pt-20" aria-labelledby="about">
+        <div className="grid items-start gap-6 lg:grid-cols-[1fr_1.3fr] lg:gap-12">
+          <div>
+            <p className="eyebrow mb-3">About Laddex</p>
+            <h2 id="about" className="text-3xl md:text-4xl">
+              A Nigerian supplier of everyday staples
+            </h2>
+          </div>
+          <div className="space-y-4 text-base text-ink-2 md:text-lg">
+            <p>
+              {BUSINESS.name} supplies{" "}
+              {BUSINESS.products.slice(0, -1).join(", ").toLowerCase()} and{" "}
+              {BUSINESS.products[BUSINESS.products.length - 1].toLowerCase()}.
+              The same stock serves {BUSINESS.buyers.join(", ").toLowerCase()}.
+            </p>
+            <p className="text-base">
+              <span className="font-medium text-ink">Visit the store:</span>{" "}
+              {BUSINESS.address}. {BUSINESS.hours}{" "}
+              <Link
+                href="/contact#visit"
+                className="font-medium text-ink underline underline-offset-4"
+              >
+                Map and directions
+              </Link>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="wrap pt-20" aria-labelledby="ways">
+        <SectionHeading
+          eyebrow="Three ways to buy"
+          title={<span id="ways">One catalogue, three kinds of customer</span>}
+        />
+        <ul className="mt-6 divide-y divide-line border-y border-line">
+          {WAYS_TO_BUY.map((w) => (
+            <li key={w.title}>
+              <Link
+                href={w.href}
+                className="group flex items-start justify-between gap-6 py-6"
+              >
+                <span>
+                  <span className="eyebrow block">{w.eyebrow}</span>
+                  <span className="mt-1 block font-display text-xl font-semibold sm:text-2xl">
+                    {w.title}
+                  </span>
+                  <span className="mt-1 block max-w-xl text-ink-2">
+                    {w.body}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="mt-2 text-xl text-ember transition-transform duration-200 group-hover:translate-x-1"
+                >
+                  &rarr;
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="wrap pt-20" aria-labelledby="deliv">
-        <div className="rv-scale panel grid lg:grid-cols-[1fr_1.1fr] overflow-hidden">
-          <div className="p-6 sm:p-10 flex flex-col">
+        <div className="panel grid overflow-hidden lg:grid-cols-[1fr_1.1fr]">
+          <div className="flex flex-col p-6 sm:p-10">
             <p className="eyebrow">Delivery</p>
-            <h2 id="deliv" className="text-3xl md:text-4xl mt-2">
-              Check delivery availability
+            <h2 id="deliv" className="mt-2 text-3xl md:text-4xl">
+              Delivery across Nigeria
             </h2>
             <p className="mt-3 text-ink-2">
               Search all {stateCount} states including the FCT. Pick your state
-              and local government area to see an illustrative estimate, then
-              confirm that delivery is available with Laddex.
+              and local government area to see an estimate, then confirm that
+              delivery is available with Laddex.
             </p>
             <form
               action="/delivery"
@@ -458,58 +230,24 @@ export default async function HomePage() {
               className="mt-6"
               title="Sample delivery rates"
             >
-              Regional rates are placeholders used to build the interface. They
-              will be replaced by Laddex&rsquo;s confirmed rates.
+              Regional rates are placeholders until Laddex confirms its own.
             </Notice>
           </div>
-          <div className="bg-paper-2 p-6 sm:p-10 grid place-items-center border-t lg:border-t-0 lg:border-l border-line">
+          <div className="hidden place-items-center border-l border-line bg-paper-2 p-10 lg:grid">
             <RegionSketch className="w-full max-w-lg" />
           </div>
         </div>
       </section>
 
       <section className="wrap pt-20">
-        <SectionHeading
-          eyebrow="How pricing and delivery work"
-          title="What this store will and will not tell you"
-        />
-        <dl className="mt-8 grid gap-px bg-line border border-line rounded-md overflow-hidden sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            [
-              "Unit price always shown",
-              "Each pack lists its price per litre or kilo next to the pack price.",
-            ],
-            [
-              "Wholesale tiers need confirmation",
-              "Volume prices are illustrative until Laddex provides a current quote.",
-            ],
-            [
-              "Delivery is estimated, not promised",
-              "A fee appears where a rate is configured. Otherwise you get a written quote.",
-            ],
-            [
-              "Data is labelled",
-              "Sample prices, stock and photos are marked until Laddex confirms them.",
-            ],
-          ].map(([t, d]) => (
-            <div key={t} className="bg-card p-5">
-              <dt className="font-display text-lg">{t}</dt>
-              <dd className="mt-2 text-sm text-ink-2">{d}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      <section className="wrap pt-20">
-        <div className="rv panel p-8 sm:p-12 flex flex-wrap items-center justify-between gap-5 bg-ochre-tint">
-          <div>
-            <h2 className="text-4xl">
-              Questions or a <span className="accent text-ember">large</span>{" "}
-              order?
+        <div className="flex flex-wrap items-center justify-between gap-6 rounded-lg bg-rail p-6 text-rail-text sm:p-10">
+          <div className="max-w-xl">
+            <h2 className="text-3xl text-rail-text sm:text-4xl">
+              Questions or a large order?
             </h2>
-            <p className="mt-2 text-ink-2">
-              Send the details to Laddex on WhatsApp to request availability,
-              price and delivery information.
+            <p className="mt-2 text-rail-text/80">
+              Send the details to Laddex to request availability, price and
+              delivery information.
             </p>
           </div>
           <ButtonLink href="/contact">Contact us</ButtonLink>

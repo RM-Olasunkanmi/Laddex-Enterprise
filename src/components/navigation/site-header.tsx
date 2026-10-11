@@ -40,7 +40,7 @@ export function Wordmark({
         width={size}
         height={size}
         priority
-        className="rounded-full"
+        className="rounded-sm"
       />
       <span className="font-display text-[1.5rem] leading-none tracking-tight font-semibold max-[359px]:sr-only">
         Laddex<span className="text-ember">.</span>

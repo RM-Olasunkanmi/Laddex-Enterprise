@@ -10,6 +10,7 @@ import { useCart } from "@/components/commerce/use-customer-pricing";
 import { Notice, Tag } from "@/components/lx/primitives";
 import { ProductPhoto } from "@/components/product/product-photo";
 import { WhatsAppOrderButton } from "@/components/store/whatsapp-order";
+import { CHECKOUT_LIVE } from "@/content/business";
 import { clearCart, removeFromCart, setQty } from "@/features/cart/store";
 import { pricePerBaseUnit, activeTier } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
@@ -176,7 +177,7 @@ export function CartView() {
       <div className="space-y-4">
         <OrderSummary showLines={false} />
         <Link href="/order" className="btn btn-primary w-full">
-          Continue to checkout preview
+          {CHECKOUT_LIVE ? "Continue to checkout" : "Continue to checkout preview"}
         </Link>
         <WhatsAppOrderButton />
         <Link href="/delivery" className="btn btn-line w-full">

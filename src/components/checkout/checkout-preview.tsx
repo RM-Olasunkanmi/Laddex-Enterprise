@@ -61,7 +61,7 @@ export function CheckoutPreview() {
       <div className="panel p-10 text-center max-w-xl mx-auto">
         <p className="font-display text-3xl">Nothing to check out</p>
         <p className="mt-2 text-ink-2">
-          Add a pack first. The checkout preview needs a cart.
+          Add a pack first. Checkout needs something in your cart.
         </p>
         <Link href="/shop" className="btn btn-ink mt-6">
           Browse packs

@@ -1,7 +1,6 @@
-import "@fontsource-variable/bricolage-grotesque/index.css";
+import "@fontsource-variable/fraunces/index.css";
+import "@fontsource-variable/fraunces/wght-italic.css";
 import "@fontsource-variable/plus-jakarta-sans/index.css";
-import "@fontsource/instrument-serif/400.css";
-import "@fontsource/instrument-serif/400-italic.css";
 import "@fontsource-variable/jetbrains-mono/index.css";
 import "@/styles/laddex.css";
 

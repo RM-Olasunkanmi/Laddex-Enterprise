@@ -38,7 +38,7 @@ export function ProductCard({
   const out = variant.stock.status === "out-of-stock";
 
   return (
-    <article className="group lift flex flex-col bg-card border border-line rounded-[1.5rem] overflow-hidden">
+    <article className="group lift flex flex-col bg-card border border-line rounded-lg overflow-hidden">
       <Link
         href={href}
         className="relative block"
@@ -82,7 +82,7 @@ export function ProductCard({
                   checked={sel}
                   onChange={() => setId(v.id)}
                 />
-                <span className={`inline-flex min-h-9 min-w-11 items-center justify-center px-2.5 rounded-full border text-sm mono transition-transform duration-200 active:scale-95 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 ${sel ? "border-ember bg-ember-tint text-ink" : "border-line-strong bg-card hover:border-ink"} ${sold && !sel ? "border-dashed text-ink-3" : ""}`}>
+                <span className={`inline-flex min-h-9 min-w-11 items-center justify-center px-2.5 rounded-sm border text-sm mono transition-transform duration-200 active:scale-95 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 ${sel ? "border-ember bg-ember-tint text-ink" : "border-line-strong bg-card hover:border-ink"} ${sold && !sel ? "border-dashed text-ink-3" : ""}`}>
                   {packLabel(v)}
                 </span>
               </label>

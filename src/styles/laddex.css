@@ -33,19 +33,17 @@
   --color-rail-line: #38332c;
   --color-rail-text: #e9e2d3;
 
-  --font-display:
-    "Bricolage Grotesque Variable", "Plus Jakarta Sans Variable", system-ui,
-    sans-serif;
-  --font-accent: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --font-accent: "Fraunces Variable", Georgia, "Times New Roman", serif;
   --font-sans:
     "Plus Jakarta Sans Variable", system-ui, -apple-system, "Segoe UI",
     sans-serif;
   --font-mono:
     "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
 
   --shadow-rule: 0 1px 0 rgba(23, 20, 15, 0.08);
   --shadow-raised:
@@ -182,10 +180,11 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.035em;
-    line-height: 1.02;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
     text-wrap: balance;
+    font-optical-sizing: auto;
   }
   :focus-visible {
     outline: 2px solid var(--color-ink);
@@ -252,11 +251,12 @@
     min-height: 2.75rem;
     padding: 0 1.125rem;
     border: 1px solid transparent;
-    border-radius: 999px;
-    font-weight: 700;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
     font-size: 0.9375rem;
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.2;
+    text-align: center;
+    padding-block: 0.5rem;
     position: relative;
     overflow: hidden;
     transition:
@@ -272,34 +272,11 @@
     opacity: 0.5;
   }
   .btn-primary {
-    background: linear-gradient(
-      135deg,
-      var(--color-ember),
-      var(--color-ember-deep)
-    );
+    background: var(--color-ember);
     color: var(--color-on-ember);
-    box-shadow: 0 6px 16px -8px var(--color-ember);
   }
   .btn-primary:hover:not(:disabled) {
-    box-shadow: 0 10px 22px -8px var(--color-ember);
-    transform: translateY(-1px);
-  }
-  /* A light sweep crosses primary buttons on hover. */
-  .btn-primary::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      100deg,
-      transparent 30%,
-      rgb(255 255 255 / 0.28) 50%,
-      transparent 70%
-    );
-    transform: translateX(-120%);
-  }
-  .btn-primary:hover:not(:disabled)::after {
-    transform: translateX(120%);
-    transition: transform 650ms var(--ease);
+    background: var(--color-ember-deep);
   }
   .btn-ink {
     background: var(--color-ink);
@@ -518,7 +495,6 @@
   font-family: var(--font-accent);
   font-style: italic;
   font-weight: 400;
-  letter-spacing: -0.01em;
 }
 .grain::before {
   content: "";
@@ -686,8 +662,7 @@
     border-color 200ms var(--ease);
 }
 .lift:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-pop);
+  border-color: var(--color-line-strong);
 }
 .link-grow {
   background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px
