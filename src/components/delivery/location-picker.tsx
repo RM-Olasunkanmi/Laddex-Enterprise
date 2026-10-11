@@ -6,6 +6,7 @@ import { CoverageBadge } from "./coverage-badge";
 
 import type {
   DeliveryLocation,
+  DeliveryOption,
   GeocodeResult,
   LngLat,
   LocationResolution,
@@ -444,7 +445,7 @@ export function LocationPicker({
 
   const addressOk = addressLine.trim().length >= 5;
 
-  const estimate = resolution
+  const sampleEstimate = resolution
     ? estimateDelivery({ resolution, weightKg })
     : null;
   const confirmed = !!(
@@ -462,6 +463,38 @@ export function LocationPicker({
       resolution,
     );
   };
+
+  // Fees come from the server, which knows whether owner-approved delivery zones exist. Until it
+  // answers (or if it cannot be reached) no amount is shown: only "pending confirmation".
+  const [server, setServer] = useState<{
+    key: string;
+    isLive: boolean;
+    options: DeliveryOption[];
+  } | null>(null);
+  const serverKey =
+    confirmed && pin ? `${pin.position.lng},${pin.position.lat},${weightKg}` : "";
+  useEffect(() => {
+    if (!serverKey || !pin) return;
+    let live = true;
+    fetch("/api/delivery/estimate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ position: pin.position, weightKg }),
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((b: { isLive: boolean; estimate: { options: DeliveryOption[] } }) => {
+        if (live) setServer({ key: serverKey, isLive: b.isLive, options: b.estimate.options });
+      })
+      .catch(() => {
+        if (live) setServer({ key: serverKey, isLive: false, options: sampleEstimate?.options ?? [] });
+      });
+    return () => {
+      live = false;
+    };
+    // sampleEstimate is derived from the same inputs as serverKey.
+  }, [serverKey]);
+  const estimate = server && server.key === serverKey ? server : null;
+  const ratesLive = !!estimate?.isLive;
 
   const hoveredState = hover ? states?.find((s) => s.id === hover) : null;
   const hoveredRegion = hover ? regionOfState(hover) : null;
@@ -769,9 +802,9 @@ export function LocationPicker({
           <section aria-labelledby="opts" className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 id="opts" className="!text-xl">
-                Illustrative delivery options
+                Delivery options
               </h2>
-              <Tag tone="sample">Sample rates</Tag>
+              {!ratesLive && <Tag tone="warning">Fees pending confirmation</Tag>}
             </div>
             <p className="hint">
               For{" "}
@@ -793,22 +826,26 @@ export function LocationPicker({
                   aria-checked={chosen === o.id}
                   disabled={!o.available}
                   onClick={() => setDeliveryOption(o.id)}
-                  className={`w-full text-left p-3 rounded-md border min-h-[4rem] ${chosen === o.id ? "border-ember border-2 bg-ember-tint/50" : "border-line-strong bg-card hover:border-ink"} disabled:opacity-60 disabled:hover:border-line-strong`}
+                  className={`w-full text-left p-3 rounded-md border min-h-[4rem] ${chosen === o.id ? "border-forest border-2 bg-forest-tint" : "border-line-strong bg-card hover:border-ink"} disabled:opacity-60 disabled:hover:border-line-strong`}
                 >
                   <span className="flex items-baseline justify-between gap-3">
                     <span className="font-medium">{o.label}</span>
-                    <span className="mono text-sm">
-                      {o.feeKobo === null
-                        ? o.available
-                          ? "Quote"
-                          : "Unavailable"
-                        : o.feeKobo === 0
-                          ? "No charge"
-                          : formatNaira(o.feeKobo)}
+                    <span className="num text-sm">
+                      {!o.available
+                        ? "Unavailable"
+                        : o.feeKobo === null || !ratesLive
+                          ? "Quoted"
+                          : o.feeKobo === 0
+                            ? "No charge"
+                            : formatNaira(o.feeKobo)}
                     </span>
                   </span>
                   <span className="block text-xs text-ink-3 mt-1">
-                    {o.detail}
+                    {ratesLive
+                      ? o.detail
+                      : o.kind === "home-delivery" && o.available
+                        ? "We deliver here. The fee for your area is being confirmed: we quote it before you pay."
+                        : o.detail.replace(/^Sample rate[^.]*. ?/, "")}
                   </span>
                   {o.note && (
                     <span className="block text-xs text-ink-2 mt-1">
@@ -821,9 +858,9 @@ export function LocationPicker({
           </section>
         )}
         <p className="hint">
-          Delivery rates are sample values per region and order weight. They are
-          not Laddex&rsquo;s confirmed prices or coverage. Confirm availability
-          directly with Laddex; no delivery time is promised.
+          Fees depend on the region and the order weight. Where a fee is not
+          confirmed yet we quote it before you pay. No delivery time is
+          promised.
         </p>
       </div>
 

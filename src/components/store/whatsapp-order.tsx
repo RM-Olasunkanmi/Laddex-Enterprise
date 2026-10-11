@@ -29,7 +29,14 @@ export function buildOrderMessage(
  * Sends the current cart to the store on WhatsApp — the way Epe trade
  * actually buys. Disabled on an empty cart.
  */
-export function WhatsAppOrderButton({ className = "" }: { className?: string }) {
+export function WhatsAppOrderButton({
+  className = "",
+  short = false,
+}: {
+  className?: string;
+  /** Compact label for tight spaces such as the cart drawer. */
+  short?: boolean;
+}) {
   const cart = useCart();
   const delivery = deliveryStore.use();
   if (!cart.hydrated || cart.lines.length === 0) return null;
@@ -43,7 +50,16 @@ export function WhatsAppOrderButton({ className = "" }: { className?: string }) 
       rel="noopener noreferrer"
       className={className || "btn btn-line w-full"}
     >
-      Order this cart on WhatsApp (opens in a new tab)
+      {short ? (
+        <>
+          Order on WhatsApp<span className="sr-only"> (opens in a new tab)</span>
+        </>
+      ) : (
+        <>
+          Order this cart on WhatsApp
+          <span className="sr-only"> (opens in a new tab)</span>
+        </>
+      )}
     </a>
   );
 }

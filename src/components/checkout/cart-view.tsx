@@ -7,14 +7,13 @@ import { OrderSummary } from "./order-summary";
 import { Price, UnitPrice } from "@/components/commerce/money";
 import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCart } from "@/components/commerce/use-customer-pricing";
-import { Notice, Tag } from "@/components/lx/primitives";
+import { Notice } from "@/components/lx/primitives";
 import { ProductPhoto } from "@/components/product/product-photo";
 import { WhatsAppOrderButton } from "@/components/store/whatsapp-order";
 import { CHECKOUT_LIVE } from "@/content/business";
-import { clearCart, removeFromCart, setQty } from "@/features/cart/store";
-import { pricePerBaseUnit, activeTier } from "@/features/catalogue/pricing";
+import { clearCart, MAX_LINE_QTY, removeFromCart, setQty } from "@/features/cart/store";
+import { pricePerBaseUnit } from "@/features/catalogue/pricing";
 import { packLabel } from "@/features/catalogue/selectors";
-import { ACCESS_LABEL } from "@/features/customer/types";
 import { formatNaira } from "@/lib/formatters";
 
 export function CartView() {
@@ -29,160 +28,132 @@ export function CartView() {
     );
   if (cart.lines.length === 0) {
     return (
-      <div className="panel p-10 text-center max-w-xl mx-auto">
+      <div className="rounded-lg border border-dashed border-line-strong px-6 py-14 text-center">
         <p className="font-display text-3xl">Your cart is empty</p>
-        <p className="mt-2 text-ink-2">
-          Add a pack from palm oil or tapioca, or request a wholesale quote for
-          volume.
+        <p className="mx-auto mt-2 max-w-md text-ink-2">
+          Choose a product and size from the shop, or send us a volume enquiry
+          if you are buying for a shop or an event.
         </p>
-        <div className="mt-6 flex justify-center gap-3 flex-wrap">
-          <Link href="/shop/palm-oil" className="btn btn-primary">
-            Palm oil
-          </Link>
-          <Link href="/shop/tapioca" className="btn btn-ink">
-            Tapioca
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link href="/shop" className="btn btn-primary">
+            Shop products
           </Link>
           <Link href="/wholesale/quote" className="btn btn-line">
-            Wholesale quote
+            Request a wholesale quote
           </Link>
         </div>
       </div>
     );
   }
+  const outOfStock = cart.lines.some((l) => l.variant.stock.status === "out-of-stock");
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm text-ink-2">
-            Pricing as: <strong>{ACCESS_LABEL[cart.access]}</strong>
-          </p>
+    <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
+      <div className="lg:col-span-7 xl:col-span-8">
+        {cart.missing.length > 0 && (
+          <Notice tone="warning" className="mb-4">
+            Some items are no longer in the catalogue and were left out of the
+            totals.
+          </Notice>
+        )}
+        {outOfStock && (
+          <Notice tone="warning" className="mb-4">
+            One or more sizes in your cart are out of stock. Remove them to
+            check out.
+          </Notice>
+        )}
+        <ul className="divide-y divide-line border-y border-line">
+          {cart.lines.map((l) => {
+            const max =
+              l.variant.stock.qtyAvailable > 0
+                ? Math.min(MAX_LINE_QTY, l.variant.stock.qtyAvailable)
+                : MAX_LINE_QTY;
+            const label = `${l.product.name} ${packLabel(l.variant)}`;
+            return (
+              <li
+                key={l.variant.id}
+                className="grid grid-cols-[5.5rem_1fr] gap-4 py-5 sm:grid-cols-[7rem_1fr_auto] sm:gap-6"
+              >
+                <ProductPhoto
+                  product={l.product}
+                  sizes="112px"
+                  className="aspect-square w-full rounded-md"
+                />
+                <div className="min-w-0">
+                  <Link
+                    href={`/products/${l.product.slug}?pack=${l.variant.id}`}
+                    className="font-display text-xl hover:text-forest"
+                  >
+                    {l.product.name}
+                  </Link>
+                  <p className="mt-0.5 text-sm text-ink-2">
+                    {packLabel(l.variant)} &middot;{" "}
+                    <span className="num">{formatNaira(l.price.unitPriceKobo)}</span>{" "}
+                    each
+                  </p>
+                  <UnitPrice
+                    kobo={pricePerBaseUnit(l.variant, l.price.unitPriceKobo)}
+                    unit={l.product.baseUnit}
+                  />
+                  {l.variant.stock.status === "out-of-stock" && (
+                    <p className="mt-2 text-sm text-danger" role="alert">
+                      Out of stock. Remove it to check out.
+                    </p>
+                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <QuantityStepper
+                      size="sm"
+                      label={`${label} quantity`}
+                      value={l.qty}
+                      min={1}
+                      max={max}
+                      onChange={(n) => setQty(l.variant.id, n)}
+                    />
+                    <button
+                      className="min-h-11 text-sm text-ink-2 underline underline-offset-4 hover:text-ink"
+                      onClick={() => removeFromCart(l.variant.id)}
+                      aria-label={`Remove ${label}`}
+                    >
+                      Remove
+                    </button>
+                    <Price
+                      kobo={l.totalKobo}
+                      className="ml-auto text-lg font-semibold sm:hidden"
+                    />
+                  </div>
+                </div>
+                <Price
+                  kobo={l.totalKobo}
+                  className="hidden text-xl font-semibold sm:block"
+                />
+              </li>
+            );
+          })}
+        </ul>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <Link href="/shop" className="text-link">
+            &larr; Continue shopping
+          </Link>
           <button
-            className="btn btn-quiet btn-sm underline underline-offset-4"
+            className="btn btn-quiet btn-sm text-ink-2 underline underline-offset-4"
             onClick={clearCart}
           >
             Empty cart
           </button>
         </div>
-        {cart.missing.length > 0 && (
-          <Notice tone="warning" className="mb-3">
-            Some items are no longer in the catalogue and were left out of the
-            totals.
-          </Notice>
-        )}
-        <ul className="panel divide-y divide-line list-none p-0">
-          {cart.lines.map((l) => {
-            const nextTier = l.variant.wholesaleTiers
-              .filter((t) => t.minQty > l.qty)
-              .sort((a, b) => a.minQty - b.minQty)[0];
-            const indicative =
-              cart.access !== "wholesale-approved"
-                ? activeTier(l.variant.wholesaleTiers, l.qty)
-                : null;
-            return (
-              <li
-                key={l.variant.id}
-                className="p-4 grid grid-cols-[5.5rem_1fr] sm:grid-cols-[6.5rem_1fr_auto] gap-4"
-              >
-                <ProductPhoto
-                  product={l.product}
-                  sizes="104px"
-                  className="rounded-sm h-24 w-full sm:h-26"
-                />
-                <div className="min-w-0">
-                  <Link
-                    href={`/products/${l.product.slug}?pack=${l.variant.id}`}
-                    className="font-display text-xl hover:underline underline-offset-4"
-                  >
-                    {l.product.name} {packLabel(l.variant)}
-                  </Link>
-                  <p className="mono text-xs text-ink-3 mt-1">
-                    {l.variant.sku} &middot;{" "}
-                    {formatNaira(l.price.unitPriceKobo)} each &middot;{" "}
-                    <UnitPrice
-                      kobo={pricePerBaseUnit(l.variant, l.price.unitPriceKobo)}
-                      unit={l.product.baseUnit}
-                      className="!text-xs"
-                    />
-                  </p>
-                  {l.price.basis === "account-tier" && (
-                    <p className="mt-2">
-                      <Tag tone="success">Account tier applied</Tag>
-                    </p>
-                  )}
-                  {indicative && (
-                    <p className="mt-2 text-xs text-ink-2">
-                      Approved wholesale accounts would see{" "}
-                      {formatNaira(indicative.unitPriceKobo)} per pack at this
-                      quantity (indicative).
-                    </p>
-                  )}
-                  {cart.access === "wholesale-approved" && nextTier && (
-                    <p className="mt-2 text-xs text-ink-2">
-                      Add {nextTier.minQty - l.qty} more for{" "}
-                      {formatNaira(nextTier.unitPriceKobo)} per pack.
-                    </p>
-                  )}
-                  {l.belowWholesaleMin && (
-                    <p className="mt-2 text-xs text-warning" role="alert">
-                      Below the wholesale minimum of {l.variant.wholesaleMinQty}
-                      : list price applies.
-                    </p>
-                  )}
-                  {l.variant.stock.status === "out-of-stock" && (
-                    <p className="mt-2 text-xs text-danger" role="alert">
-                      Out of stock. Remove it or request a quote.
-                    </p>
-                  )}
-                  <div className="mt-3 flex items-center gap-3 sm:hidden">
-                    <QuantityStepper
-                      size="sm"
-                      label={`${l.product.name} ${packLabel(l.variant)} quantity`}
-                      value={l.qty}
-                      min={1}
-                      onChange={(n) => setQty(l.variant.id, n)}
-                    />
-                    <Price
-                      kobo={l.totalKobo}
-                      className="font-semibold ml-auto"
-                    />
-                    <button
-                      className="text-sm underline underline-offset-4 text-ink-2 min-h-11"
-                      onClick={() => removeFromCart(l.variant.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-                <div className="hidden sm:flex flex-col items-end justify-between">
-                  <Price kobo={l.totalKobo} className="text-xl font-semibold" />
-                  <QuantityStepper
-                    size="sm"
-                    label={`${l.product.name} ${packLabel(l.variant)} quantity`}
-                    value={l.qty}
-                    min={1}
-                    onChange={(n) => setQty(l.variant.id, n)}
-                  />
-                  <button
-                    className="text-sm underline underline-offset-4 text-ink-2 min-h-11"
-                    onClick={() => removeFromCart(l.variant.id)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
       </div>
-      <div className="space-y-4">
-        <OrderSummary showLines={false} />
-        <Link href="/order" className="btn btn-primary w-full">
+      <div className="space-y-3 lg:col-span-5 xl:col-span-4">
+        <OrderSummary />
+        <Link
+          href="/order"
+          className={`btn btn-primary btn-lg w-full ${outOfStock ? "pointer-events-none opacity-50" : ""}`}
+          aria-disabled={outOfStock || undefined}
+        >
           {CHECKOUT_LIVE ? "Continue to checkout" : "Continue to checkout preview"}
         </Link>
         <WhatsAppOrderButton />
-        <Link href="/delivery" className="btn btn-line w-full">
-          Check delivery first
-        </Link>
+        <p className="pt-1 text-center text-xs text-ink-3">
+          Delivery or free pickup in Epe is chosen at checkout.
+        </p>
       </div>
     </div>
   );

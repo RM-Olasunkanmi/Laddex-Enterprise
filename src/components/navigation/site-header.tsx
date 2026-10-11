@@ -1,38 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { CartButton, MobileNavButton } from "./header-client";
+import { CartButton, MobileNavButton, PrimaryNav } from "./header-client";
 import { ThemeToggle } from "./theme-toggle";
 
-export const NAV = [
-  {
-    href: "/shop",
-    label: "Shop",
-    children: [
-      { href: "/shop/palm-oil", label: "Palm oil", note: "By the litre" },
-      { href: "/shop/tapioca", label: "Tapioca flakes", note: "By the kilo" },
-      { href: "/shop/garri", label: "Garri", note: "Igbo and Ijebu" },
-      { href: "/shop", label: "All products", note: "Compare sizes" },
-    ],
-  },
-  { href: "/wholesale", label: "Wholesale" },
-  { href: "/events", label: "Events" },
-  { href: "/delivery", label: "Delivery" },
-  { href: "/contact", label: "Contact" },
-] as const;
+export { NAV } from "./nav";
 
 export function Wordmark({
   className = "",
-  size = 44,
+  size = 40,
+  tone = "default",
 }: {
   className?: string;
   size?: number;
+  tone?: "default" | "on-dark";
 }) {
   return (
     <Link
       href="/"
-      className={`inline-flex items-center gap-2.5 text-ink ${className}`}
-      aria-label="Laddex Enterprise, home"
+      className={`inline-flex items-center gap-2.5 ${tone === "on-dark" ? "text-rail-text" : "text-ink"} ${className}`}
     >
       <Image
         src="/brand/laddex-logo.png"
@@ -40,10 +26,19 @@ export function Wordmark({
         width={size}
         height={size}
         priority
-        className="rounded-sm"
+        className="rounded-full"
       />
-      <span className="font-display text-[1.5rem] leading-none tracking-tight font-semibold max-[359px]:sr-only">
-        Laddex<span className="text-ember">.</span>
+      <span className="leading-none max-[339px]:sr-only">
+        <span className="block font-display text-[1.375rem] font-semibold tracking-tight">
+          Laddex
+        </span>
+        <span
+          className={`mt-0.5 block text-[0.5625rem] font-semibold uppercase tracking-[0.28em] ${tone === "on-dark" ? "text-rail-text/70" : "text-ink-3"}`}
+        >
+          {" "}
+          Enterprise
+        </span>
+        <span className="sr-only">, home</span>
       </span>
     </Link>
   );
@@ -51,58 +46,14 @@ export function Wordmark({
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 bg-paper/85 backdrop-blur-md border-b border-line">
-      <div className="wrap flex h-16 sm:h-[4.5rem] items-center gap-2 sm:gap-4">
-        <MobileNavButton />
+    <header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md supports-[backdrop-filter]:bg-paper/80">
+      <div className="wrap flex h-16 items-center gap-3 lg:h-[4.5rem]">
         <Wordmark />
-        <nav
-          aria-label="Primary"
-          className="hidden xl:flex items-center gap-1 ml-2"
-        >
-          {NAV.map((item) =>
-            "children" in item ? (
-              <div key={item.href} className="relative group">
-                <Link
-                  href={item.href}
-                  className="btn btn-quiet btn-sm text-[0.9375rem] link-grow"
-                >
-                  {item.label}
-                  <span aria-hidden="true" className="text-ink-3 text-xs">
-                    ▾
-                  </span>
-                </Link>
-                <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-[opacity,visibility] duration-[var(--d-base)] absolute left-0 top-full pt-2 w-64">
-                  <ul className="panel shadow-pop p-1.5">
-                    {item.children.map((c) => (
-                      <li key={c.href + c.label}>
-                        <Link
-                          href={c.href}
-                          className="flex items-baseline justify-between gap-3 px-3 py-2.5 rounded-sm hover:bg-paper-2"
-                        >
-                          <span className="font-medium">{c.label}</span>
-                          <span className="mono text-[0.6875rem] text-ink-3 uppercase tracking-wider">
-                            {c.note}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="btn btn-quiet btn-sm text-[0.9375rem] link-grow"
-              >
-                {item.label}
-              </Link>
-            ),
-          )}
-        </nav>
-        <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle />
+        <PrimaryNav />
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          <ThemeToggle className="hidden sm:inline-flex !border-transparent" />
           <CartButton />
+          <MobileNavButton />
         </div>
       </div>
     </header>

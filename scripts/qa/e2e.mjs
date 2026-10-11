@@ -1,16 +1,12 @@
 // End-to-end checks against a running server. Usage: BASE=http://localhost:3344 node scripts/qa/e2e.mjs
 // Uses the preinstalled Chromium via playwright-core. Exits non-zero if any check fails.
 import { chromium } from "playwright-core";
-import { existsSync, readdirSync, mkdirSync } from "node:fs";
+
+import { findChromium } from "./chromium.mjs";
+import { mkdirSync } from "node:fs";
 
 const BASE = process.env.BASE ?? "http://localhost:3344";
-const findChrome = () => {
-  const root = "/opt/pw-browsers";
-  for (const d of readdirSync(root))
-    for (const rel of ["chrome-linux/chrome", "chrome-linux/headless_shell"])
-      if (existsSync(`${root}/${d}/${rel}`)) return `${root}/${d}/${rel}`;
-  throw new Error("no chromium");
-};
+const findChrome = findChromium;
 const results = [];
 const consoleErrors = [];
 const check = async (name, fn) => {
@@ -76,16 +72,32 @@ const go = (page, path) =>
 // ---------- Storefront ----------
 {
   const page = await newPage();
-  await check("home: logo, headline, about, nationwide delivery, contact", async () => {
+  await check("home: logo, headline, both hero actions, delivery, store", async () => {
     await go(page, "/");
     assert(await page.locator('img[src*="laddex-logo"]').first().isVisible(), "logo missing");
-    assert(await page.getByRole("heading", { name: /Pure\. Natural\./ }).isVisible(), "headline");
-    assert(await page.getByRole("heading", { name: /everyday staples/ }).isVisible(), "about section");
+    assert(await page.getByRole("heading", { level: 1, name: /Palm oil, garri and tapioca/ }).isVisible(), "headline");
+    assert(await page.getByRole("link", { name: "Shop products" }).first().isVisible(), "primary cta");
+    assert(await page.getByRole("link", { name: "Wholesale enquiries" }).first().isVisible(), "secondary cta");
     assert(await page.getByRole("heading", { name: /Delivery across Nigeria/ }).isVisible(), "nationwide");
+    assert(await page.getByRole("heading", { name: /Our store in Epe/ }).isVisible(), "store");
     const body = await page.locator("body").innerText();
     assert(!/Lagos only|in Lagos/i.test(body), "mentions Lagos-only delivery");
     assert(!/\b25 L\b|200 L|jerrycan/i.test(body), "old litre sizes still present");
-    assert(await page.getByRole("link", { name: "Contact us" }).first().isVisible(), "contact cta");
+    await page.evaluate(async () => {
+      for (let y = 0; y < document.body.scrollHeight; y += 600) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 80));
+      }
+    });
+    await page.waitForTimeout(800);
+    const broken = await page.evaluate(() => [...document.images].filter((i) => i.complete && i.naturalWidth === 0).length);
+    assert(broken === 0, broken + " broken images");
+  });
+  await check("header: desktop nav has every section and marks the current page", async () => {
+    const nav = page.getByRole("navigation", { name: "Primary" });
+    for (const n of ["Home", "Shop", "Wholesale", "Events", "Delivery", "About"])
+      assert(await nav.getByRole("link", { name: n, exact: true }).isVisible(), n);
+    assert((await nav.getByRole("link", { name: "Home", exact: true }).getAttribute("aria-current")) === "page", "current page");
   });
   await check("home: four real products, garri included", async () => {
     for (const n of ["Palm Oil", "Tapioca Flakes", "Garri Igbo", "Ijebu Garri"])
@@ -106,16 +118,67 @@ const go = (page, path) =>
     assert((await cards.count()) === 2, "two garri products");
     const card = cards.first();
     const before = await card.innerText();
-    await card.getByRole("radio", { name: "5 kg", exact: true }).click();
+    await card.locator("label", { hasText: /^5 kg$/ }).click();
     const after = await card.innerText();
     assert(before !== after && /8,500|9,000/.test(after), "price follows size");
   });
-  await check("product page: garri pack, add to cart updates the cart", async () => {
+  await check("product page: switching size updates price and URL", async () => {
+    await go(page, "/products/palm-oil?pack=po-1l");
+    await page.locator("main label", { hasText: /^5 L/ }).first().click();
+    await page.waitForTimeout(300);
+    assert(page.url().includes("pack=po-5l"), "url follows size");
+    assert(/16,000/.test(await page.locator("main").innerText()), "5 L price shown");
+  });
+  await check("cart: add, change quantity, totals, remove", async () => {
     await go(page, "/products/garri-igbo?pack=gi-5kg");
     await page.getByRole("button", { name: /Add to cart/ }).first().click();
     await page.waitForTimeout(500);
+    assert(await page.getByRole("dialog", { name: "Cart" }).isVisible(), "drawer opens");
+    await page.keyboard.press("Escape");
     await go(page, "/cart");
-    assert((await page.locator("body").innerText()).includes("Garri Igbo"), "line in cart");
+    const main = page.locator("main");
+    assert((await main.innerText()).includes("Garri Igbo"), "line in cart");
+    await main.getByRole("button", { name: /Increase .*quantity/ }).first().click();
+    await page.waitForTimeout(300);
+    assert(/₦17,000/.test(await main.innerText()), "2 x 8,500 = 17,000");
+    await main.getByRole("button", { name: /^Remove Garri Igbo/ }).click();
+    await page.waitForTimeout(300);
+    assert(/Your cart is empty/.test(await main.innerText()), "empty after remove");
+  });
+  await check("checkout: validation, delivery by state and LGA, review, payment step", async () => {
+    await go(page, "/products/palm-oil?pack=po-5l");
+    await page.getByRole("button", { name: /Add to cart/ }).first().click();
+    await page.keyboard.press("Escape");
+    await go(page, "/order");
+    await page.getByRole("button", { name: "Continue to delivery" }).click();
+    assert((await page.getByText("Enter your full name.").count()) > 0, "name required");
+    await page.fill("#co-name", "Ada Obi");
+    await page.fill("#co-phone", "0803 123 4567");
+    await page.fill("#co-email", "ada@example.com");
+    await page.getByRole("button", { name: "Continue to delivery" }).click();
+    await page.getByRole("button", { name: "Review order" }).click();
+    assert((await page.getByText("Choose your state.").count()) > 0, "state required");
+    await page.waitForFunction(() => document.querySelectorAll("#addr-state option").length > 30, null, { timeout: 20000 });
+    await page.selectOption("#addr-state", { label: "Oyo" });
+    await page.waitForFunction(() => document.querySelectorAll("#addr-lga option").length > 5, null, { timeout: 20000 });
+    await page.selectOption("#addr-lga", { index: 2 });
+    await page.fill("#addr-street", "12 Test Street");
+    await page.getByRole("button", { name: "Review order" }).click();
+    await page.getByRole("button", { name: "Continue to payment" }).waitFor({ timeout: 15000 });
+    await page.waitForFunction(() => !/Checking prices/.test(document.body.innerText), null, { timeout: 15000 });
+    const review = await page.locator("main").innerText();
+    assert(/12 Test Street/.test(review) && /Oyo/.test(review), "address in review");
+    await page.getByRole("button", { name: "Continue to payment" }).click();
+    assert(await page.getByRole("heading", { name: "Payment" }).isVisible(), "payment step");
+    assert(await page.getByRole("link", { name: /Send order on WhatsApp/ }).isVisible(), "whatsapp route offered");
+  });
+  await check("checkout: pickup needs no address and has no delivery charge", async () => {
+    await go(page, "/order");
+    await page.getByRole("button", { name: "Continue to delivery" }).click();
+    await page.getByText("Pick up in Epe").click();
+    await page.getByRole("button", { name: "Review order" }).click();
+    await page.getByRole("button", { name: "Continue to payment" }).waitFor({ timeout: 15000 });
+    assert(/No charge \(pickup\)/.test(await page.locator("main").innerText()), "pickup no charge");
   });
   await check("delivery: choosing a state and LGA resolves nationwide", async () => {
     await go(page, "/delivery");
@@ -123,12 +186,14 @@ const go = (page, path) =>
     await page.waitForFunction(() => document.querySelector("#lga-pick option:nth-child(3)"), null, { timeout: 15000 });
     const lga = await page.locator("#lga-pick option").nth(2).innerText();
     await page.selectOption("#lga-pick", { index: 2 });
+    await page.fill("#addr-line", ""); // the checkout test above saved an address; start clean
     assert(await page.getByRole("button", { name: "Confirm this address" }).isDisabled(), "confirm needs an address");
     await page.fill("#addr-line", "12 Test Street, beside the central market");
     await page.getByRole("button", { name: "Confirm this address" }).click();
+    await page.waitForFunction(() => /Delivery options/.test(document.body.innerText), null, { timeout: 20000 });
     const body = await page.locator("body").innerText();
     assert(/Kano/.test(body) && /North West/.test(body), "state and region shown: " + lga);
-    assert(/Delivery options/.test(body) && /₦/.test(body), "delivery fee shown");
+    assert(/Delivery options/.test(body) && /(₦|Quoted)/.test(body), "delivery options shown");
   });
   await check("delivery: geolocation fills the pin, landmark chips explain offline state", async () => {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, geolocation: { latitude: 6.4584, longitude: 7.5464 }, permissions: ["geolocation"] });
@@ -151,20 +216,19 @@ const go = (page, path) =>
     const body = await page.locator("body").innerText();
     assert(/Enugu/.test(body), "Enugu result");
   });
-  await check("contact: validation, then confirmation without sending", async () => {
+  await check("contact: validation before opening WhatsApp", async () => {
     await go(page, "/contact");
-    await page.getByRole("button", { name: "Send enquiry" }).click();
+    await page.getByRole("button", { name: "Continue on WhatsApp" }).click();
     assert((await page.getByText("Enter your name").count()) > 0, "name error");
-    await page.fill("#enq-name", "Ada");
-    await page.fill("#enq-contact", "ada@example.com");
-    await page.fill("#enq-message", "Do you deliver garri to Enugu?");
-    await page.getByRole("button", { name: "Send enquiry" }).click();
-    assert((await page.getByText("Nothing was sent").count()) > 0, "honest confirmation");
   });
-  await check("events: page offers souvenirs enquiry with events topic", async () => {
+  await check("events: enquiry validates products, date and contact", async () => {
     await go(page, "/events");
-    assert(await page.getByRole("heading", { name: /useful gifts/ }).isVisible(), "heading");
-    assert((await page.locator("#enq-topic").inputValue()) === "events", "topic preselected");
+    assert(await page.getByRole("heading", { level: 1, name: /Useful gifts/ }).isVisible(), "heading");
+    await page.getByRole("button", { name: "Continue on WhatsApp" }).click();
+    for (const t of ["Choose at least one product.", "Choose the event date.", "Enter your name."])
+      assert((await page.getByText(t).count()) > 0, t);
+    await page.getByLabel("Garri Igbo", { exact: true }).check();
+    assert((await page.getByLabel("Garri Igbo pack size").count()) === 1, "pack size appears");
   });
   await check("wholesale: tier explorer defaults to a real pack and quote builder works", async () => {
     await go(page, "/wholesale");
@@ -176,7 +240,10 @@ const go = (page, path) =>
 }
 
 // ---------- Dashboard ----------
-{
+// The dashboard requires a signed-in Payload admin or analyst (Postgres). Set SKIP_DASHBOARD=1
+// when running without a database.
+if (process.env.SKIP_DASHBOARD === "1") console.log("SKIP dashboard checks (SKIP_DASHBOARD=1)");
+else {
   const page = await newPage();
   await check("dashboard overview: nationwide KPIs and reach", async () => {
     await go(page, "/dashboard");
@@ -271,7 +338,7 @@ const go = (page, path) =>
     const rp = await newPage();
     await rp.emulateMedia({ reducedMotion: "reduce" });
     await go(rp, "/");
-    const op = await rp.evaluate(() => getComputedStyle(document.querySelector(".rv")).opacity);
+    const op = await rp.evaluate(() => getComputedStyle(document.querySelector(".hero-fade")).opacity);
     assert(op === "1", "reveal element visible, opacity " + op);
     await rp.context().close();
   });
@@ -293,12 +360,23 @@ const go = (page, path) =>
 {
   const page = await newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await check("mobile: no horizontal overflow on key pages", async () => {
-    for (const r of ["/", "/shop", "/contact", "/events", "/delivery", "/dashboard", "/dashboard/insights"]) {
+    for (const r of ["/", "/shop", "/products/palm-oil", "/cart", "/order", "/wholesale", "/about", "/contact", "/events", "/delivery", ...(process.env.SKIP_DASHBOARD === "1" ? [] : ["/dashboard", "/dashboard/insights"])]) {
       await go(page, r);
       await page.waitForTimeout(800);
       const o = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       assert(o <= 1, `${r} overflows by ${o}px`);
     }
+  });
+  await check("mobile: menu opens, lists every section, closes with Escape", async () => {
+    await go(page, "/");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const menu = page.getByRole("dialog", { name: "Menu" });
+    assert(await menu.isVisible(), "menu open");
+    for (const n of ["Shop", "Wholesale", "Events", "Delivery", "About"])
+      assert(await menu.getByRole("link", { name: n, exact: true }).isVisible(), n);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+    assert(!(await menu.isVisible()), "menu closed");
   });
   await page.context().close();
 }

@@ -16,10 +16,10 @@ The storefront and dashboard need no database. The starter's Payload admin and l
 
 | Route                                                               | What it is                                                                                                                             |
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                                                                 | Homepage with About, products, three ways to buy, nationwide delivery                                                                  |
+| `/`, `/about`                                                       | Homepage (hero, products, ways to buy, what to expect, events, delivery, store); About                                                   |
 | `/shop`, `/shop/palm-oil`, `/shop/tapioca`, `/shop/garri`           | Catalogue                                                                                                                              |
 | `/products/garri-igbo?pack=gi-25kg`                                 | Product page (also `palm-oil`, `tapioca-flakes`, `garri-ijebu`)                                                                        |
-| `/cart`, `/order`, `/order/confirmation`                            | Cart and checkout preview                                                                                                              |
+| `/cart`, `/order`, `/order/confirmation`                            | Cart and four-step checkout: details, delivery or pickup, review, payment (bank transfer with receipt, or WhatsApp)                    |
 | `/delivery`                                                         | Nationwide: search, state and LGA selects, map pin, delivery options                                                                   |
 | `/wholesale`, `/wholesale/quote`, `/wholesale/register`, `/account` | Wholesale and account                                                                                                                  |
 | `/events`                                                           | Souvenirs and bulk gifts, with enquiry form                                                                                            |
@@ -34,9 +34,13 @@ Review helpers: the black strip at the top of the storefront switches between gu
 
 ```bash
 pnpm typecheck && pnpm lint
-pnpm test                                  # 125 unit tests
+pnpm test                                  # unit tests
 pnpm build && pnpm start -p 3355 &
-BASE=http://localhost:3355 pnpm test:e2e   # 25 browser checks (Chromium via playwright-core)
+BASE=http://localhost:3355 pnpm test:e2e   # browser checks (Chromium via playwright-core)
+# Without a database, add SKIP_DASHBOARD=1 (the dashboard needs a signed-in staff user).
+# Build locally with LADDEX_CATALOGUE_SOURCE=fixture when no Postgres is running.
+# QA scripts find Chromium in /opt/pw-browsers or Playwright's cache on Linux, macOS and Windows,
+# or use CHROMIUM_PATH.
 BASE=http://localhost:3355 node scripts/qa/a11y.mjs        # axe, add MOBILE=1 for phone width or DARK=1 for dark theme
 BASE=http://localhost:3355 node scripts/qa/perf.mjs
 BASE=http://localhost:3355 node scripts/qa/gallery.mjs     # refresh /screenshots

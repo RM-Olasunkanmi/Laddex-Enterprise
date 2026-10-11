@@ -18,6 +18,7 @@ const staticRoutes = [
   "/wholesale",
   "/events",
   "/delivery",
+  "/about",
   "/contact",
 ];
 

@@ -12,7 +12,7 @@ export function Price({
   return <span className={`num ${className ?? ""}`}>{formatNaira(kobo)}</span>;
 }
 
-/** "₦3,400 / L": unit price lines are always mono so columns of them align. */
+/** "₦3,400 per L": tabular figures so columns of them align. */
 export function UnitPrice({
   kobo,
   unit,
@@ -23,8 +23,8 @@ export function UnitPrice({
   className?: string;
 }) {
   return (
-    <span className={`mono text-[0.8125rem] text-ink-3 ${className ?? ""}`}>
-      {formatNaira(kobo)} / {unit === "l" ? "L" : "kg"}
+    <span className={`num text-[0.8125rem] text-ink-3 ${className ?? ""}`}>
+      {formatNaira(kobo)} per {unit === "l" ? "litre" : "kg"}
     </span>
   );
 }

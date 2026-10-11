@@ -14,7 +14,7 @@ import type {
 import type { CustomerAccess } from "@/features/customer/types";
 import type { Kobo, Unit } from "@/lib/formatters";
 
-import { CATEGORIES } from "@/fixtures/products/products";
+import { CATEGORIES, PRODUCTS } from "@/fixtures/products/products";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -67,6 +67,18 @@ function toVariant(v: Doc, productId: string, includeTiers: boolean): PackVarian
   };
 }
 
+/**
+ * Without a storage provider, Payload keeps uploads on the local disk of whichever machine ran the
+ * upload. A serverless deployment (Vercel) does not have those files, so every /api/*-media/file URL
+ * fails there. In that case, and when a product has no gallery at all, use the same photographs
+ * bundled in /public/products (the files the media seed uploads), matched by product slug.
+ */
+const UPLOADS_UNREACHABLE = !process.env.STORAGE_PROVIDER && !!process.env.VERCEL;
+
+function bundledPhotographs(slug: string): Product["photographs"] {
+  return PRODUCTS.find((f) => f.slug === slug)?.photographs ?? [];
+}
+
 function toProduct(p: Doc, variants: PackVariant[]): Product | null {
   const l = p?.laddex;
   if (!l?.category || !l?.baseUnit) return null;
@@ -90,9 +102,15 @@ function toProduct(p: Doc, variants: PackVariant[]): Product | null {
         }];
       })
     : [];
+  const slug = String(p.slug ?? p.id);
+  const bundled = bundledPhotographs(slug);
+  const usable =
+    (UPLOADS_UNREACHABLE || photographs.length === 0) && bundled.length > 0
+      ? bundled
+      : photographs;
   return {
-    id: String(p.slug ?? p.id),
-    slug: String(p.slug ?? p.id),
+    id: slug,
+    slug,
     category,
     name: String(p.title ?? "Untitled"),
     unitKind: l.baseUnit === "l" ? "volume" : "mass",
@@ -105,7 +123,7 @@ function toProduct(p: Doc, variants: PackVariant[]): Product | null {
     packagingNotes: textItems(l.packagingNotes),
     usage: textItems(l.usage),
     variants,
-    photographs,
+    photographs: usable,
   };
 }
 

@@ -35,7 +35,12 @@ export const metadata: Metadata = {
   icons: { icon: "/brand/laddex-logo-64.png", apple: "/brand/laddex-logo.png" },
 };
 
-export const viewport: Viewport = { themeColor: "#F8F6F0" };
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F7F3EA" },
+    { media: "(prefers-color-scheme: dark)", color: "#101712" },
+  ],
+};
 
 export default function LaddexRootLayout({
   children,

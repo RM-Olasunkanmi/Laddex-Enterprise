@@ -1,15 +1,11 @@
 // Captures the review gallery into screenshots/. Usage: BASE=http://localhost:3355 node scripts/qa/gallery.mjs
 import { chromium } from "playwright-core";
+
+import { findChromium } from "./chromium.mjs";
 import { existsSync, readdirSync, mkdirSync } from "node:fs";
 
 const BASE = process.env.BASE ?? "http://localhost:3355";
-const find = () => {
-  const root = "/opt/pw-browsers";
-  for (const d of readdirSync(root))
-    for (const rel of ["chrome-linux/chrome", "chrome-linux/headless_shell"])
-      if (existsSync(`${root}/${d}/${rel}`)) return `${root}/${d}/${rel}`;
-  throw new Error("no chromium");
-};
+const find = findChromium;
 mkdirSync("screenshots", { recursive: true });
 const browser = await chromium.launch({
   executablePath: find(),

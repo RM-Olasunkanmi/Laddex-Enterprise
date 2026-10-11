@@ -4,91 +4,108 @@ import { Wordmark } from "./site-header";
 
 import { BUSINESS, BUSINESS_CONTACT } from "@/content/business";
 
-const col = (title: string, items: { href: string; label: string }[]) => (
-  <div>
-    <h3 className="eyebrow !font-mono !font-medium !text-[0.6875rem] mb-3 [font-family:var(--font-mono)]">
-      {title}
-    </h3>
-    <ul className="space-y-2 text-sm">
-      {items.map((i) => (
-        <li key={i.href + i.label}>
-          <Link
-            href={i.href}
-            className="text-ink-2 hover:text-ink underline-offset-4 hover:underline"
-          >
-            {i.label}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+const COLUMNS = [
+  {
+    title: "Shop",
+    items: [
+      { href: "/shop/palm-oil", label: "Palm oil" },
+      { href: "/shop/tapioca", label: "Tapioca flakes" },
+      { href: "/shop/garri", label: "Garri Igbo and Ijebu" },
+      { href: "/shop", label: "All products" },
+      { href: "/cart", label: "Cart" },
+    ],
+  },
+  {
+    title: "Buy in volume",
+    items: [
+      { href: "/wholesale", label: "Wholesale" },
+      { href: "/wholesale/quote", label: "Request a quote" },
+      { href: "/wholesale/register", label: "Register a business" },
+      { href: "/events", label: "Events and souvenirs" },
+    ],
+  },
+  {
+    title: "Help",
+    items: [
+      { href: "/delivery", label: "Delivery" },
+      { href: "/about", label: "About Laddex" },
+      { href: "/contact", label: "Contact" },
+      { href: "/delivery-policy", label: "Delivery policy" },
+      { href: "/returns-refunds", label: "Returns and refunds" },
+      { href: "/privacy", label: "Privacy" },
+      { href: "/terms", label: "Terms" },
+    ],
+  },
+] as const;
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-line-strong bg-paper-2">
-      <div className="wrap py-12 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-[1.4fr_repeat(3,1fr)] md:gap-12 md:py-14">
-        <div className="col-span-2 max-w-xs md:col-span-1">
+    <footer className="border-t border-line bg-paper-2">
+      <div className="wrap grid gap-10 py-12 md:grid-cols-12 md:gap-8 md:py-16">
+        <div className="md:col-span-5 lg:col-span-4">
           <Wordmark />
-          <p className="mt-4 text-ink-2 text-sm">
-            Palm oil, tapioca flakes and garri, for households, shops and
-            events. Ask us to check delivery availability for your location.
-            Prices are in Nigerian Naira.
+          <p className="mt-5 max-w-sm text-sm leading-relaxed text-ink-2">
+            Palm oil, tapioca flakes, Garri Igbo and Ijebu Garri for
+            households, shops, food vendors and events. Prices are in Nigerian
+            Naira.
           </p>
-          {(BUSINESS.phone ||
-            BUSINESS.whatsapp ||
-            BUSINESS.email ||
-            BUSINESS.address) && (
-            <ul className="mt-4 space-y-1 text-sm text-ink-2 list-none p-0">
-              {BUSINESS.phone && (
-                <li>
-                  <a className="underline underline-offset-4" href={BUSINESS_CONTACT.phoneHref}>
-                    Phone: {BUSINESS.phone}
-                  </a>
-                </li>
-              )}
-              {BUSINESS.whatsapp && (
-                <li>
-                  <a className="underline underline-offset-4" href={BUSINESS_CONTACT.whatsappHref}>
-                    WhatsApp: {BUSINESS.whatsapp}
-                  </a>
-                </li>
-              )}
-              {BUSINESS.email && <li><a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a></li>}
-              {BUSINESS.address && <li>{BUSINESS.address}</li>}
-            </ul>
-          )}
+          <address className="mt-5 space-y-1.5 text-sm not-italic text-ink-2">
+            {BUSINESS.address && <p>{BUSINESS.address}</p>}
+            {BUSINESS.phone && (
+              <p>
+                <a className="text-link" href={BUSINESS_CONTACT.phoneHref}>
+                  Call {BUSINESS.phone}
+                </a>
+              </p>
+            )}
+            {BUSINESS.whatsapp && (
+              <p>
+                <a
+                  className="text-link"
+                  href={BUSINESS_CONTACT.whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp {BUSINESS.whatsapp}
+                </a>
+              </p>
+            )}
+            {BUSINESS.email && (
+              <p>
+                <a className="text-link" href={`mailto:${BUSINESS.email}`}>
+                  {BUSINESS.email}
+                </a>
+              </p>
+            )}
+          </address>
         </div>
-        {col("Shop", [
-          { href: "/shop/palm-oil", label: "Palm oil" },
-          { href: "/shop/tapioca", label: "Tapioca flakes" },
-          { href: "/shop/garri", label: "Garri Igbo and Ijebu" },
-          { href: "/shop", label: "All pack sizes" },
-          { href: "/cart", label: "Cart" },
-        ])}
-        {col("Wholesale", [
-          { href: "/wholesale", label: "Volume pricing" },
-          { href: "/wholesale/quote", label: "Request a quote" },
-          { href: "/wholesale/register", label: "Register a business" },
-          { href: "/events", label: "Souvenirs and events" },
-          { href: "/contact", label: "Contact us" },
-        ])}
-        {col("Delivery", [
-          { href: "/delivery", label: "Check delivery availability" },
-          { href: "/order", label: "Checkout" },
-          { href: "/privacy", label: "Privacy" },
-          { href: "/terms", label: "Terms" },
-          { href: "/delivery-policy", label: "Delivery policy" },
-          { href: "/returns-refunds", label: "Returns & refunds" },
-        ])}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 md:col-span-7 lg:col-span-7 lg:col-start-6">
+          {COLUMNS.map((c) => (
+            <nav key={c.title} aria-label={c.title}>
+              <h2 className="eyebrow !text-ink-3">{c.title}</h2>
+              <ul className="mt-4 space-y-1">
+                {c.items.map((i) => (
+                  <li key={i.href}>
+                    <Link
+                      href={i.href}
+                      className="inline-flex min-h-9 items-center text-[0.9375rem] text-ink-2 hover:text-forest hover:underline hover:underline-offset-4"
+                    >
+                      {i.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+        </div>
       </div>
       <div className="border-t border-line">
-        <div className="wrap py-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-xs text-ink-3">
+        <div className="wrap flex flex-col gap-2 py-5 text-xs text-ink-3 md:flex-row md:items-center md:justify-between">
           <p>
-            &copy; Laddex Enterprise. Catalogue sizes, prices, stock and delivery
-            rates are illustrative until confirmed by Laddex.
+            &copy; {new Date().getFullYear()} {BUSINESS.name}, Epe, Lagos State.
+            Prices, stock and delivery fees are confirmed with every order.
           </p>
-          <p className="mono">
+          <p>
             Map data &copy; OpenStreetMap contributors. Boundaries:
             geoBoundaries (GRID3), CC BY 4.0.
           </p>

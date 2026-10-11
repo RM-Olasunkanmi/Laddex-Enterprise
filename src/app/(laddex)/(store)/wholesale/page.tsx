@@ -26,42 +26,87 @@ export default async function WholesalePage() {
   );
   return (
     <>
-      <section className="border-b border-line bg-paper-2/60">
-        <div className="wrap py-12 lg:py-16">
-          <div>
-            <p className="eyebrow mb-4">Wholesale, resale and events</p>
-            <h1 className="text-5xl lg:text-6xl">
-              Buy in volume, priced by the pack.
+      <section className="border-b border-line">
+        <div className="wrap grid gap-10 pb-14 pt-10 lg:grid-cols-12 lg:gap-14 lg:pb-20 lg:pt-16">
+          <div className="lg:col-span-7">
+            <p className="eyebrow">Wholesale</p>
+            <h1 className="display mt-4 text-[2.5rem] sm:text-6xl">
+              Supply for shops, vendors and kitchens.
             </h1>
-            <p className="mt-5 text-lg text-ink-2 max-w-xl">
-              For shops, resellers, caterers and event suppliers. Price breaks
-              are set for each pack size, with a minimum order for each.
-              Send your business details on WhatsApp or ask for a quote for an
-              unusual volume. Buying souvenirs for an event? See the events page.
+            <p className="lede mt-5 max-w-xl">
+              Palm oil, tapioca flakes and garri by the carton, bag or sack.
+              Tell us what you need and where it is going, and we reply with a
+              written quote covering price, stock and delivery.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <ButtonLink href="/wholesale/register">
-                Register a business
-              </ButtonLink>
-              <ButtonLink href="/wholesale/quote" variant="ink">
+            <div className="mt-8 flex flex-col gap-3 xs:flex-row">
+              <ButtonLink href="/wholesale/quote" size="lg">
                 Request a quote
               </ButtonLink>
+              <ButtonLink href="/wholesale/register" variant="line" size="lg">
+                Register a business
+              </ButtonLink>
+            </div>
+          </div>
+          <div className="lg:col-span-5">
+            <div className="rounded-lg bg-rail p-6 text-rail-text sm:p-8">
+              <p className="eyebrow !text-amber-bright">Who buys wholesale</p>
+              <ul className="mt-4 divide-y divide-rail-line">
+                {[
+                  ["Shops and resellers", "Restock shelves by the pack size your customers buy."],
+                  ["Food vendors and restaurants", "Regular supply of palm oil and garri for the kitchen."],
+                  ["Caterers and event suppliers", "Large one-off orders for a date."],
+                  ["Distributors", "Volume across several products and sizes."],
+                ].map(([t, d]) => (
+                  <li key={t} className="py-3.5">
+                    <p className="font-semibold">{t}</p>
+                    <p className="mt-0.5 text-sm text-rail-text/75">{d}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="wrap pt-16">
+      <section className="wrap section" aria-labelledby="how">
         <SectionHeading
-          eyebrow="Volume pricing"
-          title="See what a bigger order does to the price"
+          eyebrow="How it works"
+          title={<span id="how">From enquiry to delivery</span>}
         />
-        <div className="mt-8">
-          <TierExplorer />
-        </div>
+        <ol className="mt-10 grid gap-8 md:grid-cols-4 md:gap-6">
+          {[
+            ["Send your list", "Products, pack sizes, quantities, your business name and where the goods are going."],
+            ["We check stock", "We confirm what is available now and whether delivery is possible to your location."],
+            ["You get a written quote", "Price per pack, any volume price, delivery fee and timing, in writing."],
+            ["Confirm and pay", "Agree the quote, pay by bank transfer, and we arrange dispatch or pickup."],
+          ].map(([t, d], i) => (
+            <li key={t} className="border-t-2 border-forest pt-4">
+              <p className="num font-display text-sm text-forest">0{i + 1}</p>
+              <p className="mt-2 font-display text-xl">{t}</p>
+              <p className="mt-2 text-[0.9375rem] leading-relaxed text-ink-2">{d}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-10 max-w-2xl rounded-md bg-paper-2 px-5 py-4 text-sm text-ink-2">
+          Volume prices, minimum quantities and delivery fees are agreed per
+          order. We do not publish discounts or delivery times that we have not
+          confirmed for you.
+        </p>
       </section>
 
-      {hasPublishedTiers && <section className="wrap pt-20">
+      {hasPublishedTiers && (
+        <section className="wrap pb-16">
+          <SectionHeading
+            eyebrow="Volume pricing"
+            title="See what a bigger order does to the price"
+          />
+          <div className="mt-8">
+            <TierExplorer />
+          </div>
+        </section>
+      )}
+
+      {hasPublishedTiers && <section className="wrap pb-16">
         <SectionHeading
           eyebrow="Minimum orders"
           title="Minimum quantities and price breaks, by pack"
@@ -156,41 +201,24 @@ export default async function WholesalePage() {
         </div>
       </section>}
 
-      <section className="wrap pt-20">
-        <SectionHeading
-          eyebrow="How wholesale enquiries work"
-          title="From requirements to confirmed quote"
-        />
-        <ol className="mt-8 grid gap-px bg-line border border-line rounded-md overflow-hidden md:grid-cols-4 list-none p-0">
-          {[
-            [
-              "1",
-              "Send details",
-              "Tell us about the business and what you need on WhatsApp.",
-            ],
-            [
-              "2",
-              "Check availability",
-              "Laddex checks current stock and whether delivery is available for your location.",
-            ],
-            [
-              "3",
-              "Confirm the quote",
-              "Use the written price and delivery details supplied for your order.",
-            ],
-            [
-              "4",
-              "Place the order",
-              "Confirm quantities and payment details directly with Laddex.",
-            ],
-          ].map(([n, t, d]) => (
-            <li key={n} className="bg-card p-5">
-              <p className="mono text-ember">{n}</p>
-              <p className="font-display text-xl mt-1">{t}</p>
-              <p className="mt-2 text-sm text-ink-2">{d}</p>
-            </li>
-          ))}
-        </ol>
+      <section className="border-t border-line bg-paper-2">
+        <div className="wrap section grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <h2 className="text-3xl md:text-4xl">Ready with a list?</h2>
+            <p className="mt-3 max-w-xl text-ink-2">
+              Build your request pack by pack. It opens in WhatsApp for you to
+              check and send.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <ButtonLink href="/wholesale/quote" size="lg">
+              Request a quote
+            </ButtonLink>
+            <ButtonLink href="/events" variant="line" size="lg">
+              Event orders
+            </ButtonLink>
+          </div>
+        </div>
       </section>
     </>
   );

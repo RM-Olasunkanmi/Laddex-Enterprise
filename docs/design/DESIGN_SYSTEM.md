@@ -1,47 +1,46 @@
 # Laddex design system
 
-Source of truth: `src/lib/design/tokens.ts` (values JavaScript needs) and `src/styles/laddex.css` (CSS custom properties and component classes). `tokens.test.ts` fails if they drift apart or if a contrast pair drops below its target. The same tokens exist as Figma variables (see `docs/FIGMA.md`).
+Source of truth: `src/lib/design/tokens.ts` (values JavaScript needs) and `src/styles/laddex.css` (CSS custom properties and component classes). `tokens.test.ts` fails if they drift apart or if a contrast pair drops below its target.
+
+## Direction (revision 3)
+
+A food brand, not a marketplace or a dashboard. Warm ivory surfaces, dark forest-green type and actions taken from the palm leaves in the logo, and palm-oil amber used sparingly as a second accent. Photography is shown whole and never sits under text. Several supplied photographs are small (160 to 540 px wide), so layouts show them near their native size, on a soft backdrop, rather than cropping and enlarging them.
 
 ## Tokens
 
-| Group              | Values                                                                                                                                               |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Surfaces           | paper `#F6F2EA`, paper-2 `#ECE6DA`, card `#FFFDF8`, rail `#1E1B17`                                                                                   |
-| Text               | ink `#1E1B17`, ink-2 `#4A453D`, ink-3 `#675F54` (all at least 4.5:1 on paper and card)                                                               |
-| Lines              | line `#D9D1C2`, line-strong `#B5AB97`                                                                                                                |
-| Palm oil           | ember `#B23A0E`, deep `#8A2A06`, tint `#F3DCCB`                                                                                                      |
-| Tapioca            | blue `#3F6FB5`, deep `#244A82`, tint `#DCE6F4`                                                                                                       |
-| Wholesale / sample | ochre `#E3B04B`, text `#7A5200`, tint `#F6E6BF`                                                                                                      |
-| Status             | success `#2E6B45`, warning `#8A5A00`, danger `#A12525`, each with a tint; always paired with text and a marker                                       |
-| Type               | Fraunces Variable (display), Hanken Grotesk Variable (body), JetBrains Mono Variable (figures, labels)                                               |
-| Space              | 4 px base: 4, 8, 12, 16, 24, 32, 48, 64, 96                                                                                                          |
-| Radius             | 2, 4, 8 px (no pills)                                                                                                                                |
-| Container          | page max 80 rem; reading 44 rem; dashboard fluid                                                                                                     |
-| Elevation          | rule (1 px), raised, pop. Used sparingly; separation comes from rules and surface tone                                                               |
-| Motion             | fast 120 ms, base 200 ms, slow 320 ms, camera 650 ms; one easing curve `cubic-bezier(.2,.7,.2,1)`; all collapse to ~0 under `prefers-reduced-motion` |
-| Focus              | 2 px ink outline plus a 4 px ochre ring                                                                                                              |
-| Chart              | see `DESIGN_DIRECTIONS.md`; sequential ember ramp `#FBEFE6 → #8A2A06` for normalised choropleths; zone categorical `#3F6FB5 #B23A0E #B07F10 #2F8F6B` |
-| Map layers         | boundary `#8C8374`, selection outline `#1E1B17`, outside-zone fill `#ECE6DA`, pickup `#1E1B17` diamond, order points by segment colour               |
+| Group      | Light                                                                                     | Notes                                                                    |
+| ---------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Surfaces   | paper `#F7F3EA`, paper-2 `#EEE8DA`, card `#FFFDF8`, rail `#132A1E` (dark forest band)      | Dark theme: `#101712`, `#16201A`, `#1A251E`, rail `#0B120D`              |
+| Text       | ink `#14211A`, ink-2 `#3B4A40`, ink-3 `#5C6A60`                                            | ink is a very dark green, not black; ink-3 is at least 4.5:1 on paper-2  |
+| Lines      | line `#DAD4C4`, line-strong `#B0AA97`                                                      |                                                                          |
+| Primary    | forest `#1F4A33`, forest-deep `#153524`, forest-tint `#E2EBE1`, on-forest `#FFFFFF`        | Buttons, selection, links, eyebrows. 10:1 on paper                       |
+| Accent     | amber `#9A5410` (text), amber-bright `#D98A1F` (marks on dark), amber-tint `#F5E5C8`       | Small highlights and the events band. Never large fills behind body text |
+| Palm red   | ember `#B3261E`                                                                            | Palm oil identity in charts and the map pin on /delivery only            |
+| Status     | success, warning, danger, each with a tint; always paired with words and a dot             |                                                                          |
+| Sample     | ochre text on ochre tint                                                                   | Marks illustrative data                                                  |
+| Type       | Fraunces Variable (display), Plus Jakarta Sans Variable (body), JetBrains Mono (dashboard) | Storefront prices use tabular sans figures, not mono                     |
+| Radius     | 4, 8, 14 px                                                                                | No pill buttons; pills only for small chips                              |
+| Motion     | 120 / 200 / 320 ms, one easing curve; hero fade, drawer slide, add-to-cart tick, step fade | All collapse under `prefers-reduced-motion`. No scroll-driven reveals    |
+| Focus      | 2 px forest outline plus a soft amber ring                                                 | Fields show a forest border and halo                                     |
 
-Density: the storefront uses 16 px body and 44 px controls; the dashboard uses 13 px body, mono figures and 36 px controls.
+Rhythm: storefront sections use `.section` (56 px block padding on phones, 88 px from 1024 px). Controls are at least 44 px tall; body text 16 px, form inputs 16 px so iOS does not zoom.
+
+## Storefront classes
+
+`.btn` with `btn-primary` (forest), `btn-ink`, `btn-line`, `btn-quiet`, `btn-on-dark`, `btn-line-on-dark`, sizes `btn-sm` and `btn-lg`; `.chip` (size options and category filters, `data-selected`, `data-unavailable`); `.stock` with `stock-in`, `stock-low`, `stock-out`; `.field`, `.label`, `.hint`; `.eyebrow`, `.display`, `.lede`, `.text-link`; `.section`; `.skel`.
 
 ## Component inventory
 
-| Area       | Components (path)                                                                                                                                              |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Navigation | `SiteHeader`, `Wordmark`, `MobileNavButton`, `NavDrawer`, `CartDrawer`, `DeliveryChip`, `PersonaSelect`, `SiteFooter` (`components/navigation`)                |
-| Commerce   | `ProductCard`, `PackTable`, `QuantityStepper`, `AddToCartButton`, `Price`, `UnitPrice`, `CatalogueBrowser` (filters, sort, empty state)                        |
-| Product    | `PackVisual` (development render), `PackLadder`, `ProductGallery`, `TierChart`, `ProductPurchase` (variant picker, tiers, sticky mobile buy bar), `ZoneSketch` |
-| Wholesale  | `TierExplorer`, `QuoteBuilder`, `RegisterForm`, `ApprovalTimeline`, `WholesaleStatusBanner`, `AccountView`                                                     |
-| Checkout   | `CartView`, `CheckoutPreview`, `OrderSummary`, `ConfirmationPreview`                                                                                           |
-| Delivery   | `LocationPicker`, `CoverageBadge`, `DeliveryCheck`                                                                                                             |
-| Maps       | `useMapLibre` (lifecycle, offline fallback), boundary layer helpers                                                                                            |
-| Analytics  | `DashboardShell`, `FilterBar`, `MapToolbar`, `DashboardMap`, `AreaList`, `Inspector`, `OrderInspector`, `OrderTable`, `KpiTile`, section pages                 |
-| Charts     | `ChartFrame` (title, definition, table view), `LineChart`, `HBarChart`, `StackedBar`, `Histogram`, `Sparkline`, `Legend`                                       |
-| Primitives | `.btn` variants, `.field`, `.tag` (success, warning, danger, info, sample), `.panel`, `.dtable`, `.skel` loading, `Notice`, `SectionHeading`                   |
-
-States covered: default, hover, focus-visible, active, disabled; loading (skeletons), empty, error with retry.
+| Area       | Components                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Navigation | `SiteHeader`, `Wordmark`, `PrimaryNav` (active state, Shop menu), `CartButton`, `NavDrawer`, `CartDrawer`, `SiteFooter`, `NAV`  |
+| Commerce   | `ProductCard` (row on phones, card from 640 px), `CatalogueBrowser`, `AddToCartButton`, `QuantityStepper`, `Price`, `UnitPrice` |
+| Product    | `ProductPurchase` (size cards, stock-capped quantity, pickup/delivery facts, sticky mobile bar), `ProductGallery`, `ProductPhoto` |
+| Checkout   | `CheckoutFlow` (4 steps), `AddressFields` (state, LGA, address, optional GPS or pin), `PinMap` (lazy), `BankDetails`, `CartView` |
+| Enquiries  | `EnquiryForm`, `EventEnquiryForm`, `QuoteBuilder`, `RegisterForm`: each opens WhatsApp with a complete message                   |
+| Delivery   | `LocationPicker` (fees from `/api/delivery/estimate`; "pending confirmation" until zones are live), `CoverageBadge`               |
+| Primitives | `ButtonLink`, `SectionHeading`, `Notice`, `Tag`, `StockTag`, `StockLine`, `SampleTag`                                            |
 
 ## Writing rules
 
-Direct and specific: "Palm oil by the litre. Tapioca by the kilo." Prices are always labelled illustrative until real; statements about delivery say "estimate", never "guarantee"; no testimonials, counts or certifications appear anywhere.
+Direct and specific. No testimonials, certifications, origins, nutritional or shelf-life claims, delivery times or discounts unless the business has confirmed them. Delivery fees that are not confirmed are labelled "pending confirmation" and quoted before payment. A receipt upload is described as "not yet confirmed" until staff verify the transfer.

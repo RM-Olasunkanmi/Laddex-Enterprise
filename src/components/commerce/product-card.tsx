@@ -7,7 +7,7 @@ import type { Product } from "@/features/catalogue/types";
 
 import { AddToCartButton } from "@/components/commerce/add-to-cart";
 import { Price, UnitPrice } from "@/components/commerce/money";
-import { StockTag } from "@/components/lx/primitives";
+import { StockLine } from "@/components/lx/primitives";
 import { ProductPhoto } from "@/components/product/product-photo";
 import { pricePerBaseUnit } from "@/features/catalogue/pricing";
 import { packLabel, sortedVariants } from "@/features/catalogue/selectors";
@@ -16,6 +16,7 @@ import { useStockedProduct } from "@/features/catalogue/stock";
 /**
  * One product, with its sizes as selectable chips. The price, unit price, stock and add-to-cart
  * button follow the chosen size, so buying a different size never needs a different page.
+ * Phones get a horizontal row (photo beside the details); wider screens a vertical card.
  */
 export function ProductCard({
   product: baseProduct,
@@ -38,88 +39,80 @@ export function ProductCard({
   const out = variant.stock.status === "out-of-stock";
 
   return (
-    <article className="group lift flex flex-col bg-card border border-line rounded-lg overflow-hidden">
+    <article className="group grid grid-cols-[7.25rem_1fr] gap-4 border-b border-line pb-6 xs:grid-cols-[9rem_1fr] sm:flex sm:flex-col sm:gap-0 sm:overflow-hidden sm:rounded-lg sm:border sm:bg-card sm:pb-0">
       <Link
         href={href}
-        className="relative block"
+        className="relative block self-start overflow-hidden rounded-md sm:self-stretch sm:rounded-none"
         tabIndex={-1}
         aria-hidden="true"
       >
         <ProductPhoto
           product={product}
-          sizes="(min-width: 1280px) 22vw, (min-width: 640px) 45vw, 50vw"
+          sizes="(min-width: 1280px) 300px, (min-width: 640px) 45vw, 144px"
           priority={priority}
-          className="aspect-square transition-transform duration-[var(--d-slow)] ease-[var(--ease)] group-hover:scale-[1.02]"
+          className="aspect-[4/5] transition-transform duration-[600ms] ease-[var(--ease)] group-hover:scale-[1.03] sm:aspect-[5/4]"
         />
       </Link>
-      <div className="flex-1 flex flex-col p-3 sm:p-4">
-        <h3 className="!text-lg sm:!text-xl !font-semibold">
-          <Link href={href} className="hover:underline underline-offset-4">
-            {product.name}
-          </Link>
-        </h3>
-        <p className="text-xs sm:text-sm text-ink-3 mt-0.5">
-          {product.unitKind === "volume"
-            ? "Sold by the litre"
-            : "Sold by the kilo"}
+      <div className="flex min-w-0 flex-1 flex-col sm:p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="text-xl sm:text-[1.375rem]">
+            <Link href={href} className="hover:text-forest">
+              {product.name}
+            </Link>
+          </h3>
+        </div>
+        <p className="mt-0.5 text-sm text-ink-3">
+          {product.unitKind === "volume" ? "Sold by the litre" : "Sold by the kilo"}
+          {" · "}
+          {variants.length} {variants.length === 1 ? "size" : "sizes"}
         </p>
 
         <fieldset className="mt-3 flex flex-wrap gap-1.5">
           <legend className="sr-only">{product.name} size</legend>
-          {variants.map((v) => {
-            const sel = v.id === id;
-            const sold = v.stock.status === "out-of-stock";
-            return (
-              <label
-                key={v.id}
-                className="cursor-pointer"
+          {variants.map((v) => (
+            <label key={v.id}>
+              <input
+                className="peer sr-only"
+                type="radio"
+                name={`pack-${product.id}`}
+                value={v.id}
+                checked={v.id === id}
+                onChange={() => setId(v.id)}
+              />
+              <span
+                className="chip !min-h-9 !px-2.5 text-[0.8125rem]"
+                data-unavailable={v.stock.status === "out-of-stock" || undefined}
               >
-                <input
-                  className="peer sr-only"
-                  type="radio"
-                  name={`pack-${product.id}`}
-                  value={v.id}
-                  checked={sel}
-                  onChange={() => setId(v.id)}
-                />
-                <span className={`inline-flex min-h-9 min-w-11 items-center justify-center px-2.5 rounded-sm border text-sm mono transition-transform duration-200 active:scale-95 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 ${sel ? "border-ember bg-ember-tint text-ink" : "border-line-strong bg-card hover:border-ink"} ${sold && !sel ? "border-dashed text-ink-3" : ""}`}>
-                  {packLabel(v)}
-                </span>
-              </label>
-            );
-          })}
+                {packLabel(v)}
+                {v.stock.status === "out-of-stock" && (
+                  <span className="sr-only"> (out of stock)</span>
+                )}
+              </span>
+            </label>
+          ))}
         </fieldset>
 
-        <div className="mt-3 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
           <div>
             <Price
               kobo={variant.retailPriceKobo}
-              className="text-lg sm:text-xl font-semibold"
+              className="block text-xl font-semibold leading-tight"
             />
-            <div>
-              <UnitPrice
-                kobo={pricePerBaseUnit(variant)}
-                unit={product.baseUnit}
-              />
-            </div>
+            <UnitPrice kobo={pricePerBaseUnit(variant)} unit={product.baseUnit} />
           </div>
-          <StockTag status={variant.stock.status} />
+          <StockLine status={variant.stock.status} />
         </div>
 
-        <div className="mt-3 sm:mt-4 grid sm:grid-cols-[1fr_auto] gap-2 mt-auto pt-1">
+        <div className="mt-4 sm:mt-auto sm:pt-4">
           <AddToCartButton
             variantId={variant.id}
             qty={1}
             disabled={out}
             disabledReason="This size is out of stock"
-            className="btn-sm min-h-11"
+            label={out ? "Out of stock" : "Add to cart"}
+            itemLabel={`${product.name} ${packLabel(variant)}`}
+            className="w-full min-h-11"
           />
-          <Link
-            href={href}
-            className="hidden sm:inline-flex btn btn-line btn-sm min-h-11"
-          >
-            Details
-          </Link>
         </div>
       </div>
     </article>

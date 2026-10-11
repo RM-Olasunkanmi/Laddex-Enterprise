@@ -64,6 +64,23 @@ seeds. If TLS verification fails, append `?sslmode=no-verify`.
      `NEXT_PUBLIC_ENABLE_PAYSTACK=false` until launch (see section 4).
 4. Deploy. Admin lives at `/admin`; the storefront is the same deployment.
 
+## 2a. Storage is required on Vercel (photos and receipts)
+
+Without `STORAGE_PROVIDER`, Payload writes uploads to the local disk of the
+machine that ran the upload. Vercel functions do not have those files and cannot
+keep new ones, so:
+
+- product photos uploaded from a laptop return errors on the live site (this was
+  happening on the production deployment). The storefront now falls back to the
+  matching photographs bundled in `public/products` when `VERCEL` is set and no
+  storage provider is configured;
+- **receipt uploads cannot be saved**. Checkout detects this on the server and
+  sends customers to WhatsApp instead of asking them to upload after paying.
+
+Fix: create a Vercel Blob store, set `STORAGE_PROVIDER=vercel` and `BLOB_TOKEN`,
+redeploy, then re-upload the product photographs in `/admin` (or re-run
+`pnpm seed:laddex:media` against production with the Blob token set).
+
 ## 2b. Bank-transfer payments (instead of Paystack)
 
 Set `NEXT_PUBLIC_BANK_NAME`, `NEXT_PUBLIC_BANK_ACCOUNT_NAME` and

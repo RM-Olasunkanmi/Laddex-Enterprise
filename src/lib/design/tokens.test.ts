@@ -74,6 +74,13 @@ describe.each([
     ["leaf-deep on leaf-tint", c.leafDeep, c.leafTint, 4.5],
     ["ink on ember-tint", c.ink, c.emberTint, 7],
     ["rail text on rail", c.railText, c.rail, 7],
+    ["on-forest on forest (primary button)", c.onForest, c.forest, 4.5],
+    ["forest on paper (links, eyebrows)", c.forest, c.paper, 4.5],
+    ["forest on card", c.forest, c.card, 4.5],
+    ["forest-deep on forest-tint", c.forestDeep, c.forestTint, 4.5],
+    ["amber on paper", c.amber, c.paper, 4.5],
+    ["amber on amber-tint", c.amber, c.amberTint, 4.5],
+    ["ink on forest-tint", c.ink, c.forestTint, 7],
   ])("%s", (_n, fg, bg, min) => {
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(min);
   });

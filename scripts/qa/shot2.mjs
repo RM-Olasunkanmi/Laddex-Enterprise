@@ -1,11 +1,11 @@
 // Usage: node scripts/qa/shot2.mjs <url> <out.png> [w] [h] [--dark] [--full] [--wait=ms]
 // Like shot.mjs but scrolls through the page first so scroll-driven reveals have played.
 import { chromium } from "playwright-core";
+
+import { findChromium } from "./chromium.mjs";
 import { existsSync, readdirSync } from "node:fs";
 const [url, out, w = "1440", h = "900", ...flags] = process.argv.slice(2);
-const root = "/opt/pw-browsers";
-let exe;
-for (const d of readdirSync(root)) for (const r of ["chrome-linux/chrome", "chrome-linux/headless_shell"]) if (existsSync(`${root}/${d}/${r}`)) exe = `${root}/${d}/${r}`;
+const exe = findChromium();
 const b = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const ctx = await b.newContext({ viewport: { width: +w, height: +h } });
 if (flags.includes("--dark")) await ctx.addInitScript(() => localStorage.setItem("laddex-theme", "dark"));

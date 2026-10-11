@@ -1,16 +1,11 @@
 // Measures transfer size and web vitals per route against a running (preferably production) server.
 // Usage: BASE=http://localhost:3355 node scripts/qa/perf.mjs
 import { chromium } from "playwright-core";
-import { existsSync, readdirSync } from "node:fs";
+
+import { findChromium } from "./chromium.mjs";
 
 const BASE = process.env.BASE ?? "http://localhost:3355";
-const find = () => {
-  const root = "/opt/pw-browsers";
-  for (const d of readdirSync(root))
-    for (const rel of ["chrome-linux/chrome", "chrome-linux/headless_shell"])
-      if (existsSync(`${root}/${d}/${rel}`)) return `${root}/${d}/${rel}`;
-  throw new Error("no chromium");
-};
+const find = findChromium;
 const routes = [
   "/",
   "/shop",
@@ -19,8 +14,8 @@ const routes = [
   "/delivery",
   "/contact",
   "/wholesale",
-  "/dashboard",
-  "/dashboard/insights",
+  "/events",
+  "/order",
 ];
 const browser = await chromium.launch({
   executablePath: find(),

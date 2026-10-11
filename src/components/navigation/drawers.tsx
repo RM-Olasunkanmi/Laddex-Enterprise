@@ -4,12 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 
+import { isActive } from "./header-client";
+import { NAV } from "./nav";
+import { ThemeToggle } from "./theme-toggle";
+
 import { Price } from "@/components/commerce/money";
 import { QuantityStepper } from "@/components/commerce/quantity-stepper";
 import { useCart } from "@/components/commerce/use-customer-pricing";
 import { ProductPhoto } from "@/components/product/product-photo";
 import { WhatsAppOrderButton } from "@/components/store/whatsapp-order";
-import { CHECKOUT_LIVE } from "@/content/business";
+import { BUSINESS, BUSINESS_CONTACT, CHECKOUT_LIVE } from "@/content/business";
 import { removeFromCart, setQty } from "@/features/cart/store";
 import { packLabel } from "@/features/catalogue/selectors";
 import { cartDrawer, navDrawer } from "@/lib/data/ui-store";
@@ -44,10 +48,31 @@ function Drawer({
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className={`m-0 p-0 h-dvh max-h-dvh w-[min(26rem,100vw)] bg-paper text-ink shadow-pop border-line ${side === "right" ? "ml-auto border-l" : "mr-auto border-r"} backdrop:bg-ink/45`}
+      data-side={side}
+      className={`drawer m-0 h-dvh max-h-dvh w-[min(27rem,100vw)] border-line bg-paper p-0 text-ink shadow-pop backdrop:bg-[#0b120d]/50 ${side === "right" ? "ml-auto border-l" : "mr-auto border-r"}`}
     >
-      <div className="h-full flex flex-col">{children}</div>
+      <div className="flex h-full flex-col">{children}</div>
     </dialog>
+  );
+}
+
+function CloseButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="btn btn-quiet min-h-11 w-11 !px-0"
+      onClick={onClick}
+      aria-label="Close"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M6 6l12 12M18 6 6 18"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
   );
 }
 
@@ -57,61 +82,71 @@ export function CartDrawer() {
   const close = () => cartDrawer.set(false);
   const pathname = usePathname();
   useEffect(() => cartDrawer.set(false), [pathname]);
+  const count = cart.lines.reduce((n, l) => n + l.qty, 0);
   return (
     <Drawer open={open} onClose={close} side="right" label="Cart">
-      <div className="flex items-center justify-between px-5 h-16 border-b border-line">
-        <h2 className="text-xl">Your cart</h2>
-        <button className="btn btn-quiet btn-sm min-h-11" onClick={close}>
-          Close
-        </button>
+      <div className="flex h-16 items-center justify-between border-b border-line pl-5 pr-2">
+        <h2 className="text-xl">
+          Your cart
+          {count > 0 && (
+            <span className="num ml-2 font-sans text-sm font-normal text-ink-3">
+              {count} {count === 1 ? "item" : "items"}
+            </span>
+          )}
+        </h2>
+        <CloseButton onClick={close} />
       </div>
-      <div className="flex-1 overflow-y-auto px-5">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-5">
         {cart.lines.length === 0 ? (
-          <div className="py-12 text-center">
-            <p className="font-display text-xl">Nothing here yet</p>
-            <p className="mt-2 text-ink-2 text-sm">
-              Pick a pack size from palm oil or tapioca.
+          <div className="py-14 text-center">
+            <p className="font-display text-2xl">Your cart is empty</p>
+            <p className="mx-auto mt-2 max-w-xs text-sm text-ink-2">
+              Choose a product and size from the shop. Prices are shown per
+              pack and per litre or kilo.
             </p>
-            <div className="mt-5 flex justify-center gap-2">
-              <Link
-                className="btn btn-ink btn-sm"
-                href="/shop/palm-oil"
-                onClick={close}
-              >
-                Palm oil
-              </Link>
-              <Link
-                className="btn btn-line btn-sm"
-                href="/shop/tapioca"
-                onClick={close}
-              >
-                Tapioca
-              </Link>
-            </div>
+            <Link
+              className="btn btn-primary mt-6"
+              href="/shop"
+              onClick={close}
+            >
+              Shop products
+            </Link>
           </div>
         ) : (
           <ul className="divide-y divide-line">
             {cart.lines.map((l) => (
-              <li key={l.variant.id} className="py-4 flex gap-3 sm:gap-4">
+              <li key={l.variant.id} className="flex gap-4 py-5">
                 <ProductPhoto
                   product={l.product}
                   sizes="80px"
-                  className="w-20 h-20 shrink-0 rounded-sm"
+                  className="h-20 w-20 shrink-0 rounded-md"
                 />
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between gap-2">
-                    <p className="font-medium">
-                      {l.product.name}{" "}
-                      <span className="mono text-ink-3 text-sm">
-                        {packLabel(l.variant)}
-                      </span>
-                    </p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/products/${l.product.slug}?pack=${l.variant.id}`}
+                        className="font-medium hover:underline underline-offset-4"
+                        onClick={close}
+                      >
+                        {l.product.name}
+                      </Link>
+                      <p className="text-sm text-ink-3">
+                        {packLabel(l.variant)} &middot;{" "}
+                        <span className="num">
+                          {formatNaira(l.price.unitPriceKobo)}
+                        </span>{" "}
+                        each
+                      </p>
+                    </div>
                     <Price kobo={l.totalKobo} className="font-semibold" />
                   </div>
-                  <p className="mono text-xs text-ink-3 mt-0.5">
-                    {formatNaira(l.price.unitPriceKobo)} each
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
+                  {l.variant.stock.status === "out-of-stock" && (
+                    <p className="mt-1 text-xs text-danger" role="alert">
+                      Out of stock. Remove it to check out.
+                    </p>
+                  )}
+                  <div className="mt-3 flex items-center justify-between gap-2">
                     <QuantityStepper
                       size="sm"
                       label={`${l.product.name} ${packLabel(l.variant)} quantity`}
@@ -121,8 +156,9 @@ export function CartDrawer() {
                     />
                     <button
                       type="button"
-                      className="text-sm underline underline-offset-4 text-ink-2 min-h-11 px-2"
+                      className="min-h-11 px-2 text-sm text-ink-2 underline underline-offset-4 hover:text-ink"
                       onClick={() => removeFromCart(l.variant.id)}
+                      aria-label={`Remove ${l.product.name} ${packLabel(l.variant)}`}
                     >
                       Remove
                     </button>
@@ -134,23 +170,28 @@ export function CartDrawer() {
         )}
       </div>
       {cart.lines.length > 0 && (
-        <div className="border-t border-line p-5 space-y-3 bg-card">
-          <div className="flex justify-between items-baseline">
+        <div className="space-y-3 border-t border-line bg-card p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="flex items-baseline justify-between">
             <span className="text-ink-2">Subtotal</span>
             <Price kobo={cart.subtotalKobo} className="text-xl font-semibold" />
           </div>
           <p className="text-xs text-ink-3">
-            Delivery is calculated from your address at checkout.
+            Delivery is worked out at checkout from your state and area, or
+            choose free pickup in Epe.
           </p>
+          <Link
+            href="/order"
+            className="btn btn-primary btn-lg w-full"
+            onClick={close}
+          >
+            {CHECKOUT_LIVE ? "Checkout" : "Checkout preview"}
+          </Link>
           <div className="grid grid-cols-2 gap-2">
-            <Link href="/cart" className="btn btn-line" onClick={close}>
+            <Link href="/cart" className="btn btn-line btn-sm min-h-11" onClick={close}>
               View cart
             </Link>
-            <Link href="/order" className="btn btn-primary" onClick={close}>
-              {CHECKOUT_LIVE ? "Checkout" : "Checkout preview"}
-            </Link>
+            <WhatsAppOrderButton className="btn btn-line btn-sm min-h-11" short />
           </div>
-          <WhatsAppOrderButton className="btn btn-line w-full" />
         </div>
       )}
     </Drawer>
@@ -162,44 +203,70 @@ export function NavDrawer() {
   const close = () => navDrawer.set(false);
   const pathname = usePathname();
   useEffect(() => navDrawer.set(false), [pathname]);
-  const links = [
-    { href: "/shop", label: "Shop", note: "All products" },
-    { href: "/shop/palm-oil", label: "Palm oil", note: "" },
-    { href: "/shop/tapioca", label: "Tapioca", note: "" },
-    { href: "/shop/garri", label: "Garri", note: "" },
-    { href: "/wholesale", label: "Wholesale", note: "" },
-    { href: "/events", label: "Events", note: "" },
-    { href: "/delivery", label: "Delivery", note: "" },
-    { href: "/contact", label: "Contact", note: "" },
-  ];
+  const shop = NAV.find((n) => "children" in n);
   return (
-    <Drawer open={open} onClose={close} side="left" label="Menu">
-      <div className="flex items-center justify-between px-5 h-16 border-b border-line">
-        <span className="font-display text-2xl font-semibold">
-          Laddex<span className="text-ember">.</span>
-        </span>
-        <button className="btn btn-quiet btn-sm min-h-11" onClick={close}>
-          Close
-        </button>
+    <Drawer open={open} onClose={close} side="right" label="Menu">
+      <div className="flex h-16 items-center justify-between border-b border-line pl-5 pr-2">
+        <span className="font-display text-xl font-semibold">Menu</span>
+        <CloseButton onClick={close} />
       </div>
-      <nav aria-label="Menu" className="flex-1 overflow-y-auto">
-        <ul>
-          {links.map((l) => (
-            <li key={l.href + l.label} className="border-b border-line">
-              <Link
-                href={l.href}
-                className="flex items-baseline justify-between px-5 min-h-14 py-3 hover:bg-paper-2"
-                onClick={close}
-              >
-                <span className="font-display text-xl">{l.label}</span>
-                <span className="mono text-[0.6875rem] uppercase tracking-wider text-ink-3">
-                  {l.note}
-                </span>
-              </Link>
-            </li>
-          ))}
+      <nav aria-label="Menu" className="flex-1 overflow-y-auto px-5 py-4">
+        <ul className="divide-y divide-line">
+          {NAV.map((l) => {
+            const active = isActive(pathname, l.href);
+            return (
+              <li key={l.href}>
+                <Link
+                  href={l.href}
+                  className={`flex min-h-14 items-center justify-between py-3 font-display text-2xl ${active ? "text-forest" : ""}`}
+                  aria-current={active ? "page" : undefined}
+                  onClick={close}
+                >
+                  {l.label}
+                  <span aria-hidden="true" className="text-base text-ink-3">
+                    &rarr;
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
+        {shop && "children" in shop && (
+          <div className="mt-6">
+            <p className="eyebrow">Shop by product</p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {shop.children.slice(0, 3).map((c) => (
+                <li key={c.href}>
+                  <Link
+                    href={c.href}
+                    className="chip"
+                    onClick={close}
+                  >
+                    {c.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </nav>
+      <div className="space-y-3 border-t border-line p-5 text-sm pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <a href={BUSINESS_CONTACT.whatsappHref} className="text-link">
+            WhatsApp {BUSINESS.whatsapp}
+          </a>
+          <a href={BUSINESS_CONTACT.phoneHref} className="text-link">
+            Call
+          </a>
+          <Link href="/contact" className="text-link" onClick={close}>
+            Contact
+          </Link>
+        </div>
+        <div className="flex items-center justify-between text-ink-3">
+          <span>Appearance</span>
+          <ThemeToggle />
+        </div>
+      </div>
     </Drawer>
   );
 }

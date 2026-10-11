@@ -4,21 +4,33 @@
  * UI reads them, so SVG charts and components switch theme without re-rendering.
  * `tokens.test.ts` fails if the two drift apart or a contrast pair drops below its target.
  *
- * Brand colours come from the Laddex logo and packaging: palm-oil red (the droplet and bottle
- * caps), palm-leaf green (the leaves and the "Pure. Natural. Royal." line), and the yellow of
- * the tapioca and garri pouches. Paper and ink neutrals carry everything else.
+ * Brand colours come from the Laddex logo and packaging. The storefront leads with forest green
+ * (the palm leaves) on warm ivory, with palm-oil amber as a restrained second accent. Palm-oil red
+ * (the droplet and caps) stays as the palm oil identity in charts and as a small brand mark.
+ * Paper and ink neutrals carry everything else; the ink is a very dark green, not black.
  */
 export type Theme = "light" | "dark";
 
 export const color = {
-  paper: "#F8F6F0",
-  paper2: "#EFEBE1",
-  card: "#FFFFFF",
-  ink: "#17140F",
-  ink2: "#46413A",
-  ink3: "#675F54",
-  line: "#DDD6C8",
-  lineStrong: "#B5AB97",
+  paper: "#F7F3EA",
+  paper2: "#EEE8DA",
+  card: "#FFFDF8",
+  ink: "#14211A",
+  ink2: "#3B4A40",
+  ink3: "#5C6A60",
+  line: "#DAD4C4",
+  lineStrong: "#B0AA97",
+
+  /** Forest green (logo leaves). Primary actions, selection and links on the storefront. */
+  forest: "#1F4A33",
+  forestDeep: "#153524",
+  forestTint: "#E2EBE1",
+  onForest: "#FFFFFF",
+
+  /** Palm-oil amber. Secondary accent: small highlights, never large fills behind text. */
+  amber: "#9A5410",
+  amberTint: "#F5E5C8",
+  amberBright: "#D98A1F",
 
   /** Brand red (logo droplet, caps). Primary actions and the palm oil identity. */
   ember: "#B3261E",
@@ -48,20 +60,29 @@ export const color = {
   danger: "#A12525",
   dangerTint: "#F4D6D6",
 
-  rail: "#17140F",
-  railLine: "#38332C",
-  railText: "#E9E2D3",
+  rail: "#132A1E",
+  railLine: "#2A4334",
+  railText: "#E8EDE4",
 } as const;
 
 export const colorDark: Record<keyof typeof color, string> = {
-  paper: "#14110D",
-  paper2: "#1C1812",
-  card: "#1E1A15",
-  ink: "#F2EDE2",
-  ink2: "#CFC8B8",
-  ink3: "#A59D8D",
-  line: "#38322A",
-  lineStrong: "#5C5445",
+  paper: "#101712",
+  paper2: "#16201A",
+  card: "#1A251E",
+  ink: "#EEF0E8",
+  ink2: "#C9CFC4",
+  ink3: "#9CA79C",
+  line: "#2C3830",
+  lineStrong: "#4A584E",
+
+  forest: "#8CCB9E",
+  forestDeep: "#B3E0BE",
+  forestTint: "#1B3324",
+  onForest: "#0E1A12",
+
+  amber: "#E7A54C",
+  amberTint: "#3A2A12",
+  amberBright: "#E7A54C",
 
   ember: "#EF6A5E",
   emberDeep: "#F59A91",
@@ -87,9 +108,9 @@ export const colorDark: Record<keyof typeof color, string> = {
   danger: "#F28B82",
   dangerTint: "#3F1C1A",
 
-  rail: "#0E0C09",
-  railLine: "#2A251E",
-  railText: "#E9E2D3",
+  rail: "#0B120D",
+  railLine: "#24302A",
+  railText: "#E8EDE4",
 };
 
 /** Series colours per theme. Every series is also told apart by label, legend and a hatch texture. */
@@ -152,6 +173,8 @@ export const v = {
   ink3: "var(--color-ink-3)",
   line: "var(--color-line)",
   ember: "var(--color-ember)",
+  forest: "var(--color-forest)",
+  amber: "var(--color-amber-bright)",
   leaf: "var(--color-leaf)",
   sky: "var(--color-sky)",
   ochre: "var(--color-ochre)",

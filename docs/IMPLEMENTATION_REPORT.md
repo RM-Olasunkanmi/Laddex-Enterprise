@@ -1,5 +1,44 @@
 # Implementation report
 
+## Revision 3: storefront redesign (October 2026)
+
+**Design.** Warm ivory, forest green and a restrained palm-oil amber replace the red-led palette;
+Fraunces display with Plus Jakarta Sans body; flat 8 px buttons; no scroll-driven reveals. Tokens
+and contrast tests updated (`docs/design/DESIGN_SYSTEM.md`).
+
+**Pages.** New homepage (photo-led hero with Shop products and Wholesale enquiries, product range,
+ways to buy, what to expect, events, delivery and store, closing call to action); shop with
+category chips, sort, an in-stock filter that only appears when it would hide something, and a
+quote prompt; product page with size cards, stock-capped quantity, pickup and delivery facts and
+a sticky mobile bar; cart; wholesale; events with a dedicated enquiry form (products, pack size,
+number of packs, date, type, packaging, location or pickup, contact); new `/about`; header with
+active states and a Shop menu; full-height mobile menu; footer.
+
+**Checkout.** Four steps: details, delivery or pickup, review, payment. Delivery is a plain form
+(state, LGA, street, optional landmark and notes); sharing the device location or dropping a pin
+is optional and the map only loads when asked for. Review uses `/api/checkout/prepare` so totals
+and the delivery fee come from the server. Payment shows the account details with copy buttons,
+the exact amount, the receipt upload and a clear "not confirmed until we see the money" message.
+When the delivery fee is not confirmed for the address, or receipts cannot be stored, customers
+are told not to pay yet and send the order on WhatsApp instead. Pickup (already supported by the
+server) is now offered.
+
+**Fixes.** Product photos on the live site returned errors (uploads were on a local disk); the
+catalogue adapter now falls back to the bundled photographs on Vercel without storage. The
+supplied palm oil photo with a social-media caption baked in is replaced by a clean crop. The
+/delivery page showed sample fees as exact amounts; it now asks the server and shows "pending
+confirmation" until zones are live. Tier chart hydration mismatch fixed. QA scripts run on
+Windows and macOS as well as Linux.
+
+**Not changed.** Catalogue data, prices, variants, stock rules, the bank-transfer API and its
+verification, Payload collections, the dashboard, legal pages, analytics and environment variables.
+
+**Open items for the owner.** See `docs/OWNER_LAUNCH_CHECKLIST.md`, plus: configure Blob storage
+(section 2a of `HOSTING_VERCEL.md`); activate owner-approved delivery zones; confirm the published
+prices and stock (they were seeded from the illustrative fixtures and are now shown as confirmed);
+confirm the bank account details; the Paystack client path calls `/api/paystack/initialize`,
+which does not exist, so keep Paystack disabled.
+
 ## What changed in this revision (owner feedback)
 
 1. **Real logo** in the header, footer, staff rail and favicon.

@@ -1,23 +1,12 @@
 // Usage: node scripts/qa/shot.mjs <url> <out.png> [width] [height] [--full] [--wait=ms] [--click=selector]
 // Takes a screenshot with the preinstalled Chromium and reports console errors and horizontal overflow.
 import { chromium } from "playwright-core";
+
+import { findChromium } from "./chromium.mjs";
 import { existsSync, readdirSync } from "node:fs";
 
 const [url, out, w = "1440", h = "900", ...flags] = process.argv.slice(2);
-const find = () => {
-  const root = "/opt/pw-browsers";
-  for (const d of readdirSync(root)) {
-    for (const rel of [
-      "chrome-linux/chrome",
-      "chrome-linux/headless_shell",
-      "chrome",
-    ]) {
-      const p = `${root}/${d}/${rel}`;
-      if (existsSync(p)) return p;
-    }
-  }
-  throw new Error("no chromium");
-};
+const find = findChromium;
 const browser = await chromium.launch({
   executablePath: find(),
   args: [

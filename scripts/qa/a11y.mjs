@@ -1,19 +1,16 @@
 // Automated WCAG 2.x A/AA scan with axe-core over key routes. Usage: BASE=http://localhost:3355 node scripts/qa/a11y.mjs
 // Automated checks find only part of the issues; keyboard and screen-reader review are still needed.
 import { chromium } from "playwright-core";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+
+import { findChromium } from "./chromium.mjs";
+import { readFileSync } from "node:fs";
 
 const BASE = process.env.BASE ?? "http://localhost:3355";
-const find = () => {
-  const root = "/opt/pw-browsers";
-  for (const d of readdirSync(root))
-    for (const rel of ["chrome-linux/chrome", "chrome-linux/headless_shell"])
-      if (existsSync(`${root}/${d}/${rel}`)) return `${root}/${d}/${rel}`;
-  throw new Error("no chromium");
-};
+const find = findChromium;
 const axeSource = readFileSync("node_modules/axe-core/axe.min.js", "utf8");
-const routes = [
+const allRoutes = [
   "/",
+  "/about",
   "/shop",
   "/shop/garri",
   "/products/garri-igbo?pack=gi-25kg",
@@ -35,6 +32,8 @@ const routes = [
   "/dashboard/inventory",
   "/dashboard/stock",
 ];
+// The dashboard needs a signed-in staff user (Postgres); SKIP_DASHBOARD=1 scans the storefront only.
+const routes = process.env.SKIP_DASHBOARD === "1" ? allRoutes.filter((r) => !r.startsWith("/dashboard")) : allRoutes;
 const browser = await chromium.launch({
   executablePath: find(),
   args: [

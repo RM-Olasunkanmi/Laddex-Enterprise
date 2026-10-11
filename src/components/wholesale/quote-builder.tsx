@@ -100,7 +100,7 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
       <div className="space-y-8">
         <section aria-labelledby="q1">
           <h2 id="q1" className="text-2xl mb-4">
-            <span className="mono text-ember text-base mr-2">1</span>What do you
+            <span className="num mr-2 text-base font-semibold text-forest">1</span>What do you
             need?
           </h2>
           <ul className="space-y-3 list-none p-0">
@@ -194,7 +194,7 @@ export function QuoteBuilder({ initialPack }: { initialPack?: string }) {
 
         <section aria-labelledby="q2">
           <h2 id="q2" className="text-2xl mb-4">
-            <span className="mono text-ember text-base mr-2">2</span>Your
+            <span className="num mr-2 text-base font-semibold text-forest">2</span>Your
             business
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">

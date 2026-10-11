@@ -31,10 +31,12 @@ export function TierChart({
     ...tiers,
   ];
   const maxQty = Math.max(tiers[tiers.length - 1].minQty * 1.35, 10);
+  // Rounded so server and browser produce identical markup (Math.log can differ in the last bit).
+  const r2 = (n: number) => Math.round(n * 100) / 100;
   const x = (q: number) =>
-    m.l + (Math.log(q) / Math.log(maxQty)) * (W - m.l - m.r);
+    r2(m.l + (Math.log(q) / Math.log(maxQty)) * (W - m.l - m.r));
   const y = (p: number) =>
-    H - m.b - (p / variant.retailPriceKobo) * (H - m.t - m.b);
+    r2(H - m.b - (p / variant.retailPriceKobo) * (H - m.t - m.b));
   let d = "";
   steps.forEach((s, i) => {
     const x0 = x(s.minQty);
@@ -100,7 +102,7 @@ export function TierChart({
             x2={x(Math.min(activeQty, maxQty))}
             y1={m.t}
             y2={H - m.b}
-            stroke={color.ember}
+            stroke={color.forest}
             strokeDasharray="4 3"
             strokeWidth="1.5"
           />

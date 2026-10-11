@@ -2,14 +2,21 @@
 
 /* Tokens mirror src/lib/design/tokens.ts (checked by tokens.test.ts). */
 @theme {
-  --color-paper: #f8f6f0;
-  --color-paper-2: #efebe1;
-  --color-card: #ffffff;
-  --color-ink: #17140f;
-  --color-ink-2: #46413a;
-  --color-ink-3: #675f54;
-  --color-line: #ddd6c8;
-  --color-line-strong: #b5ab97;
+  --color-paper: #f7f3ea;
+  --color-paper-2: #eee8da;
+  --color-card: #fffdf8;
+  --color-ink: #14211a;
+  --color-ink-2: #3b4a40;
+  --color-ink-3: #5c6a60;
+  --color-line: #dad4c4;
+  --color-line-strong: #b0aa97;
+  --color-forest: #1f4a33;
+  --color-forest-deep: #153524;
+  --color-forest-tint: #e2ebe1;
+  --color-on-forest: #ffffff;
+  --color-amber: #9a5410;
+  --color-amber-tint: #f5e5c8;
+  --color-amber-bright: #d98a1f;
   --color-ember: #b3261e;
   --color-ember-deep: #861510;
   --color-ember-tint: #f8dedb;
@@ -29,9 +36,9 @@
   --color-warning-tint: #f7e7c2;
   --color-danger: #a12525;
   --color-danger-tint: #f4d6d6;
-  --color-rail: #17140f;
-  --color-rail-line: #38332c;
-  --color-rail-text: #e9e2d3;
+  --color-rail: #132a1e;
+  --color-rail-line: #2a4334;
+  --color-rail-text: #e8ede4;
 
   --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
   --font-accent: "Fraunces Variable", Georgia, "Times New Roman", serif;
@@ -42,8 +49,8 @@
     "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
 
   --shadow-rule: 0 1px 0 rgba(23, 20, 15, 0.08);
   --shadow-raised:
@@ -91,14 +98,21 @@
 /* Dark theme: same names, different values. Set on <html data-theme="dark"> by the theme script. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-paper: #14110d;
-  --color-paper-2: #1c1812;
-  --color-card: #1e1a15;
-  --color-ink: #f2ede2;
-  --color-ink-2: #cfc8b8;
-  --color-ink-3: #a59d8d;
-  --color-line: #38322a;
-  --color-line-strong: #5c5445;
+  --color-paper: #101712;
+  --color-paper-2: #16201a;
+  --color-card: #1a251e;
+  --color-ink: #eef0e8;
+  --color-ink-2: #c9cfc4;
+  --color-ink-3: #9ca79c;
+  --color-line: #2c3830;
+  --color-line-strong: #4a584e;
+  --color-forest: #8ccb9e;
+  --color-forest-deep: #b3e0be;
+  --color-forest-tint: #1b3324;
+  --color-on-forest: #0e1a12;
+  --color-amber: #e7a54c;
+  --color-amber-tint: #3a2a12;
+  --color-amber-bright: #e7a54c;
   --color-ember: #ef6a5e;
   --color-ember-deep: #f59a91;
   --color-ember-tint: #3a1b18;
@@ -118,9 +132,9 @@
   --color-warning-tint: #3a2c0f;
   --color-danger: #f28b82;
   --color-danger-tint: #3f1c1a;
-  --color-rail: #0e0c09;
-  --color-rail-line: #2a251e;
-  --color-rail-text: #e9e2d3;
+  --color-rail: #0b120d;
+  --color-rail-line: #24302a;
+  --color-rail-text: #e8ede4;
   --chart-palm: #d9483d;
   --chart-tapioca: #b88a14;
   --chart-garri: #3a9a66;
@@ -187,12 +201,16 @@
     font-optical-sizing: auto;
   }
   :focus-visible {
-    outline: 2px solid var(--color-ink);
+    outline: 2px solid var(--color-forest);
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px var(--color-ochre);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-amber-bright) 45%, transparent);
   }
   ::selection {
-    background: var(--color-ochre-tint);
+    background: var(--color-amber-tint);
+  }
+  h1,
+  h2 {
+    font-variation-settings: "SOFT" 30, "WONK" 0;
   }
   button,
   [role="button"],
@@ -220,11 +238,112 @@
     font-variant-numeric: tabular-nums;
   }
   .eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.08em;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
+    color: var(--color-forest);
+  }
+  /* Storefront section rhythm: one value, so sections never feel randomly spaced. */
+  .section {
+    padding-block: 3.5rem;
+  }
+  @media (min-width: 64rem) {
+    .section {
+      padding-block: 5.5rem;
+    }
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 560;
+    letter-spacing: -0.025em;
+    line-height: 1.02;
+  }
+  .lede {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+  @media (min-width: 48rem) {
+    .lede {
+      font-size: 1.1875rem;
+    }
+  }
+  .text-link {
+    color: var(--color-forest);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition: text-decoration-color var(--d-fast) var(--ease);
+  }
+  .text-link:hover {
+    text-decoration-thickness: 2px;
+  }
+  /* Size chips (radio inputs styled as compact options). */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    min-width: 2.75rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-card);
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+    transition:
+      border-color var(--d-fast) var(--ease),
+      background-color var(--d-fast) var(--ease),
+      color var(--d-fast) var(--ease);
+  }
+  .chip:hover {
+    border-color: var(--color-ink-3);
+  }
+  .chip[data-selected="true"],
+  :checked + .chip {
+    border-color: var(--color-forest);
+    background: var(--color-forest);
+    color: var(--color-on-forest);
+  }
+  .chip[data-unavailable="true"] {
+    border-style: dashed;
     color: var(--color-ink-3);
+  }
+  :checked + .chip[data-unavailable="true"] {
+    color: var(--color-on-forest);
+  }
+  :focus-visible + .chip {
+    outline: 2px solid var(--color-forest);
+    outline-offset: 2px;
+  }
+  /* Stock line: a dot plus words, never colour alone. */
+  .stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+  .stock::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .stock-in {
+    color: var(--color-success);
+  }
+  .stock-low {
+    color: var(--color-warning);
+  }
+  .stock-out {
+    color: var(--color-danger);
   }
   .rule {
     border-top: 1px solid var(--color-line);
@@ -248,10 +367,10 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    min-height: 2.75rem;
-    padding: 0 1.125rem;
+    min-height: 2.875rem;
+    padding: 0 1.25rem;
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     font-weight: 600;
     font-size: 0.9375rem;
     line-height: 1.2;
@@ -272,11 +391,31 @@
     opacity: 0.5;
   }
   .btn-primary {
-    background: var(--color-ember);
-    color: var(--color-on-ember);
+    background: var(--color-forest);
+    color: var(--color-on-forest);
   }
   .btn-primary:hover:not(:disabled) {
-    background: var(--color-ember-deep);
+    background: var(--color-forest-deep);
+  }
+  .btn-lg {
+    min-height: 3.25rem;
+    padding-inline: 1.625rem;
+    font-size: 1rem;
+  }
+  .btn-on-dark {
+    background: var(--color-rail-text);
+    color: var(--color-rail);
+  }
+  .btn-on-dark:hover:not(:disabled) {
+    background: #ffffff;
+  }
+  .btn-line-on-dark {
+    border-color: color-mix(in srgb, var(--color-rail-text) 45%, transparent);
+    color: var(--color-rail-text);
+  }
+  .btn-line-on-dark:hover:not(:disabled) {
+    border-color: var(--color-rail-text);
+    background: color-mix(in srgb, var(--color-rail-text) 8%, transparent);
   }
   .btn-ink {
     background: var(--color-ink);
@@ -323,15 +462,23 @@
   .field:hover {
     border-color: var(--color-ink-3);
   }
+  .field:focus-visible {
+    border-color: var(--color-forest);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-forest) 22%, transparent);
+    outline: none;
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
   .field::placeholder {
     color: var(--color-ink-3);
   }
   .label {
     display: block;
     margin-bottom: 0.375rem;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-ink-2);
+    color: var(--color-ink);
   }
   .hint {
     font-size: 0.8125rem;
@@ -448,6 +595,32 @@
   }
 }
 
+/* Drawers slide in from their edge. Closing is instant: a closing dialog leaves the top layer at once. */
+dialog.drawer[open] {
+  animation: drawerIn var(--d-slow) var(--ease);
+}
+dialog.drawer[open][data-side="left"] {
+  animation-name: drawerInLeft;
+}
+dialog.drawer[open]::backdrop {
+  animation: fadeBackdrop var(--d-slow) var(--ease);
+}
+@keyframes drawerIn {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes drawerInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes fadeBackdrop {
+  from {
+    opacity: 0;
+  }
+}
+
 /* MapLibre control and popup restyle to match the system */
 .maplibregl-ctrl-group {
   border-radius: 4px !important;
@@ -459,6 +632,9 @@
 }
 .maplibregl-canvas:focus-visible {
   outline: 2px solid var(--color-ink);
+}
+.maplibregl-ctrl-attrib a {
+  text-decoration: underline !important;
 }
 .maplibregl-ctrl-attrib {
   font-size: 0.6875rem !important;
